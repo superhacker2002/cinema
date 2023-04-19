@@ -10,5 +10,5 @@ import (
 func main() {
 	config := config.New()
 	httphandler.New()
-	log.Fatal(http.ListenAndServe("localhost:"+config.Cinema.Port, nil))
+	log.Fatal(http.ListenAndServe("localhost:"+config.Port, nil))
 }
