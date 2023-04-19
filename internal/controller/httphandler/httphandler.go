@@ -13,13 +13,11 @@ func New() httpHandler {
 }
 
 func (h httpHandler) setRoutes() {
-	http.HandleFunc("/auth", h.handlerFunc)
-	http.HandleFunc("/clients", h.handlerFunc)
-	http.HandleFunc("/films", h.handlerFunc)
-	http.HandleFunc("/halls", h.handlerFunc)
-
-}
-
-func (h httpHandler) handlerFunc(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
+	handler := func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}
+	http.HandleFunc("/auth", handler)
+	http.HandleFunc("/clients", handler)
+	http.HandleFunc("/films", handler)
+	http.HandleFunc("/halls", handler)
 }
