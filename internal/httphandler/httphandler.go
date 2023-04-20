@@ -13,6 +13,7 @@ func New() httpHandler {
 	return handler
 }
 
+// setRoutes adds handlers to http.DefaultServeMux
 func (h httpHandler) setRoutes() {
 	handler := func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
