@@ -9,6 +9,7 @@ type httpHandler struct{}
 func New() httpHandler {
 	handler := httpHandler{}
 	handler.setRoutes()
+
 	return handler
 }
 
