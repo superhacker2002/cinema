@@ -1,4 +1,4 @@
-SWAGGER_DOCS_FILE := openapi.html
+OPENAPI_FILE := openapi.html
 
 .PHONY: run
 run:
@@ -10,7 +10,7 @@ test:
 
 .PHONY: openapi-docs
 openapi-docs:
-	redocly build-docs api/swagger.yaml --output=docs/$(SWAGGER_DOCS_FILE)
+	redocly build-docs api/openapi.yaml --output=docs/$(OPENAPI_FILE)
 	@echo "Open html file created in docs/ directory with the browser."
 
 .PHONY: clean-docs
