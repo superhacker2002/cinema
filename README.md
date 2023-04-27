@@ -34,3 +34,20 @@ Test the service by using Makefile:
 make test
 ```
 
+## OpenAPI documentation
+**Updating** 
+
+The API documentation is generated entirely from api/swagger.yaml. If you make updates to the API, edit this file to 
+represent the change in the documentation.  
+
+**Viewing**  
+
+[Install redocly](https://redocly.com/docs/cli/installation/) utility and
+run the command if you want to generate html file entirely from api/swagger.yaml:
+```shell
+make openapi-docs
+```
+Or use [Swagger](https://swagger.io) tools for viewing the content of the documentation.
+
+
+
