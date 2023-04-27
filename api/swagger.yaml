@@ -1,0 +1,914 @@
+openapi: 3.0.0
+info:
+  title: Online Cinema Service
+  description: An online cinema service that allows admins to add halls, movies, and cinema sessions, and allows users to view the schedule, see movies watched, and buy tickets. The service returns tickets as PDF documents and exposes a RESTful API.
+  version: 1.0.0
+
+servers:
+  - url: https://onlinecinema.com
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  responses:
+    BadRequest:
+      description: Incorrect request was sent to the server.
+    Unauthorized:
+      description: Unauthorized request, user not authenticated.
+    Forbidden:
+      description: The user does not have permission to access the requested resource.
+    NotFound:
+      description: The requested resource was not found on the server.
+    InternalServerError:
+      description: An unexpected error occurred on the server.
+
+  schemas:
+    Hall:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier of the hall. Generated on the server side.
+          readOnly: true
+        name:
+          type: string
+          example: vip
+          description: Hall name
+        capacity:
+          type: integer
+          example: 250
+          description: Maximum number of people that the hall can accommodate
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier of the user. Generated on the server side.
+          readOnly: true
+        username:
+          type: string
+          example: theUser
+          description: User name
+        email:
+          type: string
+          example: user@email.com
+          description: User email address
+        password:
+          type: string
+          example: user_password
+          description: User password
+          writeOnly: true
+
+    Movie:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier of the movie. Generated on the server side.
+          readOnly: true
+        title:
+          type: string
+          example: Titanic
+          description: Title of the movie.
+        description:
+          type: string
+          example: Titanic is a 1997 American epic romance and disaster film directed, written, co-produced, and co-edited by James Cameron.
+          description: Description of the movie.
+        duration:
+          type: integer
+          example: 195
+          description: Duration of the movie in minutes.
+
+    CinemaSession:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier of the cinema session. Generated on the server side.
+          readOnly: true
+        hall_id:
+          type: string
+          format: uuid
+          description: ID of the hall in which the cinema session takes place.
+        movie_id:
+          type: string
+          format: uuid
+          description: ID of the movie being shown in the cinema session.
+        start_time:
+          type: string
+          format: date-time
+          description: Start time of the cinema session in ISO 8601 format.
+
+    Ticket:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier of the ticket. Generated on the server side.
+          readOnly: true
+        user_id:
+          type: string
+          format: uuid
+          description: ID of the user who purchased the ticket.
+        cinema_session_id:
+          type: string
+          format: uuid
+          description: ID of the cinema session for which the ticket was purchased.
+        seat_number:
+          type: integer
+          example: 50
+          description: Number of the seat in the hall for which the ticket was purchased.
+        price:
+          type: number
+          format: float
+          example: 350
+          description: Price of the ticket in dollars.
+        pdf_url:
+          type: string
+          example: https://storage/ticket/1234
+          description: URL of the PDF document containing the ticket.
+          readOnly: true
+
+paths:
+  /halls:
+    get:
+      tags:
+        - halls
+      summary: Get all halls
+      description: Retrieves a list of all halls in the cinema.
+      operationId: getAllHalls
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Hall'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - bearerAuth: []
+
+    post:
+      tags:
+        - halls
+      summary: Create a new hall
+      operationId: createHall
+      requestBody:
+        description: Details about the new hall
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Hall'
+      responses:
+        '201':
+          description: The new hall was created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Hall'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - bearerAuth: []
+
+  /halls/{hallId}:
+    get:
+      tags:
+        - halls
+      summary: Get hall by ID
+      description: Retrieves a single hall by its unique ID
+      operationId: getHallById
+      parameters:
+        - name: hallId
+          in: path
+          description: ID of hall to return
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successfull operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Hall'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - bearerAuth: []
+
+    put:
+      tags:
+        - halls
+      summary: Update details about a specific hall
+      operationId: updateHall
+      parameters:
+        - name: hallId
+          in: path
+          description: The ID of the hall to update
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        description: The hall was updated successfully
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Hall'
+      responses:
+        '200':
+          description: Details about the updated hall
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Hall'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - bearerAuth: []
+
+    delete:
+      tags:
+        - halls
+      summary: Delete specific hall by it's ID
+      operationId: deleteHall
+      parameters:
+        - name: hallId
+          in: path
+          description: The ID of the hall to delete
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: The hall was deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      security:
+        - bearerAuth: []
+
+  /movies:
+    get:
+      tags:
+        - movies
+      summary: Returns a list of all movies
+      operationId: getAllMovies
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Movie'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - bearerAuth: []
+
+    post:
+      tags:
+        - movies
+      summary: Creates a new movie
+      operationId: createMovie
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Movie'
+      responses:
+        '201':
+          description: The movie was created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movie'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - bearerAuth: []
+
+  /movies/watched/{userId}:
+    get:
+      tags:
+        - movies
+      summary: Returns a specific movie by ID
+      operationId: getWatchedMoviesByUser
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the movie to retrieve
+      responses:
+        '200':
+          description: Successfull operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movie'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - bearerAuth: []
+
+  /movies/{movieId}:
+    get:
+      tags:
+        - movies
+      summary: Returns a specific movie by ID
+      operationId: getMovie
+      parameters:
+        - in: path
+          name: movieId
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the movie to retrieve
+      responses:
+        '200':
+          description: Successfull operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movie'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - bearerAuth: []
+
+    put:
+      summary: Updates a specific movie by ID
+      operationId: updateMovie
+      tags:
+        - movies
+      parameters:
+        - in: path
+          name: movieId
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the movie to update
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Movie'
+      responses:
+        '200':
+          description: The movie was updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movie'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - bearerAuth: []
+
+    delete:
+      summary: Deletes a specific movie by ID
+      operationId: deleteMovie
+      tags:
+        - movies
+      parameters:
+        - in: path
+          name: movieId
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the movie to delete
+      responses:
+        '204':
+          description: The movie was deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      security:
+        - bearerAuth: []
+
+  /cinema-sessions:
+    get:
+      tags:
+        - cinema sessions
+      summary: Returns a list of all cinema sessions
+      operationId: getAllCinemaSessions
+      responses:
+        '200':
+          description: Successfull operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CinemaSession'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - bearerAuth: []
+
+    post:
+      tags:
+        - cinema sessions
+      summary: Creates a new cinema session
+      operationId: createCinemaSession
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CinemaSession'
+      responses:
+        '201':
+          description: The newly created cinema session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CinemaSession'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - bearerAuth: []
+
+  /cinema-sessions/{sessionId}:
+    get:
+      tags:
+        - cinema sessions
+      summary: Returns a specific cinema session by ID
+      operationId: getCinemaSession
+      parameters:
+        - in: path
+          name: sessionId
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the cinema session to retrieve
+      responses:
+        '200':
+          description: Successfull operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CinemaSession'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - bearerAuth: []
+
+    put:
+      summary: Updates a specific cinema session by ID
+      operationId: updateCinemaSession
+      tags:
+        - cinema sessions
+      parameters:
+        - in: path
+          name: sessionId
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the cinema session to update
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CinemaSession'
+      responses:
+        '200':
+          description: The cinema session was updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CinemaSession'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - bearerAuth: []
+
+    delete:
+      summary: Deletes a specific cinema session by ID
+      operationId: deleteCinemaSession
+      tags:
+        - cinema sessions
+      parameters:
+        - in: path
+          name: sessionId
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the cinema session to delete
+      responses:
+        '204':
+          description: The cinema session was updated successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /tickets:
+    get:
+      tags:
+        - tickets
+      summary: Get all tickets
+      description: Retrieve information about all tickets in the database.
+      operationId: getAllTickets
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Ticket'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - bearerAuth: []
+
+    post:
+      tags:
+        - tickets
+      summary: Create a new ticket
+      description: Create a new ticket and store it in the storage.
+      operationId: createTicket
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Ticket'
+      responses:
+        '201':
+          description: Created
+          headers:
+            Location:
+              description: URL of the newly created ticket.
+              schema:
+                type: string
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+                description: The PDF ticket document
+                example: Some binary pdf document
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - bearerAuth: []
+
+  /tickets/{id}:
+    get:
+      tags:
+        - tickets
+      summary: Get ticket information
+      description: Retrieve information about a ticket based on its identifier.
+      operationId: getTicket
+      parameters:
+        - name: id
+          in: path
+          description: Identifier of the ticket to retrieve information about.
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Ticket'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - bearerAuth: []
+
+  /users:
+    get:
+      tags:
+        - users
+      summary: Get all users
+      operationId: getAllUsers
+      parameters:
+        - name: viewed_movies
+          in: query
+          description: Return only users who have viewed at least one movie
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Successfull operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - users
+      summary: Create a new user
+      operationId: createUser
+      requestBody:
+        description: User object
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '201':
+          description: User was created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/login:
+    post:
+      tags:
+        - authorization
+      summary: Logs user into the system
+      operationId: loginUser
+      parameters:
+        - name: username
+          in: query
+          description: The user name for login
+          required: true
+          schema:
+            type: string
+        - name: password
+          in: query
+          description: The password for login in clear text
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: The user logged in successfuly
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /auth/logout:
+    post:
+      tags:
+        - authorization
+      summary: Logs user out the system
+      operationId: logoutUser
+      responses:
+        '201':
+          description: The user logged out successfuly
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /users/{userId}:
+    get:
+      tags:
+        - users
+      summary: Returns a specific user by ID
+      operationId: getUser
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the user to retrieve
+      responses:
+        '200':
+          description: Successfull operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - bearerAuth: []
+
+    put:
+      summary: Updates a specific user by ID
+      operationId: updateUser
+      tags:
+        - users
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the user to update
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: The user was updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - bearerAuth: []
+
+    delete:
+      summary: Deletes a specific user by ID
+      operationId: deleteUser
+      tags:
+        - users
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the user to delete
+      responses:
+        '204':
+          description: The user was deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
