@@ -20,9 +20,9 @@ sessions.
 ```shell
 go get "bitbucket.org/Ernst_Dzeravianka/cinemago-app"
 ```
-**2.** Set up environment variables:
-- Create .env file
-- Set `PORT` variable to port on which the server will listen for incoming connections.
+**2.** Set up environment variables:  
+- Create .env file  
+- Set `PORT` variable to port on which the server will listen for incoming connections.  
 
 **3.** Run web service using Makefile:
 ```shell
