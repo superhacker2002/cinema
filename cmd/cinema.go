@@ -1,14 +1,16 @@
 package main
 
 import (
+	cinemaHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinema/handler"
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/config"
-	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/httphandler"
+	userHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/handler"
 	"log"
 	"net/http"
 )
 
 func main() {
 	config := config.New()
-	httphandler.New()
+	userHandler.New()
+	cinemaHandler.New()
 	log.Fatal(http.ListenAndServe(":"+config.Port, nil))
 }

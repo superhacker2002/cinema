@@ -1,4 +1,4 @@
-package httphandler
+package user
 
 import (
 	"net/http"
@@ -19,7 +19,4 @@ func (h httpHandler) setRoutes() {
 		w.WriteHeader(http.StatusOK)
 	}
 	http.HandleFunc("/auth", handler)
-	http.HandleFunc("/clients", handler)
-	http.HandleFunc("/films", handler)
-	http.HandleFunc("/halls", handler)
 }
