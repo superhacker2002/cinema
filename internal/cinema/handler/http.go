@@ -1,25 +1,25 @@
 package handler
 
 import (
+	"github.com/gorilla/mux"
 	"net/http"
 )
 
 type httpHandler struct{}
 
-func New() httpHandler {
+func New(router *mux.Router) httpHandler {
 	handler := httpHandler{}
-	handler.setRoutes()
+	handler.setRoutes(router)
 
 	return handler
 }
 
-// setRoutes adds handlers to http.DefaultServeMux
-func (h httpHandler) setRoutes() {
-	http.HandleFunc("/movies", moviesHandler)
-	http.HandleFunc("/movies/watched", watchedMoviesHandler)
-	http.HandleFunc("/halls", hallsHandler)
-	http.HandleFunc("/cinema-sessions", sessionsHandler)
-	http.HandleFunc("/tickets", ticketsHandler)
+func (h httpHandler) setRoutes(router *mux.Router) {
+	router.HandleFunc("/movies", moviesHandler)
+	router.HandleFunc("/movies/watched", watchedMoviesHandler)
+	router.HandleFunc("/halls", hallsHandler)
+	router.HandleFunc("/cinema-sessions", sessionsHandler)
+	router.HandleFunc("/tickets", ticketsHandler)
 }
 
 func moviesHandler(w http.ResponseWriter, r *http.Request) {

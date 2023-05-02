@@ -1,22 +1,22 @@
 package handler
 
 import (
+	"github.com/gorilla/mux"
 	"net/http"
 )
 
 type httpHandler struct{}
 
-func New() httpHandler {
+func New(router *mux.Router) httpHandler {
 	handler := httpHandler{}
-	handler.setRoutes()
+	handler.setRoutes(router)
 
 	return handler
 }
 
-// setRoutes adds handlers to http.DefaultServeMux
-func (h httpHandler) setRoutes() {
-	http.HandleFunc("/auth/login", logIn)
-	http.HandleFunc("/users", userHandler)
+func (h httpHandler) setRoutes(router *mux.Router) {
+	router.HandleFunc("/auth/login", logIn)
+	router.HandleFunc("/users", userHandler)
 }
 
 func logIn(w http.ResponseWriter, _ *http.Request) {
