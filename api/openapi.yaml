@@ -144,7 +144,6 @@ paths:
         - halls
       summary: Get all halls
       description: Retrieves a list of all halls in the cinema.
-      operationId: getAllHalls
       responses:
         '200':
           description: Successful operation
@@ -167,7 +166,6 @@ paths:
       tags:
         - halls
       summary: Create a new hall
-      operationId: createHall
       requestBody:
         description: Details about the new hall
         required: true
@@ -197,7 +195,6 @@ paths:
         - halls
       summary: Get hall by ID
       description: Retrieves a single hall by its unique ID
-      operationId: getHallById
       parameters:
         - name: hallId
           in: path
@@ -228,7 +225,6 @@ paths:
       tags:
         - halls
       summary: Update details about a specific hall
-      operationId: updateHall
       parameters:
         - name: hallId
           in: path
@@ -266,7 +262,6 @@ paths:
       tags:
         - halls
       summary: Delete specific hall by it's ID
-      operationId: deleteHall
       parameters:
         - name: hallId
           in: path
@@ -292,7 +287,6 @@ paths:
       tags:
         - movies
       summary: Returns a list of all movies
-      operationId: getAllMovies
       responses:
         '200':
           description: Successful operation
@@ -317,7 +311,6 @@ paths:
       tags:
         - movies
       summary: Creates a new movie
-      operationId: createMovie
       requestBody:
         required: true
         content:
@@ -346,8 +339,7 @@ paths:
     get:
       tags:
         - movies
-      summary: Returns a specific movie by ID
-      operationId: getWatchedMoviesByUser
+      summary: Returns list of watched movies by specific user
       parameters:
         - in: path
           name: userId
@@ -379,7 +371,6 @@ paths:
       tags:
         - movies
       summary: Returns a specific movie by ID
-      operationId: getMovie
       parameters:
         - in: path
           name: movieId
@@ -408,7 +399,6 @@ paths:
 
     put:
       summary: Updates a specific movie by ID
-      operationId: updateMovie
       tags:
         - movies
       parameters:
@@ -447,7 +437,6 @@ paths:
 
     delete:
       summary: Deletes a specific movie by ID
-      operationId: deleteMovie
       tags:
         - movies
       parameters:
@@ -475,7 +464,6 @@ paths:
       tags:
         - cinema sessions
       summary: Returns a list of all cinema sessions
-      operationId: getAllCinemaSessions
       responses:
         '200':
           description: Successfull operation
@@ -500,7 +488,6 @@ paths:
       tags:
         - cinema sessions
       summary: Creates a new cinema session
-      operationId: createCinemaSession
       requestBody:
         required: true
         content:
@@ -530,7 +517,6 @@ paths:
       tags:
         - cinema sessions
       summary: Returns a specific cinema session by ID
-      operationId: getCinemaSession
       parameters:
         - in: path
           name: sessionId
@@ -559,7 +545,6 @@ paths:
 
     put:
       summary: Updates a specific cinema session by ID
-      operationId: updateCinemaSession
       tags:
         - cinema sessions
       parameters:
@@ -598,7 +583,6 @@ paths:
 
     delete:
       summary: Deletes a specific cinema session by ID
-      operationId: deleteCinemaSession
       tags:
         - cinema sessions
       parameters:
@@ -620,38 +604,11 @@ paths:
           $ref: '#/components/responses/NotFound'
 
   /tickets:
-    get:
-      tags:
-        - tickets
-      summary: Get all tickets
-      description: Retrieve information about all tickets in the database.
-      operationId: getAllTickets
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Ticket'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-      security:
-        - bearerAuth: []
-
     post:
       tags:
         - tickets
       summary: Create a new ticket
       description: Create a new ticket and store it in the storage.
-      operationId: createTicket
       requestBody:
         required: true
         content:
@@ -684,15 +641,40 @@ paths:
       security:
         - bearerAuth: []
 
-  /tickets/{id}:
+  /tickets/{userId}:
+    get:
+      tags:
+        - tickets
+      summary: Get all purchased tickets by a specific user
+      description: Retrieve information about all tickets bought by user in the database.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Ticket'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - bearerAuth: []
+
+  /tickets/{ticketId}:
     get:
       tags:
         - tickets
       summary: Get ticket information
       description: Retrieve information about a ticket based on its identifier.
-      operationId: getTicket
       parameters:
-        - name: id
+        - name: ticketId
           in: path
           description: Identifier of the ticket to retrieve information about.
           required: true
@@ -723,7 +705,6 @@ paths:
       tags:
         - users
       summary: Get all users
-      operationId: getAllUsers
       parameters:
         - name: viewed_movies
           in: query
@@ -752,7 +733,6 @@ paths:
       tags:
         - users
       summary: Create a new user
-      operationId: createUser
       requestBody:
         description: User object
         required: true
@@ -779,7 +759,6 @@ paths:
       tags:
         - authorization
       summary: Logs user into the system
-      operationId: loginUser
       parameters:
         - name: username
           in: query
@@ -809,7 +788,6 @@ paths:
       tags:
         - authorization
       summary: Logs user out the system
-      operationId: logoutUser
       responses:
         '201':
           description: The user logged out successfuly
@@ -824,7 +802,6 @@ paths:
       tags:
         - users
       summary: Returns a specific user by ID
-      operationId: getUser
       parameters:
         - in: path
           name: userId
@@ -853,7 +830,6 @@ paths:
 
     put:
       summary: Updates a specific user by ID
-      operationId: updateUser
       tags:
         - users
       parameters:
@@ -892,7 +868,6 @@ paths:
 
     delete:
       summary: Deletes a specific user by ID
-      operationId: deleteUser
       tags:
         - users
       parameters:
@@ -912,3 +887,5 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+      security:
+        - bearerAuth: []
