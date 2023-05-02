@@ -9,7 +9,7 @@ type Token struct {
 	Token string `json:"token"`
 }
 
-func generateJWT(JWTSecret []byte) (Token, error) {
+func GenerateJWT(JWTSecret []byte) (Token, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"exp": time.Now().Add(time.Hour * 24).Unix(),
 	})

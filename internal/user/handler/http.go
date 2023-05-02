@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/auth"
 	"github.com/gorilla/mux"
 	"net/http"
 )
@@ -17,14 +18,15 @@ func New(router *mux.Router, JWTSecret []byte) httpHandler {
 }
 
 func (h httpHandler) setRoutes(router *mux.Router) {
-	router.HandleFunc("/auth/login", loginHandler).Methods("POST")
+	router.HandleFunc("/auth/login", h.loginHandler).Methods("POST")
 	router.HandleFunc("/users", getUsersHandler).Methods("GET")
 	router.HandleFunc("/users", createUsersHandler).Methods("POST")
 	router.HandleFunc("/users", deleteUsersHandler).Methods("DELETE")
 	router.HandleFunc("/users", updateUsersHandler).Methods("PUT")
 }
 
-func loginHandler(w http.ResponseWriter, _ *http.Request) {
+func (h httpHandler) loginHandler(w http.ResponseWriter, _ *http.Request) {
+	auth.GenerateJWT(h.JWTSecret)
 	w.WriteHeader(http.StatusOK)
 }
 
