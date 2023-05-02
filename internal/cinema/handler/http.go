@@ -15,14 +15,14 @@ func New(router *mux.Router) httpHandler {
 }
 
 func (h httpHandler) setRoutes(router *mux.Router) {
-	router.HandleFunc("/movies", moviesHandler)
-	router.HandleFunc("/movies/watched", watchedMoviesHandler)
-	router.HandleFunc("/halls", hallsHandler)
-	router.HandleFunc("/cinema-sessions", sessionsHandler)
-	router.HandleFunc("/tickets", ticketsHandler)
+	router.HandleFunc("/movies", h.moviesHandler)
+	router.HandleFunc("/movies/watched", h.watchedMoviesHandler)
+	router.HandleFunc("/halls", h.hallsHandler)
+	router.HandleFunc("/cinema-sessions", h.sessionsHandler)
+	router.HandleFunc("/tickets", h.ticketsHandler)
 }
 
-func moviesHandler(w http.ResponseWriter, r *http.Request) {
+func (h httpHandler) moviesHandler(w http.ResponseWriter, r *http.Request) {
 	userId := r.URL.Query()
 	if _, ok := userId["movieId"]; ok {
 		if r.Method == "GET" {
@@ -42,7 +42,7 @@ func moviesHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func watchedMoviesHandler(w http.ResponseWriter, r *http.Request) {
+func (h httpHandler) watchedMoviesHandler(w http.ResponseWriter, r *http.Request) {
 	userId := r.URL.Query()
 	if _, ok := userId["userId"]; !ok {
 		http.Error(w, "user id not provided: ", http.StatusBadRequest)
@@ -52,7 +52,7 @@ func watchedMoviesHandler(w http.ResponseWriter, r *http.Request) {
 	// return list of watched movies by user id
 }
 
-func hallsHandler(w http.ResponseWriter, r *http.Request) {
+func (h httpHandler) hallsHandler(w http.ResponseWriter, r *http.Request) {
 	hallId := r.URL.Query()
 	if _, ok := hallId["hallId"]; ok {
 		if r.Method == "GET" {
@@ -72,7 +72,7 @@ func hallsHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func sessionsHandler(w http.ResponseWriter, r *http.Request) {
+func (h httpHandler) sessionsHandler(w http.ResponseWriter, r *http.Request) {
 	sessionId := r.URL.Query()
 	if _, ok := sessionId["sessionId"]; ok {
 		if r.Method == "GET" {
@@ -92,7 +92,7 @@ func sessionsHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func ticketsHandler(w http.ResponseWriter, r *http.Request) {
+func (h httpHandler) ticketsHandler(w http.ResponseWriter, r *http.Request) {
 	ticketId := r.URL.Query()
 	if _, ok := ticketId["ticketId"]; ok {
 		if r.Method == "GET" {

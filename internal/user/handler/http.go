@@ -15,19 +15,19 @@ func New(router *mux.Router) httpHandler {
 }
 
 func (h httpHandler) setRoutes(router *mux.Router) {
-	router.HandleFunc("/auth/login", logIn)
-	router.HandleFunc("/users", getUsersHandler).Methods("GET")
-	router.HandleFunc("/users", createUsersHandler).Methods("POST")
-	router.HandleFunc("/users", deleteUsersHandler).Methods("DELETE")
-	router.HandleFunc("/users", updateUsersHandler).Methods("PUT")
+	router.HandleFunc("/auth/login", h.logIn)
+	router.HandleFunc("/users", h.getUsersHandler).Methods("GET")
+	router.HandleFunc("/users", h.createUsersHandler).Methods("POST")
+	router.HandleFunc("/users", h.deleteUsersHandler).Methods("DELETE")
+	router.HandleFunc("/users", h.updateUsersHandler).Methods("PUT")
 
 }
 
-func logIn(w http.ResponseWriter, _ *http.Request) {
+func (h httpHandler) logIn(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func getUsersHandler(w http.ResponseWriter, r *http.Request) {
+func (h httpHandler) getUsersHandler(w http.ResponseWriter, r *http.Request) {
 	userId := r.URL.Query()
 	if _, ok := userId["userId"]; ok {
 		// return user by id (only for admins)
@@ -37,12 +37,12 @@ func getUsersHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func createUsersHandler(w http.ResponseWriter, r *http.Request) {
+func (h httpHandler) createUsersHandler(w http.ResponseWriter, r *http.Request) {
 	// create new user
 	w.WriteHeader(http.StatusOK)
 }
 
-func deleteUsersHandler(w http.ResponseWriter, r *http.Request) {
+func (h httpHandler) deleteUsersHandler(w http.ResponseWriter, r *http.Request) {
 	userId := r.URL.Query()
 	if _, ok := userId["userId"]; !ok {
 		http.Error(w, "user id not provided: ", http.StatusNotFound)
@@ -52,7 +52,7 @@ func deleteUsersHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func updateUsersHandler(w http.ResponseWriter, r *http.Request) {
+func (h httpHandler) updateUsersHandler(w http.ResponseWriter, r *http.Request) {
 	userId := r.URL.Query()
 	if _, ok := userId["userId"]; !ok {
 		http.Error(w, "user id not provided: ", http.StatusNotFound)
