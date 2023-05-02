@@ -1,44 +1,63 @@
 package handler
 
 import (
+	"github.com/gorilla/mux"
 	"net/http"
 )
 
 type httpHandler struct{}
 
-func New() httpHandler {
+func New(router *mux.Router) httpHandler {
 	handler := httpHandler{}
-	handler.setRoutes()
+	handler.setRoutes(router)
 
 	return handler
 }
 
-// setRoutes adds handlers to http.DefaultServeMux
-func (h httpHandler) setRoutes() {
-	http.HandleFunc("/auth/login", logIn)
-	http.HandleFunc("/users", userHandler)
+func (h httpHandler) setRoutes(router *mux.Router) {
+	router.HandleFunc("/auth/login", logIn)
+	router.HandleFunc("/users", getUsersHandler).Methods("GET")
+	router.HandleFunc("/users", createUsersHandler).Methods("POST")
+	router.HandleFunc("/users", deleteUsersHandler).Methods("DELETE")
+	router.HandleFunc("/users", updateUsersHandler).Methods("PUT")
+
 }
 
 func logIn(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func userHandler(w http.ResponseWriter, r *http.Request) {
+func getUsersHandler(w http.ResponseWriter, r *http.Request) {
 	userId := r.URL.Query()
 	if _, ok := userId["userId"]; ok {
-		if r.Method == "GET" {
-			// return user by id (only for admins)
-		} else if r.Method == "PUT" {
-			// update user information
-		} else if r.Method == "DELETE" {
-			// delete user (only for admins)
-		}
+		// return user by id (only for admins)
 	} else {
-		if r.Method == "POST" {
-			// create new user
-		} else if r.Method == "GET" {
-			// return all users (only for admins)
-		}
+		// return all users (only for admins)
 	}
+	w.WriteHeader(http.StatusOK)
+}
+
+func createUsersHandler(w http.ResponseWriter, r *http.Request) {
+	// create new user
+	w.WriteHeader(http.StatusOK)
+}
+
+func deleteUsersHandler(w http.ResponseWriter, r *http.Request) {
+	userId := r.URL.Query()
+	if _, ok := userId["userId"]; !ok {
+		http.Error(w, "user id not provided: ", http.StatusNotFound)
+		return
+	}
+	// delete user (only for admins)
+	w.WriteHeader(http.StatusOK)
+}
+
+func updateUsersHandler(w http.ResponseWriter, r *http.Request) {
+	userId := r.URL.Query()
+	if _, ok := userId["userId"]; !ok {
+		http.Error(w, "user id not provided: ", http.StatusNotFound)
+		return
+	}
+	// update user information
 	w.WriteHeader(http.StatusOK)
 }
