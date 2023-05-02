@@ -11,6 +11,9 @@ import (
 
 func main() {
 	config := config.New()
+	if err := config.Validate(); err != nil {
+		log.Fatal(err)
+	}
 
 	router := mux.NewRouter()
 	userHandler.New(router, config.JWTSecret)

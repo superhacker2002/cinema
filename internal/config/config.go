@@ -1,7 +1,15 @@
 package config
 
 import (
+	"errors"
+	"github.com/joho/godotenv"
+	"log"
 	"os"
+)
+
+var (
+	ErrNoJWTSecret = errors.New("missing JWT secret key variable")
+	ErrNoPort      = errors.New("missing server port variable")
 )
 
 type Config struct {
@@ -10,16 +18,21 @@ type Config struct {
 }
 
 func New() Config {
+	if err := godotenv.Load(); err != nil {
+		log.Print("no .env file found")
+	}
 	return Config{
-		Port:      getEnv("PORT", "8080"),
+		Port:      os.Getenv("PORT"),
 		JWTSecret: []byte(os.Getenv("JWT_SECRET")),
 	}
 }
 
-func getEnv(key string, defaultVal string) string {
-	if value, ok := os.LookupEnv(key); ok {
-		return value
+func (c Config) Validate() error {
+	if c.Port == "" {
+		return ErrNoPort
 	}
-
-	return defaultVal
+	if len(c.JWTSecret) == 0 {
+		return ErrNoJWTSecret
+	}
+	return nil
 }
