@@ -11,8 +11,10 @@ import (
 
 func main() {
 	config := config.New()
+
 	router := mux.NewRouter()
 	userHandler.New(router)
 	cinemaHandler.New(router)
+
 	log.Fatal(http.ListenAndServe(":"+config.Port, router))
 }
