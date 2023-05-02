@@ -15,15 +15,14 @@ func New(router *mux.Router) httpHandler {
 }
 
 func (h httpHandler) setRoutes(router *mux.Router) {
-	router.HandleFunc("/auth/login", logIn)
+	router.HandleFunc("/auth/login", loginHandler).Methods("POST")
 	router.HandleFunc("/users", getUsersHandler).Methods("GET")
 	router.HandleFunc("/users", createUsersHandler).Methods("POST")
 	router.HandleFunc("/users", deleteUsersHandler).Methods("DELETE")
 	router.HandleFunc("/users", updateUsersHandler).Methods("PUT")
-
 }
 
-func logIn(w http.ResponseWriter, _ *http.Request) {
+func loginHandler(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
