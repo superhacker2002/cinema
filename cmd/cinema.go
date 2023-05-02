@@ -13,7 +13,7 @@ func main() {
 	config := config.New()
 
 	router := mux.NewRouter()
-	userHandler.New(router)
+	userHandler.New(router, config.JWTSecret)
 	cinemaHandler.New(router)
 
 	log.Fatal(http.ListenAndServe(":"+config.Port, router))

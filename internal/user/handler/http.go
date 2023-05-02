@@ -5,10 +5,12 @@ import (
 	"net/http"
 )
 
-type httpHandler struct{}
+type httpHandler struct {
+	JWTSecret []byte
+}
 
-func New(router *mux.Router) httpHandler {
-	handler := httpHandler{}
+func New(router *mux.Router, JWTSecret []byte) httpHandler {
+	handler := httpHandler{JWTSecret: JWTSecret}
 	handler.setRoutes(router)
 
 	return handler

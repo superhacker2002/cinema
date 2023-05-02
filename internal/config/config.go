@@ -5,12 +5,14 @@ import (
 )
 
 type Config struct {
-	Port string
+	Port      string
+	JWTSecret []byte
 }
 
 func New() Config {
 	return Config{
-		Port: getEnv("PORT", "8080"),
+		Port:      getEnv("PORT", "8080"),
+		JWTSecret: []byte(os.Getenv("JWT_SECRET")),
 	}
 }
 
