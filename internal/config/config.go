@@ -8,14 +8,13 @@ import (
 )
 
 var (
-	ErrNoJWTSecret = errors.New("missing JWT secret key variable")
-	ErrNoPort      = errors.New("missing server port variable")
+	ErrNoPort        = errors.New("missing server port variable")
+	ErrNoDataBaseURL = errors.New("missing database URL variable")
 )
 
 type Config struct {
-	Port      string
-	JWTSecret string
-	Db        string
+	Port string
+	Db   string
 }
 
 func New() Config {
@@ -23,9 +22,8 @@ func New() Config {
 		log.Print("no .env file found")
 	}
 	return Config{
-		Port:      os.Getenv("PORT"),
-		JWTSecret: os.Getenv("JWT_SECRET"),
-		Db:        os.Getenv("DATABASE_URL"),
+		Port: os.Getenv("PORT"),
+		Db:   os.Getenv("DATABASE_URL"),
 	}
 }
 
@@ -33,8 +31,8 @@ func (c Config) Validate() error {
 	if c.Port == "" {
 		return ErrNoPort
 	}
-	if c.JWTSecret == "" {
-		return ErrNoJWTSecret
+	if c.Db == "" {
+		return ErrNoDataBaseURL
 	}
 	return nil
 }
