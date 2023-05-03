@@ -1,22 +1,15 @@
 package handler
 
 import (
-	"database/sql"
 	"github.com/gorilla/mux"
 	"net/http"
-)
 
-type auth interface {
-	Authenticate(username string, password string) (string, error)
-}
 
 type httpHandler struct {
-	auth auth
-	db   *sql.DB
 }
 
-func New(router *mux.Router, auth auth, db *sql.DB) httpHandler {
-	handler := httpHandler{auth: auth, db: db}
+func New(router *mux.Router) httpHandler {
+	handler := httpHandler{}
 	handler.setRoutes(router)
 
 	return handler

@@ -1,7 +1,6 @@
 package main
 
 import (
-	auth2 "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/auth"
 	cinemaHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinema/handler"
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/config"
 	userHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/handler"
@@ -24,8 +23,7 @@ func main() {
 	defer db.Close()
 
 	router := mux.NewRouter()
-	auth := auth2.New(db, config.JWTSecret)
-	userHandler.New(router, auth, db)
+	userHandler.New(router)
 	cinemaHandler.New(router)
 
 	log.Fatal(http.ListenAndServe(":"+config.Port, router))
