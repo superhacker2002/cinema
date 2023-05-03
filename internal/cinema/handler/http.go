@@ -5,10 +5,14 @@ import (
 	"net/http"
 )
 
-type httpHandler struct{}
+type repository interface{}
 
-func New(router *mux.Router) httpHandler {
-	handler := httpHandler{}
+type httpHandler struct {
+	repository repository
+}
+
+func New(router *mux.Router, repository repository) httpHandler {
+	handler := httpHandler{repository: repository}
 	handler.setRoutes(router)
 
 	return handler

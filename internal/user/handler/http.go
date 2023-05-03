@@ -3,13 +3,16 @@ package handler
 import (
 	"github.com/gorilla/mux"
 	"net/http"
+)
 
+type repository interface{}
 
 type httpHandler struct {
+	repository repository
 }
 
-func New(router *mux.Router) httpHandler {
-	handler := httpHandler{}
+func New(router *mux.Router, repository repository) httpHandler {
+	handler := httpHandler{repository: repository}
 	handler.setRoutes(router)
 
 	return handler
@@ -24,7 +27,6 @@ func (h httpHandler) setRoutes(router *mux.Router) {
 }
 
 func (h httpHandler) loginHandler(w http.ResponseWriter, _ *http.Request) {
-	//h.auth.Authenticate()
 	w.WriteHeader(http.StatusOK)
 }
 
