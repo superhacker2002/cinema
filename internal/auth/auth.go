@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"database/sql"
 	"errors"
 	"time"
 
@@ -20,13 +19,11 @@ type User struct {
 }
 
 type Auth struct {
-	db        *sql.DB
 	jwtSecret []byte
 }
 
-func New(db *sql.DB, jwtSecret string) Auth {
+func New(jwtSecret string) Auth {
 	return Auth{
-		db:        db,
 		jwtSecret: []byte(jwtSecret),
 	}
 }
@@ -35,7 +32,7 @@ func (a Auth) Authenticate(username string, password string) (string, error) {
 	var passwordHash string
 	var userID int64
 
-	// TODO: get user id from db
+	// TODO: get user id and password hash from database
 
 	err := comparePasswords(passwordHash, []byte(password))
 	if err != nil {

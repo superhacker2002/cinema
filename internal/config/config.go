@@ -8,8 +8,9 @@ import (
 )
 
 var (
-	ErrNoJWTSecret = errors.New("missing JWT secret key variable")
-	ErrNoPort      = errors.New("missing server port variable")
+	ErrNoJWTSecret   = errors.New("missing JWT secret key variable")
+	ErrNoPort        = errors.New("missing server port variable")
+	ErrNoDataBaseURL = errors.New("missing data base URL variable")
 )
 
 type Config struct {
@@ -35,6 +36,9 @@ func (c Config) Validate() error {
 	}
 	if c.JWTSecret == "" {
 		return ErrNoJWTSecret
+	}
+	if c.Db == "" {
+		return ErrNoDataBaseURL
 	}
 	return nil
 }
