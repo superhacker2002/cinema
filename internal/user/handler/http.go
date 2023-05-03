@@ -5,16 +5,15 @@ import (
 	"net/http"
 )
 
-type auth interface {
-	Authenticate(username string, password string) (string, error)
-}
+type repository interface{}
 
 type httpHandler struct {
-	auth auth
+	auth       auth
+	repository repository
 }
 
-func New(router *mux.Router, auth auth) httpHandler {
-	handler := httpHandler{auth: auth}
+func New(router *mux.Router, auth auth, repository repository) httpHandler {
+	handler := httpHandler{auth: auth, repository: repository}
 	handler.setRoutes(router)
 
 	return handler
@@ -29,7 +28,6 @@ func (h httpHandler) setRoutes(router *mux.Router) {
 }
 
 func (h httpHandler) loginHandler(w http.ResponseWriter, _ *http.Request) {
-	//h.auth.Authenticate()
 	w.WriteHeader(http.StatusOK)
 }
 
