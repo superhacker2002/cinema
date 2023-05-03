@@ -14,8 +14,9 @@ var (
 )
 
 type Config struct {
-	Port string
-	Db   string
+	Port      string
+	JWTSecret string
+	Db        string
 }
 
 func New() Config {
@@ -23,8 +24,9 @@ func New() Config {
 		log.Print("no .env file found")
 	}
 	return Config{
-		Port: os.Getenv("PORT"),
-		Db:   os.Getenv("DATABASE_URL"),
+		Port:      os.Getenv("PORT"),
+		JWTSecret: os.Getenv("JWT_SECRET"),
+		Db:        os.Getenv("DATABASE_URL"),
 	}
 }
 
@@ -32,8 +34,8 @@ func (c Config) Validate() error {
 	if c.Port == "" {
 		return ErrNoPort
 	}
-	if c.Db == "" {
-		return ErrNoDataBaseURL
+	if c.JWTSecret == "" {
+		return ErrNoJWTSecret
 	}
 	if c.Db == "" {
 		return ErrNoDataBaseURL

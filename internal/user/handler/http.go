@@ -7,6 +7,10 @@ import (
 
 type repository interface{}
 
+type auth interface {
+	Authenticate(username string, password string) (string, error)
+}
+
 type httpHandler struct {
 	auth       auth
 	repository repository

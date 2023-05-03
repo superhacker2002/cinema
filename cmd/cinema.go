@@ -6,6 +6,7 @@ import (
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/config"
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/repository"
 	userHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/handler"
+	"database/sql"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
@@ -26,8 +27,9 @@ func main() {
 
 	router := mux.NewRouter()
 	authentication := auth.New(config.JWTSecret)
-	userHandler.New(router, authentication)
-	cinemaHandler.New(router)
+
+	userHandler.New(router, authentication, repository)
+	cinemaHandler.New(router, repository)
 
 	log.Fatal(http.ListenAndServe(":"+config.Port, router))
 }
