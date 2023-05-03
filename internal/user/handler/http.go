@@ -1,17 +1,22 @@
 package handler
 
 import (
-	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/auth"
+	"database/sql"
 	"github.com/gorilla/mux"
 	"net/http"
 )
 
-type httpHandler struct {
-	JWTSecret []byte
+type auth interface {
+	Authenticate(username string, password string) (string, error)
 }
 
-func New(router *mux.Router, JWTSecret []byte) httpHandler {
-	handler := httpHandler{JWTSecret: JWTSecret}
+type httpHandler struct {
+	auth auth
+	db   *sql.DB
+}
+
+func New(router *mux.Router, auth auth, db *sql.DB) httpHandler {
+	handler := httpHandler{auth: auth, db: db}
 	handler.setRoutes(router)
 
 	return handler
@@ -26,7 +31,8 @@ func (h httpHandler) setRoutes(router *mux.Router) {
 }
 
 func (h httpHandler) loginHandler(w http.ResponseWriter, _ *http.Request) {
-	auth.GenerateJWT(h.JWTSecret)
+	//h.auth.Authenticate()
+	w.WriteHeader(http.StatusOK)
 }
 
 func (h httpHandler) getUsersHandler(w http.ResponseWriter, r *http.Request) {
