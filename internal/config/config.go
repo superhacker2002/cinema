@@ -14,7 +14,7 @@ var (
 
 type Config struct {
 	Port      string
-	JWTSecret []byte
+	JWTSecret string
 }
 
 func New() Config {
@@ -23,7 +23,7 @@ func New() Config {
 	}
 	return Config{
 		Port:      os.Getenv("PORT"),
-		JWTSecret: []byte(os.Getenv("JWT_SECRET")),
+		JWTSecret: os.Getenv("JWT_SECRET"),
 	}
 }
 
@@ -31,7 +31,7 @@ func (c Config) Validate() error {
 	if c.Port == "" {
 		return ErrNoPort
 	}
-	if len(c.JWTSecret) == 0 {
+	if c.JWTSecret == "" {
 		return ErrNoJWTSecret
 	}
 	return nil
