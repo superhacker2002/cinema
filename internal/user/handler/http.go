@@ -1,9 +1,15 @@
 package handler
 
 import (
+	"encoding/json"
 	"github.com/gorilla/mux"
 	"net/http"
 )
+
+type credentials struct {
+	username string `json:"username"`
+	password string `json:"password"`
+}
 
 type repository interface{}
 
@@ -31,8 +37,22 @@ func (h httpHandler) setRoutes(router *mux.Router) {
 	router.HandleFunc("/users", h.updateUsersHandler).Methods("PUT")
 }
 
-func (h httpHandler) loginHandler(w http.ResponseWriter, _ *http.Request) {
-	w.WriteHeader(http.StatusOK)
+func (h httpHandler) loginHandler(w http.ResponseWriter, r *http.Request) {
+	creds := credentials{}
+	err := json.NewDecoder(r.Body).Decode(creds)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	token, err := h.auth.Authenticate(creds.username, creds.password)
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"token": token})
 }
 
 func (h httpHandler) getUsersHandler(w http.ResponseWriter, r *http.Request) {
