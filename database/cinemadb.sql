@@ -6,9 +6,9 @@ CREATE TABLE roles (
 CREATE TABLE users (
     user_id SERIAL PRIMARY KEY,
     username VARCHAR(50) NOT NULL,
-    hashed_password VARCHAR(100) NOT NULL,
-    email VARCHAR(50) NOT NULL,
-    credit_card_info VARCHAR(50) NOT NULL,
+    hashed_password VARCHAR(64) NOT NULL,
+    email VARCHAR(50),
+    credit_card_info VARCHAR(50),
     role_id INTEGER NOT NULL,
     CONSTRAINT users_role_id_fkey FOREIGN KEY (role_id)
         REFERENCES roles (role_id) ON DELETE CASCADE
@@ -27,7 +27,6 @@ CREATE TABLE halls (
     hall_name VARCHAR(50) NOT NULL,
     capacity INTEGER NOT NULL
 );
-
 CREATE TABLE cinema_sessions (
     session_id SERIAL PRIMARY KEY,
     movie_id INTEGER NOT NULL,
@@ -45,7 +44,7 @@ CREATE TABLE tickets (
     ticket_id SERIAL PRIMARY KEY,
     session_id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
-    seat_number INTEGER UNIQUE NOT NULL,
+    seat_number INTEGER NOT NULL,
     CONSTRAINT tickets_session_id_fkey FOREIGN KEY (session_id)
         REFERENCES cinema_sessions (session_id) ON DELETE CASCADE,
     CONSTRAINT tickets_user_id_fkey FOREIGN KEY (user_id)
@@ -57,39 +56,7 @@ INSERT INTO roles (role_name) VALUES ('admin');
 INSERT INTO roles (role_name) VALUES ('user');
 
 INSERT INTO users (username, hashed_password, email, credit_card_info, role_id)
-VALUES ('admin', 'hashed_admin_password', 'admin@example.com', '1234567890123456', 1);
-
-INSERT INTO users (username, hashed_password, email, credit_card_info, role_id)
-VALUES ('user1', 'hashed_user1_password', 'user1@example.com', '1111222233334444', 2);
-
-INSERT INTO users (username, hashed_password, email, credit_card_info, role_id)
-VALUES ('user2', 'hashed_user2_password', 'user2@example.com', '2222333344445555', 2);
-
-INSERT INTO movies (title, genre, release_date, duration)
-VALUES ('Avengers: Endgame', 'Action, Adventure, Drama', '2019-04-26', 181);
-
-INSERT INTO movies (title, genre, release_date, duration)
-VALUES ('The Lion King', 'Animation, Adventure, Drama', '2019-07-19', 118);
-
-INSERT INTO movies (title, genre, release_date, duration)
-VALUES ('The Dark Knight', 'Action, Crime, Drama', '2008-07-18', 152);
-
-INSERT INTO movies (title, genre, release_date, duration)
-VALUES ('Forrest Gump', 'Drama, Romance', '1994-07-06', 142);
-
-INSERT INTO movies (title, genre, release_date, duration)
-VALUES ('The Shawshank Redemption', 'Drama', '1994-09-23', 142);
+VALUES ('admin', 'djb5d7owi', 'admin@example.com', '1234567890123456', 1);
 
 INSERT INTO halls (hall_name, capacity) VALUES ('Hall 1', 100);
 INSERT INTO halls (hall_name, capacity) VALUES ('Hall 2', 80);
-
-INSERT INTO cinema_sessions (movie_id, hall_id, start_time, end_time, price)
-VALUES (1, 1, '2023-05-10 19:00:00', '2023-05-10 22:00:00', 10.00);
-
-INSERT INTO cinema_sessions (movie_id, hall_id, start_time, end_time, price)
-VALUES (1, 2, '2023-05-10 20:00:00', '2023-05-10 22:00:00', 10.00);
-
-INSERT INTO tickets (session_id, user_id, seat_number) VALUES (1, 2, 1);
-INSERT INTO tickets (session_id, user_id, seat_number) VALUES (1, 3, 2);
-INSERT INTO tickets (session_id, user_id, seat_number) VALUES (1, 3, 3);
-
