@@ -6,7 +6,7 @@ CREATE TABLE roles (
 CREATE TABLE users (
     user_id SERIAL PRIMARY KEY,
     username VARCHAR(50) NOT NULL,
-    password VARCHAR(50) NOT NULL,
+    hashed_password VARCHAR(100) NOT NULL,
     email VARCHAR(50) NOT NULL,
     credit_card_info VARCHAR(50) NOT NULL,
     role_id INTEGER NOT NULL,
@@ -56,14 +56,14 @@ CREATE TABLE tickets (
 INSERT INTO roles (role_name) VALUES ('admin');
 INSERT INTO roles (role_name) VALUES ('user');
 
-INSERT INTO users (username, password, email, credit_card_info, role_id)
-VALUES ('admin', 'adminpass', 'admin@example.com', '1234567890123456', 1);
+INSERT INTO users (username, hashed_password, email, credit_card_info, role_id)
+VALUES ('admin', 'hashed_admin_password', 'admin@example.com', '1234567890123456', 1);
 
-INSERT INTO users (username, password, email, credit_card_info, role_id)
-VALUES ('user1', 'userpass1', 'user1@example.com', '1111222233334444', 2);
+INSERT INTO users (username, hashed_password, email, credit_card_info, role_id)
+VALUES ('user1', 'hashed_user1_password', 'user1@example.com', '1111222233334444', 2);
 
-INSERT INTO users (username, password, email, credit_card_info, role_id)
-VALUES ('user2', 'userpass2', 'user2@example.com', '2222333344445555', 2);
+INSERT INTO users (username, hashed_password, email, credit_card_info, role_id)
+VALUES ('user2', 'hashed_user2_password', 'user2@example.com', '2222333344445555', 2);
 
 INSERT INTO movies (title, genre, release_date, duration)
 VALUES ('Avengers: Endgame', 'Action, Adventure, Drama', '2019-04-26', 181);
@@ -79,7 +79,6 @@ VALUES ('Forrest Gump', 'Drama, Romance', '1994-07-06', 142);
 
 INSERT INTO movies (title, genre, release_date, duration)
 VALUES ('The Shawshank Redemption', 'Drama', '1994-09-23', 142);
-
 
 INSERT INTO halls (hall_name, capacity) VALUES ('Hall 1', 100);
 INSERT INTO halls (hall_name, capacity) VALUES ('Hall 2', 80);
