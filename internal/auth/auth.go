@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"database/sql"
 	"errors"
 	"time"
 
@@ -9,13 +8,18 @@ import (
 	_ "github.com/lib/pq"
 )
 
+var (
+	ErrUserNotFound    = errors.New("user not found")
+	ErrInvalidPassword = errors.New("invalid password")
+)
+
 type Credentials struct {
-	ID       string
-	Password string
+	ID           string
+	PasswordHash string
 }
 
 type repository interface {
-	getUserInfo(username string) (Credentials, error)
+	GetUserInfo(username string) (Credentials, error)
 }
 
 type auth struct {
@@ -23,24 +27,22 @@ type auth struct {
 	repository repository
 }
 
-func New(jwtSecret string) auth {
+func New(jwtSecret string, repository repository) auth {
 	return auth{
-		jwtSecret: []byte(jwtSecret),
+		jwtSecret:  []byte(jwtSecret),
+		repository: repository,
 	}
 }
 
 func (a auth) Authenticate(username string, password string) (string, error) {
-	userInfo, err := a.repository.getUserInfo(username)
+	userInfo, err := a.repository.GetUserInfo(username)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return "", errors.New("user not found")
-		}
 		return "", err
 	}
 
-	err = a.comparePasswords(userInfo.Password, []byte(password))
+	err = a.comparePasswords(userInfo.PasswordHash, []byte(password))
 	if err != nil {
-		return "", errors.New("invalid password")
+		return "", ErrInvalidPassword
 	}
 
 	return a.generateJWT(userInfo.ID)
