@@ -16,7 +16,7 @@ func New(db *sql.DB) repository {
 
 func (r repository) GetUserInfo(username string) (auth.Credentials, error) {
 	credentials := auth.Credentials{}
-	err := r.db.QueryRow("SELECT id, hashed_password FROM users WHERE username=?", username).
+	err := r.db.QueryRow("SELECT user_id, hashed_password FROM users WHERE username=$1", username).
 		Scan(&credentials.ID, &credentials.PasswordHash)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

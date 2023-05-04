@@ -13,6 +13,7 @@ import (
 )
 
 func main() {
+	log.SetFlags(log.Lshortfile)
 	config := config.New()
 	if err := config.Validate(); err != nil {
 		log.Fatal(err)

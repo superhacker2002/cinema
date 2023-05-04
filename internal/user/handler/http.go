@@ -32,11 +32,13 @@ func New(router *mux.Router, auth auth, repository repository) httpHandler {
 }
 
 func (h httpHandler) setRoutes(router *mux.Router) {
-	router.HandleFunc("/auth/login", h.loginHandler).Methods("POST")
-	router.HandleFunc("/users", h.getUsersHandler).Methods("GET")
-	router.HandleFunc("/users", h.createUsersHandler).Methods("POST")
-	router.HandleFunc("/users", h.deleteUsersHandler).Methods("DELETE")
-	router.HandleFunc("/users", h.updateUsersHandler).Methods("PUT")
+	router.HandleFunc("/auth/login/", h.loginHandler)
+	s := router.PathPrefix("/users").Subrouter()
+	s.HandleFunc("/", h.getUsersHandler).Methods("GET")
+	s.HandleFunc("/{userId}/", h.getUserHandler).Methods("GET")
+	s.HandleFunc("/", h.createUserHandler).Methods("POST")
+	s.HandleFunc("/{userId}/", h.deleteUserHandler).Methods("DELETE")
+	s.HandleFunc("/{userId}/", h.updateUserHandler).Methods("PUT")
 }
 
 func (h httpHandler) loginHandler(w http.ResponseWriter, r *http.Request) {
@@ -67,36 +69,26 @@ func (h httpHandler) loginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h httpHandler) getUsersHandler(w http.ResponseWriter, r *http.Request) {
-	userId := r.URL.Query()
-	if _, ok := userId["userId"]; ok {
-		// return user by id (only for admins)
-	} else {
-		// return all users (only for admins)
-	}
+	// TODO: return all users
 	w.WriteHeader(http.StatusOK)
 }
 
-func (h httpHandler) createUsersHandler(w http.ResponseWriter, r *http.Request) {
-	// create new user
+func (h httpHandler) getUserHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO: return user by ID
 	w.WriteHeader(http.StatusOK)
 }
 
-func (h httpHandler) deleteUsersHandler(w http.ResponseWriter, r *http.Request) {
-	userId := r.URL.Query()
-	if _, ok := userId["userId"]; !ok {
-		http.Error(w, "user id not provided: ", http.StatusNotFound)
-		return
-	}
-	// delete user (only for admins)
+func (h httpHandler) createUserHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO: create user
 	w.WriteHeader(http.StatusOK)
 }
 
-func (h httpHandler) updateUsersHandler(w http.ResponseWriter, r *http.Request) {
-	userId := r.URL.Query()
-	if _, ok := userId["userId"]; !ok {
-		http.Error(w, "user id not provided: ", http.StatusNotFound)
-		return
-	}
-	// update user information
+func (h httpHandler) deleteUserHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO: delete user by ID
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h httpHandler) updateUserHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO: update user by ID
 	w.WriteHeader(http.StatusOK)
 }
