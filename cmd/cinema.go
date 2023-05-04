@@ -26,7 +26,7 @@ func main() {
 	repository := repository.New(db)
 
 	router := mux.NewRouter()
-	authentication := auth.New(config.JWTSecret)
+	authentication := auth.New(config.JWTSecret, repository)
 
 	userHandler.New(router, authentication, repository)
 	cinemaHandler.New(router, repository)
