@@ -14,10 +14,10 @@ func New(db *sql.DB) repository {
 	return repository{db: db}
 }
 
-func (r repository) getUserInfo(username string) (auth.Credentials, error) {
+func (r repository) GetUserInfo(username string) (auth.Credentials, error) {
 	credentials := auth.Credentials{}
-	err := r.db.QueryRow("SELECT id, password_hash FROM users WHERE username=?", username).
-		Scan(&credentials.ID, &credentials.Password)
+	err := r.db.QueryRow("SELECT id, hashed_password FROM users WHERE username=?", username).
+		Scan(&credentials.ID, &credentials.PasswordHash)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return auth.Credentials{}, errors.New("user not found")
