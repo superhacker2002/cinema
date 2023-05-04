@@ -3,12 +3,14 @@ package handler
 import (
 	"encoding/json"
 	"github.com/gorilla/mux"
+	"io"
+	"log"
 	"net/http"
 )
 
 type credentials struct {
-	username string `json:"username"`
-	password string `json:"password"`
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
 type repository interface{}
@@ -38,16 +40,25 @@ func (h httpHandler) setRoutes(router *mux.Router) {
 }
 
 func (h httpHandler) loginHandler(w http.ResponseWriter, r *http.Request) {
-	creds := credentials{}
-	err := json.NewDecoder(r.Body).Decode(creds)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		log.Fatal(err)
 		return
 	}
 
-	token, err := h.auth.Authenticate(creds.username, creds.password)
+	var creds credentials
+	log.Println(string(body))
+	err = json.Unmarshal(body, &creds)
+
 	if err != nil {
-		w.WriteHeader(http.StatusUnauthorized)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	log.Println(creds.Username, creds.Password)
+
+	token, err := h.auth.Authenticate(creds.Username, creds.Password)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
 
