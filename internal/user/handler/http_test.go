@@ -21,17 +21,22 @@ func TestSetRoutes(t *testing.T) {
 	testCases := []struct {
 		path   string
 		status int
+		method string
 	}{
-		{path: "/auth/login", status: http.StatusOK},
-		{path: "/users", status: http.StatusOK},
+		{path: "/auth/login", status: http.StatusOK, method: "POST"},
+		{path: "/users", status: http.StatusOK, method: "POST"},
+		{path: "/users", status: http.StatusOK, method: "GET"},
+		{path: "/users/1", status: http.StatusOK, method: "GET"},
+		{path: "/users/1", status: http.StatusOK, method: "PUT"},
+		{path: "/users/1", status: http.StatusOK, method: "DELETE"},
 	}
 
 	for _, tc := range testCases {
-		req, err := http.NewRequest("GET", server.URL+tc.path, nil)
+		req, err := http.NewRequest(tc.method, server.URL+tc.path, nil)
 		assert.NoError(t, err)
 
 		resp, clientErr := client.Do(req)
 		assert.NoError(t, clientErr)
-		assert.Equal(t, tc.status, resp.StatusCode, "Request to %s", tc.path)
+		assert.Equal(t, tc.status, resp.StatusCode, "Request to %s using method %s", tc.path, tc.method)
 	}
 }

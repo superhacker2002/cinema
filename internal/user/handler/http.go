@@ -17,9 +17,10 @@ func New(router *mux.Router) httpHandler {
 func (h httpHandler) setRoutes(router *mux.Router) {
 	router.HandleFunc("/auth/login", h.logIn)
 	router.HandleFunc("/users", h.getUsersHandler).Methods("GET")
-	router.HandleFunc("/users", h.createUsersHandler).Methods("POST")
-	router.HandleFunc("/users", h.deleteUsersHandler).Methods("DELETE")
-	router.HandleFunc("/users", h.updateUsersHandler).Methods("PUT")
+	router.HandleFunc("/users/{userId}", h.getUserHandler).Methods("GET")
+	router.HandleFunc("/users", h.createUserHandler).Methods("POST")
+	router.HandleFunc("/users/{userId}", h.deleteUserHandler).Methods("DELETE")
+	router.HandleFunc("/users/{userId}", h.updateUserHandler).Methods("PUT")
 
 }
 
@@ -28,36 +29,26 @@ func (h httpHandler) logIn(w http.ResponseWriter, _ *http.Request) {
 }
 
 func (h httpHandler) getUsersHandler(w http.ResponseWriter, r *http.Request) {
-	q := r.URL.Query()
-	if _, ok := q["userId"]; ok {
-		// return user by id (only for admins)
-	} else {
-		// return all users (only for admins)
-	}
+	// TODO: return all users
 	w.WriteHeader(http.StatusOK)
 }
 
-func (h httpHandler) createUsersHandler(w http.ResponseWriter, r *http.Request) {
-	// create new user
+func (h httpHandler) getUserHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO: return user by ID
 	w.WriteHeader(http.StatusOK)
 }
 
-func (h httpHandler) deleteUsersHandler(w http.ResponseWriter, r *http.Request) {
-	q := r.URL.Query()
-	if _, ok := q["userId"]; !ok {
-		http.Error(w, "user id not provided: ", http.StatusNotFound)
-		return
-	}
-	// delete user (only for admins)
+func (h httpHandler) createUserHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO: create user
 	w.WriteHeader(http.StatusOK)
 }
 
-func (h httpHandler) updateUsersHandler(w http.ResponseWriter, r *http.Request) {
-	q := r.URL.Query()
-	if _, ok := q["userId"]; !ok {
-		http.Error(w, "user id not provided: ", http.StatusNotFound)
-		return
-	}
-	// update user information
+func (h httpHandler) deleteUserHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO: delete user by ID
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h httpHandler) updateUserHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO: update user by ID
 	w.WriteHeader(http.StatusOK)
 }
