@@ -28,8 +28,8 @@ func (h httpHandler) logIn(w http.ResponseWriter, _ *http.Request) {
 }
 
 func (h httpHandler) getUsersHandler(w http.ResponseWriter, r *http.Request) {
-	userId := r.URL.Query()
-	if _, ok := userId["userId"]; ok {
+	q := r.URL.Query()
+	if _, ok := q["userId"]; ok {
 		// return user by id (only for admins)
 	} else {
 		// return all users (only for admins)
@@ -43,8 +43,8 @@ func (h httpHandler) createUsersHandler(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h httpHandler) deleteUsersHandler(w http.ResponseWriter, r *http.Request) {
-	userId := r.URL.Query()
-	if _, ok := userId["userId"]; !ok {
+	q := r.URL.Query()
+	if _, ok := q["userId"]; !ok {
 		http.Error(w, "user id not provided: ", http.StatusNotFound)
 		return
 	}
@@ -53,8 +53,8 @@ func (h httpHandler) deleteUsersHandler(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h httpHandler) updateUsersHandler(w http.ResponseWriter, r *http.Request) {
-	userId := r.URL.Query()
-	if _, ok := userId["userId"]; !ok {
+	q := r.URL.Query()
+	if _, ok := q["userId"]; !ok {
 		http.Error(w, "user id not provided: ", http.StatusNotFound)
 		return
 	}

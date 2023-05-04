@@ -23,8 +23,8 @@ func (h httpHandler) setRoutes(router *mux.Router) {
 }
 
 func (h httpHandler) moviesHandler(w http.ResponseWriter, r *http.Request) {
-	userId := r.URL.Query()
-	if _, ok := userId["movieId"]; ok {
+	q := r.URL.Query()
+	if _, ok := q["movieId"]; ok {
 		if r.Method == "GET" {
 			// return movie by id
 		} else if r.Method == "PUT" {
@@ -43,8 +43,8 @@ func (h httpHandler) moviesHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h httpHandler) watchedMoviesHandler(w http.ResponseWriter, r *http.Request) {
-	userId := r.URL.Query()
-	if _, ok := userId["userId"]; !ok {
+	q := r.URL.Query()
+	if _, ok := q["userId"]; !ok {
 		http.Error(w, "user id not provided: ", http.StatusBadRequest)
 		return
 	}
@@ -53,8 +53,8 @@ func (h httpHandler) watchedMoviesHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (h httpHandler) hallsHandler(w http.ResponseWriter, r *http.Request) {
-	hallId := r.URL.Query()
-	if _, ok := hallId["hallId"]; ok {
+	q := r.URL.Query()
+	if _, ok := q["hallId"]; ok {
 		if r.Method == "GET" {
 			// return hall by id
 		} else if r.Method == "PUT" {
@@ -73,8 +73,8 @@ func (h httpHandler) hallsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h httpHandler) sessionsHandler(w http.ResponseWriter, r *http.Request) {
-	sessionId := r.URL.Query()
-	if _, ok := sessionId["sessionId"]; ok {
+	q := r.URL.Query()
+	if _, ok := q["sessionId"]; ok {
 		if r.Method == "GET" {
 			// return session by id
 		} else if r.Method == "PUT" {
@@ -93,12 +93,12 @@ func (h httpHandler) sessionsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h httpHandler) ticketsHandler(w http.ResponseWriter, r *http.Request) {
-	ticketId := r.URL.Query()
-	if _, ok := ticketId["ticketId"]; ok {
+	q := r.URL.Query()
+	if _, ok := q["ticketId"]; ok {
 		if r.Method == "GET" {
 			// return ticket by id
 		}
-	} else if _, ok := ticketId["userId"]; ok {
+	} else if _, ok := q["userId"]; ok {
 		if r.Method == "GET" {
 			// return all tickets purchased by the user
 		}
