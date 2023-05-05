@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"time"
 
@@ -42,7 +44,7 @@ func (a auth) Authenticate(username string, password string) (string, error) {
 
 	err = a.comparePasswords(userInfo.PasswordHash, []byte(password))
 	if err != nil {
-		return "", ErrInvalidPassword
+		return "", err
 	}
 
 	return a.generateJWT(userInfo.ID)
@@ -66,6 +68,11 @@ func (a auth) VerifyToken(tokenString string) error {
 }
 
 func (a auth) comparePasswords(hash string, password []byte) error {
-	// TODO: compare password with its hash
+	hasher := sha256.New()
+	hasher.Write(password)
+	passwordHash := hex.EncodeToString(hasher.Sum(nil))
+	if hash != passwordHash {
+		return ErrInvalidPassword
+	}
 	return nil
 }
