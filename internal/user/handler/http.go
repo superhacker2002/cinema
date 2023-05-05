@@ -56,7 +56,7 @@ func (h httpHandler) loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var creds credentials
-	err = json.Unmarshal(body, creds)
+	err = json.Unmarshal(body, &creds)
 
 	if err != nil {
 		log.Println(err)
