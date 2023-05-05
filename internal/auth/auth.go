@@ -6,6 +6,8 @@ import (
 	"errors"
 	"github.com/dgrijalva/jwt-go"
 	_ "github.com/lib/pq"
+	"log"
+	"time"
 )
 
 var (
@@ -53,7 +55,7 @@ func (a auth) Authenticate(username string, password string) (string, error) {
 func (a auth) generateJWT(userID string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id": userID,
-		//"exp":     time.Now().Add(time.Hour * 24).Unix(),
+		"exp":     time.Now().Add(time.Hour * 24).Unix(),
 	})
 	tokenString, err := token.SignedString(a.jwtSecret)
 	if err != nil {
@@ -62,7 +64,7 @@ func (a auth) generateJWT(userID string) (string, error) {
 	return tokenString, nil
 }
 
-func (a auth) VerifyToken(tokenString string) (int, error) {
+func (a auth) VerifyToken(tokenString string) (string, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, ErrInvalidSigningMethod
@@ -70,16 +72,17 @@ func (a auth) VerifyToken(tokenString string) (int, error) {
 		return a.jwtSecret, nil
 	})
 	if err != nil {
-		return 0, err
+		log.Println(err)
+		return "", ErrInvalidToken
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if ok && token.Valid {
-		userID := claims["user_id"].(int)
+		userID := claims["user_id"].(string)
 		return userID, nil
 	}
 
-	return 0, ErrInvalidToken
+	return "", ErrInvalidToken
 }
 
 func (a auth) comparePasswords(hash string, password []byte) error {

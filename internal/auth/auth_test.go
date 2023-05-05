@@ -3,6 +3,7 @@ package auth
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -21,10 +22,9 @@ func TestAuthenticate(t *testing.T) {
 
 	hasher := sha256.New()
 	hasher.Write([]byte("password"))
-	hashed_password := hex.EncodeToString(hasher.Sum(nil))
+	hashedPassword := hex.EncodeToString(hasher.Sum(nil))
 
-	repo.creds = Credentials{"existing_user",
-		hashed_password}
+	repo.creds = Credentials{"existing_user", hashedPassword}
 
 	t.Run("Valid auth", func(t *testing.T) {
 		repo.err = nil
@@ -66,5 +66,44 @@ func TestComparePasswords(t *testing.T) {
 	t.Run("Compare invalid password", func(t *testing.T) {
 		err := auth.comparePasswords(hash, []byte("invalid_password"))
 		assert.Equal(t, ErrInvalidPassword, err)
+	})
+}
+
+func createTokenString(secret []byte, userID string) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"user_id": userID,
+	})
+
+	return token.SignedString(secret)
+}
+
+func TestVerifyToken(t *testing.T) {
+	repo := mockRepository{}
+
+	repo.creds = Credentials{}
+	auth := New("secret-key", repo)
+
+	t.Run("Valid token", func(t *testing.T) {
+		token, _ := createTokenString([]byte("secret-key"), "existing_user")
+		userID, err := auth.VerifyToken(token)
+
+		assert.Nil(t, err, "unexpected error occurred: %w", err)
+		assert.Equal(t, "existing_user", userID)
+	})
+
+	t.Run("Invalid token", func(t *testing.T) {
+		invalidToken := "invalid_token"
+		userID, err := auth.VerifyToken(invalidToken)
+
+		assert.Equal(t, ErrInvalidToken, err)
+		assert.Equal(t, "", userID)
+	})
+
+	t.Run("Invalid signing method", func(t *testing.T) {
+		invalidToken, _ := createTokenString([]byte("invalid-secret-key"), "existing_user")
+		userID, err := auth.VerifyToken(invalidToken)
+
+		assert.Equal(t, ErrInvalidToken, err)
+		assert.Equal(t, "", userID)
 	})
 }
