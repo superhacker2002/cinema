@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -14,11 +16,17 @@ func (m mockRepository) GetUserInfo(username string) (Credentials, error) {
 	return m.creds, m.err
 }
 
-func TestAuth_Authenticate(t *testing.T) {
+func TestAuthenticate(t *testing.T) {
 	repo := mockRepository{}
 
+	hasher := sha256.New()
+	hasher.Write([]byte("password"))
+	hashed_password := hex.EncodeToString(hasher.Sum(nil))
+
+	repo.creds = Credentials{"existing_user",
+		hashed_password}
+
 	t.Run("Valid auth", func(t *testing.T) {
-		repo.creds = Credentials{"existing_user", "password"}
 		repo.err = nil
 		auth := New("secret-key", repo)
 		token, err := auth.Authenticate("existing_user", "password")
@@ -27,7 +35,6 @@ func TestAuth_Authenticate(t *testing.T) {
 	})
 
 	t.Run("Invalid username", func(t *testing.T) {
-		repo.creds = Credentials{"existing_user", "password"}
 		repo.err = ErrUserNotFound
 		auth := New("secret-key", repo)
 		token, err := auth.Authenticate("non_existing_user", "password")
@@ -35,8 +42,29 @@ func TestAuth_Authenticate(t *testing.T) {
 		assert.Empty(t, token)
 	})
 
-	//// Test invalid password
-	//token, err = auth.Authenticate("existing_user", "wrong_password")
-	//assert.Equal(t, errors.New("invalid password"), err, "Error should be 'invalid password'")
-	//assert.Empty(t, token, "Token should be empty")
+	t.Run("Invalid password", func(t *testing.T) {
+		repo.err = ErrInvalidPassword
+		auth := New("secret-key", repo)
+		token, err := auth.Authenticate("existing_user", "invalid_password")
+		assert.Equal(t, ErrInvalidPassword, err)
+		assert.Empty(t, token)
+	})
+}
+
+func TestComparePasswords(t *testing.T) {
+	auth := auth{}
+	password := "password"
+	hasher := sha256.New()
+	hasher.Write([]byte(password))
+	hash := hex.EncodeToString(hasher.Sum(nil))
+
+	t.Run("Compare valid password", func(t *testing.T) {
+		err := auth.comparePasswords(hash, []byte(password))
+		assert.Nil(t, err)
+	})
+
+	t.Run("Compare invalid password", func(t *testing.T) {
+		err := auth.comparePasswords(hash, []byte("invalid_password"))
+		assert.Equal(t, ErrInvalidPassword, err)
+	})
 }
