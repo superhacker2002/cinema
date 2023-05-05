@@ -4,15 +4,17 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
-	"time"
-
 	"github.com/dgrijalva/jwt-go"
 	_ "github.com/lib/pq"
+	"log"
+	"time"
 )
 
 var (
-	ErrUserNotFound    = errors.New("user not found")
-	ErrInvalidPassword = errors.New("invalid password")
+	ErrUserNotFound         = errors.New("user not found")
+	ErrInvalidPassword      = errors.New("invalid password")
+	ErrInvalidSigningMethod = errors.New("invalid signing method")
+	ErrInvalidToken         = errors.New("invalid token")
 )
 
 type Credentials struct {
@@ -62,9 +64,25 @@ func (a auth) generateJWT(userID string) (string, error) {
 	return tokenString, nil
 }
 
-func (a auth) VerifyToken(tokenString string) error {
-	// TODO: verify and decode token
-	return nil
+func (a auth) VerifyToken(tokenString string) (string, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, ErrInvalidSigningMethod
+		}
+		return a.jwtSecret, nil
+	})
+	if err != nil {
+		log.Println(err)
+		return "", ErrInvalidToken
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if ok && token.Valid {
+		userID := claims["user_id"].(string)
+		return userID, nil
+	}
+
+	return "", ErrInvalidToken
 }
 
 func (a auth) comparePasswords(hash string, password []byte) error {
