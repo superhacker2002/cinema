@@ -2,10 +2,15 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/gorilla/mux"
 	"io"
 	"log"
 	"net/http"
+)
+
+var (
+	ErrReadRequestFail = errors.New("failed to read request body")
 )
 
 type credentials struct {
@@ -44,23 +49,23 @@ func (h httpHandler) setRoutes(router *mux.Router) {
 func (h httpHandler) loginHandler(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		http.Error(w, ErrReadRequestFail.Error(), http.StatusBadRequest)
 		return
 	}
 
 	var creds credentials
-	log.Println(string(body))
-	err = json.Unmarshal(body, &creds)
+	err = json.Unmarshal(body, creds)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		log.Println(err)
+		http.Error(w, ErrReadRequestFail.Error(), http.StatusBadRequest)
 		return
 	}
-	log.Println(creds.Username, creds.Password)
 
 	token, err := h.auth.Authenticate(creds.Username, creds.Password)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
+		http.Error(w, "failed to authorize: "+err.Error(), http.StatusUnauthorized)
 		return
 	}
 
