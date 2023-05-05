@@ -21,22 +21,39 @@ func TestSetRoutes(t *testing.T) {
 	testCases := []struct {
 		path   string
 		status int
+		method string
 	}{
-		{path: "/movies", status: http.StatusOK},
-		{path: "/movies/watched", status: http.StatusBadRequest},
-		{path: "/movies/watched?userId=1", status: http.StatusOK},
-		{path: "/halls", status: http.StatusOK},
-		{path: "/cinema-sessions", status: http.StatusOK},
-		{path: "/tickets", status: http.StatusOK},
-		{path: "/invalid", status: http.StatusNotFound},
+		{path: "/halls/", status: http.StatusOK, method: "POST"},
+		{path: "/halls/", status: http.StatusOK, method: "GET"},
+		{path: "/halls/1/", status: http.StatusOK, method: "GET"},
+		{path: "/halls/1/", status: http.StatusOK, method: "PUT"},
+		{path: "/halls/1/", status: http.StatusOK, method: "DELETE"},
+
+		{path: "/movies/", status: http.StatusOK, method: "POST"},
+		{path: "/movies/", status: http.StatusOK, method: "GET"},
+		{path: "/movies/1/", status: http.StatusOK, method: "GET"},
+		{path: "/movies/1/", status: http.StatusOK, method: "PUT"},
+		{path: "/movies/1/", status: http.StatusOK, method: "DELETE"},
+		{path: "/movies/watched/1/", status: http.StatusOK, method: "GET"},
+
+		{path: "/cinema-sessions/", status: http.StatusOK, method: "POST"},
+		{path: "/cinema-sessions/", status: http.StatusOK, method: "GET"},
+		{path: "/cinema-sessions/1/", status: http.StatusOK, method: "GET"},
+		{path: "/cinema-sessions/1/", status: http.StatusOK, method: "PUT"},
+		{path: "/cinema-sessions/1/", status: http.StatusOK, method: "DELETE"},
+
+		{path: "/tickets/1/", status: http.StatusOK, method: "GET"},
+		{path: "/tickets/", status: http.StatusOK, method: "POST"},
+
+		{path: "/invalid/", status: http.StatusNotFound, method: "GET"},
 	}
 
 	for _, tc := range testCases {
-		req, err := http.NewRequest("GET", server.URL+tc.path, nil)
+		req, err := http.NewRequest(tc.method, server.URL+tc.path, nil)
 		assert.NoError(t, err)
 
 		resp, clientErr := client.Do(req)
 		assert.NoError(t, clientErr)
-		assert.Equal(t, tc.status, resp.StatusCode, "Request to %s", tc.path)
+		assert.Equal(t, tc.status, resp.StatusCode, "Request to %s, method %s", tc.path, tc.method)
 	}
 }

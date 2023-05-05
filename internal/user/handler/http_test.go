@@ -23,14 +23,12 @@ func TestSetRoutes(t *testing.T) {
 		status int
 		method string
 	}{
-		{path: "/auth/login", status: http.StatusOK, method: "POST"},
-		{path: "/users", status: http.StatusOK, method: "POST"},
-		{path: "/users", status: http.StatusOK, method: "GET"},
-		{path: "/users?userId=1", status: http.StatusOK, method: "GET"},
-		{path: "/users", status: http.StatusNotFound, method: "PUT"},
-		{path: "/users?userId=1", status: http.StatusOK, method: "PUT"},
-		{path: "/users", status: http.StatusNotFound, method: "DELETE"},
-		{path: "/users?userId=1", status: http.StatusOK, method: "DELETE"},
+		{path: "/auth/login/", status: http.StatusOK, method: "POST"},
+		{path: "/users/", status: http.StatusOK, method: "POST"},
+		{path: "/users/", status: http.StatusOK, method: "GET"},
+		{path: "/users/1/", status: http.StatusOK, method: "GET"},
+		{path: "/users/1/", status: http.StatusOK, method: "PUT"},
+		{path: "/users/1/", status: http.StatusOK, method: "DELETE"},
 	}
 
 	for _, tc := range testCases {
