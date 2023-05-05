@@ -39,9 +39,9 @@ func New(router *mux.Router, auth auth, repository repository) httpHandler {
 func (h httpHandler) setRoutes(router *mux.Router) {
 	router.HandleFunc("/auth/login/", h.loginHandler)
 	s := router.PathPrefix("/users").Subrouter()
+	s.HandleFunc("/", h.createUserHandler).Methods("POST")
 	s.HandleFunc("/", h.getUsersHandler).Methods("GET")
 	s.HandleFunc("/{userId}/", h.getUserHandler).Methods("GET")
-	s.HandleFunc("/", h.createUserHandler).Methods("POST")
 	s.HandleFunc("/{userId}/", h.deleteUserHandler).Methods("DELETE")
 	s.HandleFunc("/{userId}/", h.updateUserHandler).Methods("PUT")
 }
@@ -65,12 +65,18 @@ func (h httpHandler) loginHandler(w http.ResponseWriter, r *http.Request) {
 
 	token, err := h.auth.Authenticate(creds.Username, creds.Password)
 	if err != nil {
+		log.Println(err)
 		http.Error(w, "failed to authorize: "+err.Error(), http.StatusUnauthorized)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"token": token})
+}
+
+func (h httpHandler) createUserHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO: create user
+	w.WriteHeader(http.StatusOK)
 }
 
 func (h httpHandler) getUsersHandler(w http.ResponseWriter, r *http.Request) {
@@ -80,11 +86,6 @@ func (h httpHandler) getUsersHandler(w http.ResponseWriter, r *http.Request) {
 
 func (h httpHandler) getUserHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO: return user by ID
-	w.WriteHeader(http.StatusOK)
-}
-
-func (h httpHandler) createUserHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: create user
 	w.WriteHeader(http.StatusOK)
 }
 
