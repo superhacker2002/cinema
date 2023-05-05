@@ -11,7 +11,7 @@ CREATE TABLE users (
     credit_card_info VARCHAR(50),
     role_id INTEGER NOT NULL,
     CONSTRAINT users_role_id_fkey FOREIGN KEY (role_id)
-        REFERENCES roles (role_id) ON DELETE CASCADE
+        REFERENCES roles (role_id) ON DELETE RESTRICT
 );
 
 CREATE TABLE movies (
