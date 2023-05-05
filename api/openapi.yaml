@@ -346,8 +346,8 @@ paths:
     get:
       tags:
         - movies
-      summary: Returns a specific movie by ID
-      operationId: getWatchedMoviesByUser
+      summary: Returns list of watched movies by specific user
+      operationId: getMoviesWatched
       parameters:
         - in: path
           name: userId
@@ -379,7 +379,7 @@ paths:
       tags:
         - movies
       summary: Returns a specific movie by ID
-      operationId: getMovie
+      operationId: getMovieById
       parameters:
         - in: path
           name: movieId
@@ -530,7 +530,7 @@ paths:
       tags:
         - cinema sessions
       summary: Returns a specific cinema session by ID
-      operationId: getCinemaSession
+      operationId: getCinemaSessionById
       parameters:
         - in: path
           name: sessionId
@@ -618,34 +618,8 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-
+  
   /tickets:
-    get:
-      tags:
-        - tickets
-      summary: Get all tickets
-      description: Retrieve information about all tickets in the database.
-      operationId: getAllTickets
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Ticket'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-      security:
-        - bearerAuth: []
-
     post:
       tags:
         - tickets
@@ -684,15 +658,50 @@ paths:
       security:
         - bearerAuth: []
 
-  /tickets/{id}:
+  /tickets/{userId}:
+    get:
+      tags:
+        - tickets
+      summary: Get all purchased tickets by a specific user
+      description: Retrieve information about all tickets bought by user in the database.
+      operationId: getTicketByUser
+      parameters:
+        - name: userId
+          in: path
+          description: Identifier of the user to retrieve information about bought tickets
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Ticket'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - bearerAuth: []
+
+  /tickets/{ticketId}:
     get:
       tags:
         - tickets
       summary: Get ticket information
       description: Retrieve information about a ticket based on its identifier.
-      operationId: getTicket
+      operationId: getTicketById
       parameters:
-        - name: id
+        - name: ticketId
           in: path
           description: Identifier of the ticket to retrieve information about.
           required: true
@@ -779,7 +788,7 @@ paths:
       tags:
         - authorization
       summary: Logs user into the system
-      operationId: loginUser
+      operationId: login
       parameters:
         - name: username
           in: query
@@ -809,7 +818,7 @@ paths:
       tags:
         - authorization
       summary: Logs user out the system
-      operationId: logoutUser
+      operationId: logout
       responses:
         '201':
           description: The user logged out successfuly
@@ -819,12 +828,13 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '500':
           $ref: '#/components/responses/InternalServerError'
+
   /users/{userId}:
     get:
       tags:
         - users
       summary: Returns a specific user by ID
-      operationId: getUser
+      operationId: getUserById
       parameters:
         - in: path
           name: userId
@@ -912,3 +922,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+      security:
+        - bearerAuth: []
+    

@@ -1,14 +1,18 @@
 package main
 
 import (
+	cinemaHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinema/handler"
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/config"
-	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/httphandler"
+	userHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/handler"
+	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 )
 
 func main() {
 	config := config.New()
-	httphandler.New()
-	log.Fatal(http.ListenAndServe(":"+config.Port, nil))
+	router := mux.NewRouter()
+	userHandler.New(router)
+	cinemaHandler.New(router)
+	log.Fatal(http.ListenAndServe(":"+config.Port, router))
 }
