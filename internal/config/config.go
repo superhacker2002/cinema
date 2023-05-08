@@ -1,23 +1,38 @@
 package config
 
 import (
+	"errors"
+	"github.com/joho/godotenv"
+	"log"
 	"os"
+)
+
+var (
+	ErrNoPort        = errors.New("missing server port variable")
+	ErrNoDataBaseURL = errors.New("missing database URL variable")
 )
 
 type Config struct {
 	Port string
+	Db   string
 }
 
 func New() Config {
+	if err := godotenv.Load(); err != nil {
+		log.Print("no .env file found")
+	}
 	return Config{
-		Port: getEnv("PORT", "8080"),
+		Port: os.Getenv("PORT"),
+		Db:   os.Getenv("DATABASE_URL"),
 	}
 }
 
-func getEnv(key string, defaultVal string) string {
-	if value, ok := os.LookupEnv(key); ok {
-		return value
+func (c Config) Validate() error {
+	if c.Port == "" {
+		return ErrNoPort
 	}
-
-	return defaultVal
+	if c.Db == "" {
+		return ErrNoDataBaseURL
+	}
+	return nil
 }
