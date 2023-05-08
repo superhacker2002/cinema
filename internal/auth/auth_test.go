@@ -35,18 +35,18 @@ func TestAuthenticate(t *testing.T) {
 	})
 
 	t.Run("Invalid username", func(t *testing.T) {
-		repo.err = ErrUserNotFound
+		repo.err = ErrInvalidUsernameOrPassword
 		auth := New("secret-key", repo)
 		token, err := auth.Authenticate("non_existing_user", "password")
-		assert.Equal(t, ErrUserNotFound, err)
+		assert.Equal(t, ErrInvalidUsernameOrPassword, err)
 		assert.Empty(t, token)
 	})
 
 	t.Run("Invalid password", func(t *testing.T) {
-		repo.err = ErrInvalidPassword
+		repo.err = ErrInvalidUsernameOrPassword
 		auth := New("secret-key", repo)
 		token, err := auth.Authenticate("existing_user", "invalid_password")
-		assert.Equal(t, ErrInvalidPassword, err)
+		assert.Equal(t, ErrInvalidUsernameOrPassword, err)
 		assert.Empty(t, token)
 	})
 }
@@ -65,7 +65,7 @@ func TestComparePasswords(t *testing.T) {
 
 	t.Run("Compare invalid password", func(t *testing.T) {
 		err := auth.comparePasswords(hash, []byte("invalid_password"))
-		assert.Equal(t, ErrInvalidPassword, err)
+		assert.Equal(t, ErrInvalidUsernameOrPassword, err)
 	})
 }
 

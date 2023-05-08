@@ -11,10 +11,9 @@ import (
 )
 
 var (
-	ErrUserNotFound         = errors.New("user not found")
-	ErrInvalidPassword      = errors.New("invalid password")
-	ErrInvalidSigningMethod = errors.New("invalid signing method")
-	ErrInvalidToken         = errors.New("invalid token")
+	ErrInvalidUsernameOrPassword = errors.New("invalid username or password")
+	ErrInvalidSigningMethod      = errors.New("invalid signing method")
+	ErrInvalidToken              = errors.New("invalid token")
 )
 
 type Credentials struct {
@@ -90,7 +89,7 @@ func (a auth) comparePasswords(hash string, password []byte) error {
 	hasher.Write(password)
 	passwordHash := hex.EncodeToString(hasher.Sum(nil))
 	if hash != passwordHash {
-		return ErrInvalidPassword
+		return ErrInvalidUsernameOrPassword
 	}
 	return nil
 }
