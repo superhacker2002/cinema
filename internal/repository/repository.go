@@ -20,7 +20,7 @@ func (r repository) GetUserInfo(username string) (auth.Credentials, error) {
 		Scan(&credentials.ID, &credentials.PasswordHash)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return auth.Credentials{}, auth.ErrUserNotFound
+			return auth.Credentials{}, auth.ErrInvalidUsernameOrPassword
 		}
 		return auth.Credentials{}, err
 	}
