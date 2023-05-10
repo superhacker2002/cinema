@@ -1,8 +1,6 @@
 package auth
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"github.com/dgrijalva/jwt-go"
 	_ "github.com/lib/pq"
@@ -37,18 +35,17 @@ func New(jwtSecret string, repository repository) auth {
 	}
 }
 
-func (a auth) Authenticate(username string, password string) (string, error) {
-	userInfo, err := a.r.User(username)
+func (a auth) Authenticate(username string, passwordHash string) (string, error) {
+	userCreds, err := a.r.User(username)
 	if err != nil {
 		return "", err
 	}
 
-	err = a.comparePasswords(userInfo.PasswordHash, []byte(password))
-	if err != nil {
-		return "", err
+	if passwordHash != userCreds.PasswordHash {
+		return "", ErrInvalidUsernameOrPassword
 	}
 
-	return a.generateJWT(userInfo.ID)
+	return a.generateJWT(userCreds.ID)
 }
 
 func (a auth) generateJWT(userID string) (string, error) {
@@ -82,14 +79,4 @@ func (a auth) VerifyToken(tokenString string) (string, error) {
 	}
 
 	return "", ErrInvalidToken
-}
-
-func (a auth) comparePasswords(hash string, password []byte) error {
-	hasher := sha256.New()
-	hasher.Write(password)
-	passwordHash := hex.EncodeToString(hasher.Sum(nil))
-	if hash != passwordHash {
-		return ErrInvalidUsernameOrPassword
-	}
-	return nil
 }
