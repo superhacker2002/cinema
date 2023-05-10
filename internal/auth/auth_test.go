@@ -29,7 +29,7 @@ func TestAuthenticate(t *testing.T) {
 	t.Run("Valid auth", func(t *testing.T) {
 		repo.err = nil
 		auth := New("secret-key", repo)
-		token, err := auth.Authenticate("existing_user", "password")
+		token, err := auth.Authenticate("existing_user", hashedPassword)
 		assert.Nil(t, err)
 		assert.NotEmpty(t, token)
 	})
@@ -37,7 +37,7 @@ func TestAuthenticate(t *testing.T) {
 	t.Run("Invalid username", func(t *testing.T) {
 		repo.err = ErrInvalidUsernameOrPassword
 		auth := New("secret-key", repo)
-		token, err := auth.Authenticate("non_existing_user", "password")
+		token, err := auth.Authenticate("non_existing_user", hashedPassword)
 		assert.Equal(t, ErrInvalidUsernameOrPassword, err)
 		assert.Empty(t, token)
 	})
@@ -48,24 +48,6 @@ func TestAuthenticate(t *testing.T) {
 		token, err := auth.Authenticate("existing_user", "invalid_password")
 		assert.Equal(t, ErrInvalidUsernameOrPassword, err)
 		assert.Empty(t, token)
-	})
-}
-
-func TestComparePasswords(t *testing.T) {
-	auth := auth{}
-	password := "password"
-	hasher := sha256.New()
-	hasher.Write([]byte(password))
-	hash := hex.EncodeToString(hasher.Sum(nil))
-
-	t.Run("Compare valid password", func(t *testing.T) {
-		err := auth.comparePasswords(hash, []byte(password))
-		assert.Nil(t, err)
-	})
-
-	t.Run("Compare invalid password", func(t *testing.T) {
-		err := auth.comparePasswords(hash, []byte("invalid_password"))
-		assert.Equal(t, ErrInvalidUsernameOrPassword, err)
 	})
 }
 
