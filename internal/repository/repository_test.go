@@ -1,12 +1,13 @@
 package repository
 
 import (
-	"reflect"
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/lib/pq"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGetMovie(t *testing.T) {
@@ -34,15 +35,11 @@ func TestGetMovie(t *testing.T) {
 
 	movie, err := repo.GetMovie(movieID)
 	if err != nil {
-		t.Fatalf("Error getting movie: %v", err)
+		t.Fatalf("Error getting movie: %v", fmt.Errorf("could not get movie: %w", err))
 	}
+
+	assert.Equal(t, expectedMovie, movie, "Expected movie does not match the actual movie")
 
 	err = mock.ExpectationsWereMet()
-	if err != nil {
-		t.Fatalf("Unfulfilled expectation: %v", err)
-	}
-
-	if !reflect.DeepEqual(expectedMovie, movie) {
-		t.Errorf("Expected movie %v, but got %v", expectedMovie, movie)
-	}
+	assert.NoError(t, err, "Unfulfilled expectation")
 }
