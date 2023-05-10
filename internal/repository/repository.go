@@ -35,9 +35,10 @@ func (r *repository) GetMovie(movieID int) (*Movie, error) {
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("movie not found")
+			return nil, fmt.Errorf("movie not found: %w", err)
 		}
-		return nil, err
+		return nil, fmt.Errorf("could not get movie: %w", err)
 	}
+
 	return &movie, nil
 }
