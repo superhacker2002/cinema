@@ -26,12 +26,14 @@ type repository interface {
 type auth struct {
 	jwtSecret []byte
 	r         repository
+	exp       int
 }
 
-func New(jwtSecret string, repository repository) auth {
+func New(jwtSecret string, tokenExp int, repository repository) auth {
 	return auth{
 		jwtSecret: []byte(jwtSecret),
 		r:         repository,
+		exp:       tokenExp,
 	}
 }
 
@@ -51,7 +53,7 @@ func (a auth) Authenticate(username string, passwordHash string) (string, error)
 func (a auth) generateJWT(userID string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id": userID,
-		"exp":     time.Now().Add(time.Hour * 24).Unix(),
+		"exp":     time.Now().Add(time.Hour * time.Duration(a.exp)).Unix(),
 	})
 	tokenString, err := token.SignedString(a.jwtSecret)
 	if err != nil {

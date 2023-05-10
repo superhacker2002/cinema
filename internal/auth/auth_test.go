@@ -28,7 +28,7 @@ func TestAuthenticate(t *testing.T) {
 
 	t.Run("Valid auth", func(t *testing.T) {
 		repo.err = nil
-		auth := New("secret-key", repo)
+		auth := New("secret-key", 24, repo)
 		token, err := auth.Authenticate("existing_user", hashedPassword)
 		assert.Nil(t, err)
 		assert.NotEmpty(t, token)
@@ -36,7 +36,7 @@ func TestAuthenticate(t *testing.T) {
 
 	t.Run("Invalid username", func(t *testing.T) {
 		repo.err = ErrInvalidUsernameOrPassword
-		auth := New("secret-key", repo)
+		auth := New("secret-key", 24, repo)
 		token, err := auth.Authenticate("non_existing_user", hashedPassword)
 		assert.Equal(t, ErrInvalidUsernameOrPassword, err)
 		assert.Empty(t, token)
@@ -44,7 +44,7 @@ func TestAuthenticate(t *testing.T) {
 
 	t.Run("Invalid password", func(t *testing.T) {
 		repo.err = ErrInvalidUsernameOrPassword
-		auth := New("secret-key", repo)
+		auth := New("secret-key", 24, repo)
 		token, err := auth.Authenticate("existing_user", "invalid_password")
 		assert.Equal(t, ErrInvalidUsernameOrPassword, err)
 		assert.Empty(t, token)
@@ -63,7 +63,7 @@ func TestVerifyToken(t *testing.T) {
 	repo := mockRepository{}
 
 	repo.creds = Credentials{}
-	auth := New("secret-key", repo)
+	auth := New("secret-key", 24, repo)
 
 	t.Run("Valid token", func(t *testing.T) {
 		token, _ := createTokenString([]byte("secret-key"), "existing_user")
