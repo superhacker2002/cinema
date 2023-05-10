@@ -6,15 +6,15 @@ import (
 	"errors"
 )
 
-type repository struct {
+type Repository struct {
 	db *sql.DB
 }
 
-func New(db *sql.DB) repository {
-	return repository{db: db}
+func New(db *sql.DB) Repository {
+	return Repository{db: db}
 }
 
-func (r repository) GetUserInfo(username string) (auth.Credentials, error) {
+func (r Repository) GetUserInfo(username string) (auth.Credentials, error) {
 	credentials := auth.Credentials{}
 	err := r.db.QueryRow("SELECT id, hashed_password FROM users WHERE username=?", username).
 		Scan(&credentials.ID, &credentials.PasswordHash)
