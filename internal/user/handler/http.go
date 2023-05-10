@@ -10,7 +10,8 @@ import (
 )
 
 var (
-	ErrReadRequestFail = errors.New("failed to read request body")
+	ErrReadRequestFail      = errors.New("failed to read request body")
+	ErrNoUsernameOrPassword = errors.New("missing username or password")
 )
 
 type credentials struct {
@@ -57,17 +58,22 @@ func (h httpHandler) loginHandler(w http.ResponseWriter, r *http.Request) {
 
 	var creds credentials
 	err = json.Unmarshal(body, &creds)
-
 	if err != nil {
 		log.Println(err)
 		http.Error(w, ErrReadRequestFail.Error(), http.StatusBadRequest)
 		return
 	}
 
+	if creds.Username == "" || creds.Password == "" {
+		log.Println(err)
+		http.Error(w, ErrNoUsernameOrPassword.Error(), http.StatusBadRequest)
+		return
+	}
+
 	token, err := h.auth.Authenticate(creds.Username, creds.Password)
 	if err != nil {
 		log.Println(err)
-		http.Error(w, "failed to authorize: "+err.Error(), http.StatusUnauthorized)
+		http.Error(w, "failed to authenticate: "+err.Error(), http.StatusUnauthorized)
 		return
 	}
 
