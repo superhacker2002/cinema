@@ -13,7 +13,7 @@ type mockRepository struct {
 	err   error
 }
 
-func (m mockRepository) GetUserInfo(username string) (Credentials, error) {
+func (m mockRepository) User(username string) (Credentials, error) {
 	return m.creds, m.err
 }
 
