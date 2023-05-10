@@ -22,23 +22,23 @@ type Credentials struct {
 }
 
 type repository interface {
-	GetUserInfo(username string) (Credentials, error)
+	User(username string) (Credentials, error)
 }
 
 type auth struct {
-	jwtSecret  []byte
-	repository repository
+	jwtSecret []byte
+	r         repository
 }
 
 func New(jwtSecret string, repository repository) auth {
 	return auth{
-		jwtSecret:  []byte(jwtSecret),
-		repository: repository,
+		jwtSecret: []byte(jwtSecret),
+		r:         repository,
 	}
 }
 
 func (a auth) Authenticate(username string, password string) (string, error) {
-	userInfo, err := a.repository.GetUserInfo(username)
+	userInfo, err := a.r.User(username)
 	if err != nil {
 		return "", err
 	}
