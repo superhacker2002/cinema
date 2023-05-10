@@ -24,19 +24,19 @@ type repository interface {
 }
 
 type auth struct {
-	jwtSecret  []byte
-	repository repository
+	jwtSecret []byte
+	r         repository
 }
 
 func New(jwtSecret string, repository repository) auth {
 	return auth{
-		jwtSecret:  []byte(jwtSecret),
-		repository: repository,
+		jwtSecret: []byte(jwtSecret),
+		r:         repository,
 	}
 }
 
 func (a auth) Authenticate(username string, passwordHash string) (string, error) {
-	userCreds, err := a.repository.User(username)
+	userCreds, err := a.r.User(username)
 	if err != nil {
 		return "", err
 	}
