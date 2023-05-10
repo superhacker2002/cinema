@@ -55,10 +55,6 @@ func (m mockAuth) VerifyToken(returnTokenString string) (string, error) {
 	return "", nil
 }
 
-type loginResponse struct {
-	Token string `json:"token"`
-}
-
 func TestLoginHandler(t *testing.T) {
 	auth := mockAuth{}
 	t.Run("successful authentication", func(t *testing.T) {
