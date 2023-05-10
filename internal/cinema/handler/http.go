@@ -4,21 +4,12 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/lib/pq"
 )
 
 type repository interface{}
 
 type httpHandler struct {
 	repository repository
-}
-
-type Movie struct {
-	ID          int
-	Title       string
-	Genre       string
-	ReleaseDate pq.NullTime
-	Duration    int
 }
 
 func New(router *mux.Router, repository repository) httpHandler {

@@ -4,14 +4,20 @@ import (
 	"database/sql"
 	"fmt"
 
-	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinema/handler"
+	"github.com/lib/pq"
 )
 
 type repository struct {
 	db *sql.DB
 }
 
-type Movie = handler.Movie // Import the Movie struct from the handler package
+type Movie struct {
+	ID          int
+	Title       string
+	Genre       string
+	ReleaseDate pq.NullTime
+	Duration    int
+}
 
 func New(db *sql.DB) repository {
 	return repository{db: db}
