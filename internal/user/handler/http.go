@@ -19,7 +19,9 @@ type credentials struct {
 	Password string `json:"password"`
 }
 
-type repository interface{}
+type repository interface {
+	CreateUser(username string, password string) (string, error)
+}
 
 type auth interface {
 	Authenticate(username string, password string) (string, error)
@@ -82,8 +84,31 @@ func (h httpHandler) loginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h httpHandler) createUserHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: create user
-	w.WriteHeader(http.StatusOK)
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, ErrReadRequestFail.Error(), http.StatusBadRequest)
+		return
+	}
+
+	var creds credentials
+	err = json.Unmarshal(body, &creds)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, ErrReadRequestFail.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if creds.Username == "" || creds.Password == "" {
+		log.Println(err)
+		http.Error(w, ErrNoUsernameOrPassword.Error(), http.StatusBadRequest)
+		return
+	}
+
+	id, err := h.repository.CreateUser(creds.Username, creds.Password)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"user_id": id})
 }
 
 func (h httpHandler) getUsersHandler(w http.ResponseWriter, r *http.Request) {

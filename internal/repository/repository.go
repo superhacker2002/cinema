@@ -2,9 +2,15 @@ package repository
 
 import (
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/auth"
+	"crypto/sha256"
 	"database/sql"
+	"encoding/hex"
 	"errors"
+	"fmt"
 )
+
+type User struct {
+}
 
 type repository struct {
 	db *sql.DB
@@ -25,4 +31,26 @@ func (r repository) GetUserInfo(username string) (auth.Credentials, error) {
 		return auth.Credentials{}, err
 	}
 	return credentials, nil
+}
+
+func (r repository) CreateUser(username string, password string) (string, error) {
+	var id string
+	err := r.db.QueryRow("SELECT id FROM users WHERE username = $1", username).Scan(&id)
+	if err == nil {
+		return "", fmt.Errorf("user with username %q already exists", username)
+	}
+	if !errors.Is(err, sql.ErrNoRows) {
+		return "", fmt.Errorf("failed to check if user with username %q exists: %w", username, err)
+	}
+
+	hash := sha256.Sum256([]byte(password))
+	hashHex := hex.EncodeToString(hash[:])
+
+	err = r.db.QueryRow("INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id",
+		username, hashHex).Scan(&id)
+	if err != nil {
+		return "", fmt.Errorf("failed to insert new user into database: %w", err)
+	}
+
+	return id, nil
 }
