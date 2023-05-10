@@ -5,7 +5,7 @@ info:
   version: 1.0.0
 
 servers:
-  - url: https://onlinecinema.com
+  - url: https://localhost
 
 components:
   securitySchemes:
@@ -618,7 +618,7 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-  
+
   /tickets:
     post:
       tags:
@@ -804,11 +804,18 @@ paths:
             type: string
       responses:
         '201':
-          description: The user logged in successfuly
+          description: The user logged in successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                type: object
+                properties:
+                  token:
+                    type: string
+                    format: sha256
+                    description: Unique JWT token for the user
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
         '500':
@@ -821,7 +828,7 @@ paths:
       operationId: logout
       responses:
         '201':
-          description: The user logged out successfuly
+          description: The user logged out successfully
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
