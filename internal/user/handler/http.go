@@ -106,6 +106,10 @@ func (h httpHandler) createUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id, err := h.repository.CreateUser(creds.Username, creds.Password)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "failed to create user: "+err.Error(), http.StatusInternalServerError)
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"user_id": id})
