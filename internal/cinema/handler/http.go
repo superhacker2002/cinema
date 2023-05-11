@@ -1,8 +1,9 @@
 package handler
 
 import (
-	"github.com/gorilla/mux"
 	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
 type repository interface{}
