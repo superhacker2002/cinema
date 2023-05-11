@@ -102,7 +102,7 @@ func (h httpHandler) createUserHandler(w http.ResponseWriter, r *http.Request) {
 	id, err := h.r.CreateUser(creds.Username, creds.Password, "user")
 	if err != nil {
 		log.Println(err)
-		http.Error(w, "failed to create user: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "failed to sign up: "+err.Error(), http.StatusInternalServerError)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
