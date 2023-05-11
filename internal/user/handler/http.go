@@ -24,8 +24,8 @@ type repository interface {
 }
 
 type auth interface {
-	Authenticate(username string, password string) (string, error)
-	VerifyToken(tokenString string) (string, error)
+	Authenticate(username string, passwordHash string) (token string, err error)
+	VerifyToken(token string) (userID string, err error)
 }
 
 type httpHandler struct {

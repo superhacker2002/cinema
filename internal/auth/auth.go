@@ -63,8 +63,8 @@ func (a Auth) generateJWT(userID string) (string, error) {
 	return signedToken, nil
 }
 
-func (a Auth) VerifyToken(tokenString string) (userID string, err error) {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+func (a Auth) VerifyToken(token string) (userID string, err error) {
+	parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, ErrInvalidSigningMethod
 		}
@@ -75,8 +75,8 @@ func (a Auth) VerifyToken(tokenString string) (userID string, err error) {
 		return "", ErrInvalidToken
 	}
 
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if ok && token.Valid {
+	claims, ok := parsedToken.Claims.(jwt.MapClaims)
+	if ok && parsedToken.Valid {
 		if a.tokenIsExpired(claims) {
 			return "", ErrExpiredToken
 		}
