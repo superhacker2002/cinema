@@ -13,12 +13,22 @@ test:
 .PHONY: test_auth
 test_auth:
 	 curl -i -X 'POST' \
-    'localhost:8080/auth/login/' \
+    'localhost:8080/auth/' \
     -H 'accept: application/json' \
     -H 'Content-Type: application/json' \
     -d '{ \
-    "username": "admin", \
-    "password": "password" \
+    "username": "test_user", \
+    "password": "10a6e6cc8311a3e2bcc09bf6c199adecd5dd59408c343e926b129c4914f3cb01" \
+    }'
+
+test_create_user:
+	 curl -i -X 'POST' \
+    'localhost:8080/users/' \
+    -H 'accept: application/json' \
+    -H 'Content-Type: application/json' \
+    -d '{ \
+    "username": "test_user", \
+    "password": "10a6e6cc8311a3e2bcc09bf6c199adecd5dd59408c343e926b129c4914f3cb01" \
     }'
 
 .PHONY: docker_db
