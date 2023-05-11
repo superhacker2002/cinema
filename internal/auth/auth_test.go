@@ -6,6 +6,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 )
 
 type mockRepository struct {
@@ -28,7 +29,7 @@ func TestAuthenticate(t *testing.T) {
 
 	t.Run("Valid auth", func(t *testing.T) {
 		repo.err = nil
-		auth := New("secret-key", repo)
+		auth := New("secret-key", 24, repo)
 		token, err := auth.Authenticate("existing_user", hashedPassword)
 		assert.Nil(t, err)
 		assert.NotEmpty(t, token)
@@ -36,7 +37,7 @@ func TestAuthenticate(t *testing.T) {
 
 	t.Run("Invalid username", func(t *testing.T) {
 		repo.err = ErrInvalidUsernameOrPassword
-		auth := New("secret-key", repo)
+		auth := New("secret-key", 24, repo)
 		token, err := auth.Authenticate("non_existing_user", hashedPassword)
 		assert.Equal(t, ErrInvalidUsernameOrPassword, err)
 		assert.Empty(t, token)
@@ -44,16 +45,17 @@ func TestAuthenticate(t *testing.T) {
 
 	t.Run("Invalid password", func(t *testing.T) {
 		repo.err = ErrInvalidUsernameOrPassword
-		auth := New("secret-key", repo)
+		auth := New("secret-key", 24, repo)
 		token, err := auth.Authenticate("existing_user", "invalid_password")
 		assert.Equal(t, ErrInvalidUsernameOrPassword, err)
 		assert.Empty(t, token)
 	})
 }
 
-func createTokenString(secret []byte, userID string) (string, error) {
+func createTokenString(secret []byte, userID string, tokenExp int) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id": userID,
+		"exp":     time.Now().Add(time.Hour * time.Duration(tokenExp)).Unix(),
 	})
 
 	return token.SignedString(secret)
@@ -63,29 +65,40 @@ func TestVerifyToken(t *testing.T) {
 	repo := mockRepository{}
 
 	repo.creds = Credentials{}
-	auth := New("secret-key", repo)
+	auth := New("secret-key", 24, repo)
 
-	t.Run("Valid token", func(t *testing.T) {
-		token, _ := createTokenString([]byte("secret-key"), "existing_user")
+	t.Run("valid token", func(t *testing.T) {
+		token, _ := createTokenString([]byte("secret-key"), "existing_user", 24)
 		userID, err := auth.VerifyToken(token)
 
 		assert.Nil(t, err, "unexpected error occurred: %w", err)
 		assert.Equal(t, "existing_user", userID)
 	})
 
-	t.Run("Invalid token", func(t *testing.T) {
+	t.Run("invalid token", func(t *testing.T) {
 		invalidToken := "invalid_token"
 		userID, err := auth.VerifyToken(invalidToken)
 
 		assert.Equal(t, ErrInvalidToken, err)
-		assert.Equal(t, "", userID)
+		assert.Equal(t, "", userID,
+			"user id should be empty when token is invalid")
 	})
 
-	t.Run("Invalid signing method", func(t *testing.T) {
-		invalidToken, _ := createTokenString([]byte("invalid-secret-key"), "existing_user")
+	t.Run("invalid signing method", func(t *testing.T) {
+		invalidToken, _ := createTokenString([]byte("invalid-secret-key"), "existing_user", 24)
 		userID, err := auth.VerifyToken(invalidToken)
 
 		assert.Equal(t, ErrInvalidToken, err)
-		assert.Equal(t, "", userID)
+		assert.Equal(t, "", userID,
+			"user id should be empty when token was signed by invalid method")
+	})
+
+	t.Run("expired token", func(t *testing.T) {
+		auth.exp = 0
+		token, _ := createTokenString([]byte("secret-key"), "existing_user", 0)
+		userID, err := auth.VerifyToken(token)
+
+		assert.Equal(t, ErrExpiredToken, err)
+		assert.Empty(t, userID, "user id should be empty when token is expired")
 	})
 }

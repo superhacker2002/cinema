@@ -6,31 +6,53 @@ import (
 )
 
 func TestValidateConfig(t *testing.T) {
-	config := Config{
-		Port:      "8080",
-		Db:        "localhost:3306/mydb",
-		JWTSecret: "secret-key",
-	}
-	assert.NoError(t, config.Validate())
+	t.Run("successful validation", func(t *testing.T) {
+		config := Config{
+			Port:      "8080",
+			Db:        "localhost:3306/mydb",
+			JWTSecret: "secret-key",
+			TokenExp:  "24",
+		}
+		assert.NoError(t, config.Validate())
+	})
 
-	config = Config{
-		Port:      "",
-		Db:        "localhost:3306/mydb",
-		JWTSecret: "secret-key",
-	}
-	assert.EqualError(t, config.Validate(), ErrNoPort.Error())
+	t.Run("missing server port", func(t *testing.T) {
+		config := Config{
+			Port:      "",
+			Db:        "localhost:3306/mydb",
+			JWTSecret: "secret-key",
+			TokenExp:  "24",
+		}
+		assert.EqualError(t, config.Validate(), ErrNoPort.Error())
+	})
 
-	config = Config{
-		Port:      "8080",
-		Db:        "",
-		JWTSecret: "secret-key",
-	}
-	assert.EqualError(t, config.Validate(), ErrNoDataBaseURL.Error())
+	t.Run("missing database URL", func(t *testing.T) {
+		config := Config{
+			Port:      "8080",
+			Db:        "",
+			JWTSecret: "secret-key",
+			TokenExp:  "24",
+		}
+		assert.EqualError(t, config.Validate(), ErrNoDataBaseURL.Error())
+	})
 
-	config = Config{
-		Port:      "8080",
-		Db:        "localhost:9999/mydb",
-		JWTSecret: "",
-	}
-	assert.EqualError(t, config.Validate(), ErrNoJWTSecret.Error())
+	t.Run("missing JWT secret key", func(t *testing.T) {
+		config := Config{
+			Port:      "8080",
+			Db:        "localhost:9999/mydb",
+			JWTSecret: "",
+			TokenExp:  "24",
+		}
+		assert.EqualError(t, config.Validate(), ErrNoJWTSecret.Error())
+	})
+
+	t.Run("missing JWT expiration time", func(t *testing.T) {
+		config := Config{
+			Port:      "8080",
+			Db:        "localhost:9999/mydb",
+			JWTSecret: "secret-key",
+			TokenExp:  "",
+		}
+		assert.EqualError(t, config.Validate(), ErrNoTokenExpiration.Error())
+	})
 }

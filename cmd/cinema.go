@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 func main() {
@@ -27,7 +28,11 @@ func main() {
 	repository := repository.New(db)
 
 	router := mux.NewRouter()
-	authentication := auth.New(config.JWTSecret, repository)
+	exp, err := strconv.Atoi(config.TokenExp)
+	if err != nil {
+		log.Fatal(err)
+	}
+	authentication := auth.New(config.JWTSecret, exp, repository)
 
 	userHandler.New(router, authentication, repository)
 	cinemaHandler.New(router, repository)

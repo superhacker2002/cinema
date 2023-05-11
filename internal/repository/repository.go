@@ -23,9 +23,10 @@ func (r Repository) User(username string) (auth.Credentials, error) {
 		Scan(&credentials.ID, &credentials.PasswordHash)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return auth.Credentials{}, auth.ErrInvalidUsernameOrPassword
+			return auth.Credentials{},
+				fmt.Errorf("failed to find user in database: %w", auth.ErrInvalidUsernameOrPassword)
 		}
-		return auth.Credentials{}, err
+		return auth.Credentials{}, fmt.Errorf("failed to get user credentials from database: %w", err)
 	}
 	return credentials, nil
 }
