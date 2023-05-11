@@ -59,7 +59,7 @@ func TestLoginHandler(t *testing.T) {
 	t.Run("successful authentication", func(t *testing.T) {
 		auth.token = "test_token"
 		auth.err = nil
-		req, err := http.NewRequest(http.MethodPost, "auth/login/",
+		req, err := http.NewRequest(http.MethodPost, "auth/",
 			strings.NewReader(`{"username": "test_user", "password": "test_password"}`))
 		require.NoError(t, err, "failed to create test request")
 
@@ -72,7 +72,7 @@ func TestLoginHandler(t *testing.T) {
 	})
 
 	t.Run("reading request fail", func(t *testing.T) {
-		req, err := http.NewRequest(http.MethodPost, "auth/login/",
+		req, err := http.NewRequest(http.MethodPost, "auth/",
 			strings.NewReader(`invalid json`))
 		require.NoError(t, err, "failed to create test request")
 
@@ -86,7 +86,7 @@ func TestLoginHandler(t *testing.T) {
 
 	t.Run("authentication fail", func(t *testing.T) {
 		auth.err = errors.New("something went wrong")
-		req, err := http.NewRequest(http.MethodPost, "auth/login/",
+		req, err := http.NewRequest(http.MethodPost, "auth/",
 			strings.NewReader(`{"username": "test_user", "password": "test_password"}`))
 		require.NoError(t, err, "failed to create test request")
 
