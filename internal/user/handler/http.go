@@ -20,7 +20,7 @@ type credentials struct {
 }
 
 type repository interface {
-	CreateUser(username string, password string) (string, error)
+	CreateUser(username string, password string, role string) (string, error)
 }
 
 type auth interface {
@@ -41,7 +41,7 @@ func New(router *mux.Router, auth auth, repository repository) httpHandler {
 }
 
 func (h httpHandler) setRoutes(router *mux.Router) {
-	router.HandleFunc("/auth/login/", h.loginHandler).Methods("POST")
+	router.HandleFunc("/auth/", h.loginHandler).Methods("POST")
 	s := router.PathPrefix("/users").Subrouter()
 	s.HandleFunc("/", h.createUserHandler).Methods("POST")
 	s.HandleFunc("/", h.getUsersHandler).Methods("GET")
@@ -99,7 +99,7 @@ func (h httpHandler) createUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.repository.CreateUser(creds.Username, creds.Password)
+	id, err := h.repository.CreateUser(creds.Username, creds.Password, "user")
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "failed to create user: "+err.Error(), http.StatusInternalServerError)
