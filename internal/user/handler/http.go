@@ -29,12 +29,12 @@ type auth interface {
 }
 
 type httpHandler struct {
-	auth       auth
-	repository repository
+	auth auth
+	r    repository
 }
 
 func New(router *mux.Router, auth auth, repository repository) httpHandler {
-	handler := httpHandler{auth: auth, repository: repository}
+	handler := httpHandler{auth: auth, r: repository}
 	handler.setRoutes(router)
 
 	return handler
@@ -99,7 +99,7 @@ func (h httpHandler) createUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.repository.CreateUser(creds.Username, creds.Password, "user")
+	id, err := h.r.CreateUser(creds.Username, creds.Password, "user")
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "failed to create user: "+err.Error(), http.StatusInternalServerError)

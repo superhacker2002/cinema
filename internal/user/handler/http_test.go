@@ -98,3 +98,53 @@ func TestLoginHandler(t *testing.T) {
 		assert.Equal(t, http.StatusUnauthorized, response.Code)
 	})
 }
+
+type mockRepository struct{}
+
+func (m mockRepository) CreateUser(username string) (string, error) {
+	return "", nil
+}
+
+func TestCreateUserHandler(t *testing.T) {
+	auth := mockAuth{}
+	repo := mockRepository{}
+	t.Run("successful registration", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodPost, "users/",
+			strings.NewReader(`{"username": "test_user", "password": "test_password"}`))
+		require.NoError(t, err, "failed to create test request")
+
+		response := httptest.NewRecorder()
+		handler := httpHandler{auth: auth, r: repo}.createUserHandler
+		handler(response, req)
+
+		assert.NotEmpty(t, response.Body)
+		assert.Equal(t, http.StatusOK, response.Code)
+	})
+
+	//t.Run("reading request fail", func(t *testing.T) {
+	//	req, err := http.NewRequest(http.MethodPost, "auth/",
+	//		strings.NewReader(`invalid json`))
+	//	require.NoError(t, err, "failed to create test request")
+	//
+	//	response := httptest.NewRecorder()
+	//	handler := httpHandler{auth: auth}.loginHandler
+	//	handler(response, req)
+	//
+	//	assert.Equal(t, "failed to read request body\n", response.Body.String())
+	//	assert.Equal(t, http.StatusBadRequest, response.Code)
+	//})
+	//
+	//t.Run("authentication fail", func(t *testing.T) {
+	//	auth.err = errors.New("something went wrong")
+	//	req, err := http.NewRequest(http.MethodPost, "auth/",
+	//		strings.NewReader(`{"username": "test_user", "password": "test_password"}`))
+	//	require.NoError(t, err, "failed to create test request")
+	//
+	//	response := httptest.NewRecorder()
+	//	handler := httpHandler{auth: auth}.loginHandler
+	//	handler(response, req)
+	//
+	//	assert.Equal(t, "failed to authenticate: something went wrong\n", response.Body.String())
+	//	assert.Equal(t, http.StatusUnauthorized, response.Code)
+	//})
+}
