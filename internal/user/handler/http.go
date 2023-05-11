@@ -66,12 +66,6 @@ func (h httpHandler) loginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if creds.Username == "" || creds.Password == "" {
-		log.Println(err)
-		http.Error(w, ErrNoUsernameOrPassword.Error(), http.StatusBadRequest)
-		return
-	}
-
 	token, err := h.auth.Authenticate(creds.Username, creds.Password)
 	if err != nil {
 		log.Println(err)

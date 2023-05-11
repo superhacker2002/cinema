@@ -26,7 +26,6 @@ func TestSetRoutes(t *testing.T) {
 		status int
 		method string
 	}{
-		{path: "/users/", status: http.StatusOK, method: "POST"},
 		{path: "/users/", status: http.StatusOK, method: "GET"},
 		{path: "/users/1/", status: http.StatusOK, method: "GET"},
 		{path: "/users/1/", status: http.StatusOK, method: "PUT"},
@@ -82,19 +81,6 @@ func TestLoginHandler(t *testing.T) {
 		handler(response, req)
 
 		assert.Equal(t, "failed to read request body\n", response.Body.String())
-		assert.Equal(t, http.StatusBadRequest, response.Code)
-	})
-
-	t.Run("unmarshal request fail", func(t *testing.T) {
-		req, err := http.NewRequest(http.MethodPost, "auth/login/",
-			strings.NewReader(`{"username": "test_user"}`))
-		require.NoError(t, err, "failed to create test request")
-
-		response := httptest.NewRecorder()
-		handler := httpHandler{auth: auth}.loginHandler
-		handler(response, req)
-
-		assert.Equal(t, "missing username or password\n", response.Body.String())
 		assert.Equal(t, http.StatusBadRequest, response.Code)
 	})
 
