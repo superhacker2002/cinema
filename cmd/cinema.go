@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/auth"
 	cinemaHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinema/handler"
 	cinemaRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinema/repository"
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/config"
@@ -11,7 +10,6 @@ import (
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
-	"strconv"
 )
 
 func main() {
@@ -29,13 +27,8 @@ func main() {
 	cinemaRepository := cinemaRepository.New(db)
 
 	router := mux.NewRouter()
-	exp, err := strconv.Atoi(config.TokenExp)
-	if err != nil {
-		log.Fatal(err)
-	}
-	authentication := auth.New(config.JWTSecret, exp, userRepository)
 
-	userHandler.New(router, authentication, userRepository)
+	userHandler.New(router, userRepository)
 	cinemaHandler.New(router, cinemaRepository)
 
 	log.Fatal(http.ListenAndServe(":"+config.Port, router))

@@ -7,18 +7,12 @@ import (
 
 type repository interface{}
 
-type auth interface {
-	Authenticate(username string, passwordHash string) (token string, err error)
-	VerifyToken(token string) (userID string, err error)
-}
-
 type httpHandler struct {
-	auth       auth
 	repository repository
 }
 
-func New(router *mux.Router, auth auth, repository repository) httpHandler {
-	handler := httpHandler{auth: auth, repository: repository}
+func New(router *mux.Router, repository repository) httpHandler {
+	handler := httpHandler{repository: repository}
 	handler.setRoutes(router)
 
 	return handler
@@ -35,6 +29,7 @@ func (h httpHandler) setRoutes(router *mux.Router) {
 }
 
 func (h httpHandler) loginHandler(w http.ResponseWriter, _ *http.Request) {
+	// TODO: login user using JWT authentication service
 	w.WriteHeader(http.StatusOK)
 }
 
