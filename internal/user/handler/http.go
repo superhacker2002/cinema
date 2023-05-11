@@ -20,7 +20,7 @@ type credentials struct {
 }
 
 type repository interface {
-	CreateUser(username string, password string, role string) (string, error)
+	CreateUser(username string, passwordHash string, role string) (userId string, err error)
 }
 
 type auth interface {

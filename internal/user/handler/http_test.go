@@ -101,6 +101,10 @@ func TestLoginHandler(t *testing.T) {
 
 type mockRepository struct{}
 
+func (m mockRepository) User(username string) (string, error) {
+	return "", nil
+}
+
 func (m mockRepository) CreateUser(username string) (string, error) {
 	return "", nil
 }
