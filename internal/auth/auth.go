@@ -6,6 +6,8 @@ import (
 	_ "github.com/lib/pq"
 	"log"
 	"time"
+
+	userRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/repository"
 )
 
 var (
@@ -15,13 +17,8 @@ var (
 	ErrExpiredToken              = errors.New("token is expired")
 )
 
-type Credentials struct {
-	ID           string
-	PasswordHash string
-}
-
 type repository interface {
-	User(username string) (Credentials, error)
+	User(username string) (userRepository.Credentials, error)
 }
 
 type Auth struct {
@@ -40,6 +37,9 @@ func New(jwtSecret string, tokenExp int, repository repository) Auth {
 
 func (a Auth) Authenticate(username string, passwordHash string) (token string, err error) {
 	userCreds, err := a.r.User(username)
+	if errors.Is(userRepository.ErrUserNotFound, err) {
+		return "", ErrInvalidUsernameOrPassword
+	}
 	if err != nil {
 		return "", err
 	}

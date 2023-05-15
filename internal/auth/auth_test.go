@@ -1,6 +1,7 @@
 package auth
 
 import (
+	userRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/repository"
 	"crypto/sha256"
 	"encoding/hex"
 	"github.com/dgrijalva/jwt-go"
@@ -10,11 +11,11 @@ import (
 )
 
 type mockRepository struct {
-	creds Credentials
+	creds userRepository.Credentials
 	err   error
 }
 
-func (m mockRepository) User(username string) (Credentials, error) {
+func (m mockRepository) User(username string) (userRepository.Credentials, error) {
 	return m.creds, m.err
 }
 
@@ -25,7 +26,7 @@ func TestAuthenticate(t *testing.T) {
 	hasher.Write([]byte("password"))
 	hashedPassword := hex.EncodeToString(hasher.Sum(nil))
 
-	repo.creds = Credentials{"existing_user", hashedPassword}
+	repo.creds = userRepository.Credentials{"existing_user", hashedPassword}
 
 	t.Run("Valid auth", func(t *testing.T) {
 		repo.err = nil
@@ -64,7 +65,7 @@ func createTokenString(secret []byte, userID string, tokenExp int) (string, erro
 func TestVerifyToken(t *testing.T) {
 	repo := mockRepository{}
 
-	repo.creds = Credentials{}
+	repo.creds = userRepository.Credentials{}
 	auth := New("secret-key", 24, repo)
 
 	t.Run("valid token", func(t *testing.T) {
