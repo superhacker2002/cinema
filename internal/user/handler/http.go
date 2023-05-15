@@ -1,25 +1,29 @@
 package handler
 
 import (
+	userRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/repository"
 	"github.com/gorilla/mux"
 	"net/http"
 )
 
-type repository interface{}
-
-type httpHandler struct {
-	repository repository
+type auth interface {
+	Authenticate(username string, passwordHash string) (token string, err error)
+	VerifyToken(token string) (userID int, err error)
 }
 
-func New(router *mux.Router, repository repository) httpHandler {
-	handler := httpHandler{repository: repository}
+type httpHandler struct {
+	r userRepository.Repository
+}
+
+func New(router *mux.Router, repository userRepository.Repository) httpHandler {
+	handler := httpHandler{r: repository}
 	handler.setRoutes(router)
 
 	return handler
 }
 
 func (h httpHandler) setRoutes(router *mux.Router) {
-	router.HandleFunc("/auth/login/", h.loginHandler).Methods("POST")
+	router.HandleFunc("/auth/", h.loginHandler).Methods("POST")
 	s := router.PathPrefix("/users").Subrouter()
 	s.HandleFunc("/", h.getUsersHandler).Methods("GET")
 	s.HandleFunc("/{userId}/", h.getUserHandler).Methods("GET")
