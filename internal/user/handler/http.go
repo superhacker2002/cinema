@@ -26,12 +26,12 @@ type auth interface {
 }
 
 type httpHandler struct {
-	auth auth
-	r    userRepository.Repository
+	a auth
+	r userRepository.Repository
 }
 
 func New(router *mux.Router, auth auth, repository userRepository.Repository) httpHandler {
-	handler := httpHandler{auth: auth, r: repository}
+	handler := httpHandler{a: auth, r: repository}
 	handler.setRoutes(router)
 
 	return handler
@@ -63,7 +63,7 @@ func (h httpHandler) loginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := h.auth.Authenticate(creds.Username, creds.Password)
+	token, err := h.a.Authenticate(creds.Username, creds.Password)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "failed to authenticate: "+err.Error(), http.StatusUnauthorized)

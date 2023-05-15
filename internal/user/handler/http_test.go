@@ -65,7 +65,7 @@ func TestLoginHandler(t *testing.T) {
 		require.NoError(t, err, "failed to create test request")
 
 		response := httptest.NewRecorder()
-		handler := httpHandler{auth: auth}.loginHandler
+		handler := httpHandler{a: auth}.loginHandler
 		handler(response, req)
 
 		assert.Equal(t, "{\"token\":\"test_token\"}\n", response.Body.String())
@@ -78,7 +78,7 @@ func TestLoginHandler(t *testing.T) {
 		require.NoError(t, err, "failed to create test request")
 
 		response := httptest.NewRecorder()
-		handler := httpHandler{auth: auth}.loginHandler
+		handler := httpHandler{a: auth}.loginHandler
 		handler(response, req)
 
 		assert.Equal(t, "failed to read request body\n", response.Body.String())
@@ -92,7 +92,7 @@ func TestLoginHandler(t *testing.T) {
 		require.NoError(t, err, "failed to create test request")
 
 		response := httptest.NewRecorder()
-		handler := httpHandler{auth: auth}.loginHandler
+		handler := httpHandler{a: auth}.loginHandler
 		handler(response, req)
 
 		assert.Equal(t, "failed to authenticate: something went wrong\n", response.Body.String())
@@ -124,7 +124,7 @@ func TestCreateUserHandler(t *testing.T) {
 		require.NoError(t, err, "failed to create test request")
 
 		response := httptest.NewRecorder()
-		handler := httpHandler{auth: auth, r: repo}.createUserHandler
+		handler := httpHandler{a: auth, r: repo}.createUserHandler
 		handler(response, req)
 
 		assert.Equal(t, "{\"user_id\":1}\n", response.Body.String())
@@ -137,7 +137,7 @@ func TestCreateUserHandler(t *testing.T) {
 		require.NoError(t, err, "failed to create test request")
 
 		response := httptest.NewRecorder()
-		handler := httpHandler{auth: auth, r: repo}.createUserHandler
+		handler := httpHandler{a: auth, r: repo}.createUserHandler
 		handler(response, req)
 
 		assert.Equal(t, "failed to read request body\n", response.Body.String())
@@ -150,7 +150,7 @@ func TestCreateUserHandler(t *testing.T) {
 		require.NoError(t, err, "failed to create test request")
 
 		response := httptest.NewRecorder()
-		handler := httpHandler{auth: auth, r: repo}.createUserHandler
+		handler := httpHandler{a: auth, r: repo}.createUserHandler
 		handler(response, req)
 
 		assert.Equal(t, "missing username or password\n", response.Body.String())
@@ -164,7 +164,7 @@ func TestCreateUserHandler(t *testing.T) {
 		require.NoError(t, err, "failed to create test request")
 
 		response := httptest.NewRecorder()
-		handler := httpHandler{auth: auth, r: repo}.createUserHandler
+		handler := httpHandler{a: auth, r: repo}.createUserHandler
 		handler(response, req)
 
 		assert.Equal(t, "failed to sign up: something went wrong\n", response.Body.String())
