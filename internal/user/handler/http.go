@@ -1,18 +1,22 @@
 package handler
 
 import (
+	userRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/repository"
 	"github.com/gorilla/mux"
 	"net/http"
 )
 
-type repository interface{}
-
-type httpHandler struct {
-	repository repository
+type auth interface {
+	Authenticate(username string, passwordHash string) (token string, err error)
+	VerifyToken(token string) (userID int, err error)
 }
 
-func New(router *mux.Router, repository repository) httpHandler {
-	handler := httpHandler{repository: repository}
+type httpHandler struct {
+	r userRepository.Repository
+}
+
+func New(router *mux.Router, repository userRepository.Repository) httpHandler {
+	handler := httpHandler{r: repository}
 	handler.setRoutes(router)
 
 	return handler
