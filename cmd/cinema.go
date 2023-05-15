@@ -27,8 +27,8 @@ func main() {
 		log.Fatal(err)
 	}
 	defer db.Close()
-	cinemaRepository := cinemaRepository.New(db)
 	userRepository := userRepository.New(db)
+	cinemaRepository := cinemaRepository.New(db)
 
 	router := mux.NewRouter()
 	exp, err := strconv.Atoi(config.TokenExp)
