@@ -1,6 +1,4 @@
 OPENAPI_FILE=openapi.html
-DATABASE_CONTAINER=cinema-container
-DATABASE_IMAGE=cinema-image
 
 .PHONY: run
 run:
