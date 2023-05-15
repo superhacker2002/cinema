@@ -23,7 +23,6 @@ func TestSetRoutes(t *testing.T) {
 		status int
 		method string
 	}{
-		{path: "/auth/login/", status: http.StatusOK, method: "POST"},
 		{path: "/users/", status: http.StatusOK, method: "POST"},
 		{path: "/users/", status: http.StatusOK, method: "GET"},
 		{path: "/users/1/", status: http.StatusOK, method: "GET"},

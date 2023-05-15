@@ -23,7 +23,7 @@ func New(router *mux.Router, repository userRepository.Repository) httpHandler {
 }
 
 func (h httpHandler) setRoutes(router *mux.Router) {
-	router.HandleFunc("/auth/login/", h.loginHandler).Methods("POST")
+	router.HandleFunc("/auth/", h.loginHandler).Methods("POST")
 	s := router.PathPrefix("/users").Subrouter()
 	s.HandleFunc("/", h.getUsersHandler).Methods("GET")
 	s.HandleFunc("/{userId}/", h.getUserHandler).Methods("GET")
