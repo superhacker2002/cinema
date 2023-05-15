@@ -3,11 +3,11 @@ package main
 import (
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/auth"
 	cinemaHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinema/handler"
-	cinemaRepo "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinema/repository"
+	cinemaRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinema/repository"
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/config"
 
 	userHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/handler"
-	userRepo "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/repository"
+	userRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/repository"
 	"database/sql"
 	"github.com/gorilla/mux"
 	"log"
@@ -27,18 +27,18 @@ func main() {
 		log.Fatal(err)
 	}
 	defer db.Close()
-	cinemaRepo := cinemaRepo.New(db)
-	userRepo := userRepo.New(db)
+	cinemaRepository := cinemaRepository.New(db)
+	userRepository := userRepository.New(db)
 
 	router := mux.NewRouter()
 	exp, err := strconv.Atoi(config.TokenExp)
 	if err != nil {
 		log.Fatal(err)
 	}
-	authentication := auth.New(config.JWTSecret, exp, userRepo)
+	authentication := auth.New(config.JWTSecret, exp, userRepository)
 
-	userHandler.New(router, authentication, userRepo)
-	cinemaHandler.New(router, cinemaRepo)
+	userHandler.New(router, authentication, userRepository)
+	cinemaHandler.New(router, cinemaRepository)
 
 	log.Fatal(http.ListenAndServe(":"+config.Port, router))
 }
