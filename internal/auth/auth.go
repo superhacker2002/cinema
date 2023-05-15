@@ -17,26 +17,22 @@ var (
 	ErrExpiredToken              = errors.New("token is expired")
 )
 
-type repository interface {
-	User(username string) (userRepository.Credentials, error)
-}
-
 type Auth struct {
 	jwtSecret []byte
-	r         repository
+	r         userRepository.Repository
 	exp       int
 }
 
-func New(jwtSecret string, tokenExp int, repository repository) Auth {
+func New(jwtSecret string, tokenExp int, repo userRepository.Repository) Auth {
 	return Auth{
 		jwtSecret: []byte(jwtSecret),
-		r:         repository,
+		r:         repo,
 		exp:       tokenExp,
 	}
 }
 
 func (a Auth) Authenticate(username string, passwordHash string) (token string, err error) {
-	userCreds, err := a.r.User(username)
+	userCreds, err := a.r.GetUser(username)
 	if errors.Is(userRepository.ErrUserNotFound, err) {
 		return "", ErrInvalidUsernameOrPassword
 	}
@@ -51,7 +47,7 @@ func (a Auth) Authenticate(username string, passwordHash string) (token string, 
 	return a.generateJWT(userCreds.ID)
 }
 
-func (a Auth) generateJWT(userID string) (string, error) {
+func (a Auth) generateJWT(userID int) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id": userID,
 		"exp":     time.Now().Add(time.Hour * time.Duration(a.exp)).Unix(),
@@ -63,7 +59,7 @@ func (a Auth) generateJWT(userID string) (string, error) {
 	return signedToken, nil
 }
 
-func (a Auth) VerifyToken(token string) (userID string, err error) {
+func (a Auth) VerifyToken(token string) (userID int, err error) {
 	parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, ErrInvalidSigningMethod
@@ -72,19 +68,19 @@ func (a Auth) VerifyToken(token string) (userID string, err error) {
 	})
 	if err != nil {
 		log.Println(err)
-		return "", ErrInvalidToken
+		return 0, ErrInvalidToken
 	}
 
 	claims, ok := parsedToken.Claims.(jwt.MapClaims)
 	if ok && parsedToken.Valid {
 		if a.tokenIsExpired(claims) {
-			return "", ErrExpiredToken
+			return 0, ErrExpiredToken
 		}
-		userID := claims["user_id"].(string)
+		userID := int(claims["user_id"].(float64))
 		return userID, nil
 	}
 
-	return "", ErrInvalidToken
+	return 0, ErrInvalidToken
 }
 
 func (a Auth) tokenIsExpired(claims jwt.MapClaims) bool {

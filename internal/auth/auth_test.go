@@ -15,7 +15,7 @@ type mockRepository struct {
 	err   error
 }
 
-func (m mockRepository) User(username string) (userRepository.Credentials, error) {
+func (m mockRepository) GetUser(username string) (userRepository.Credentials, error) {
 	return m.creds, m.err
 }
 
@@ -26,7 +26,7 @@ func TestAuthenticate(t *testing.T) {
 	hasher.Write([]byte("password"))
 	hashedPassword := hex.EncodeToString(hasher.Sum(nil))
 
-	repo.creds = userRepository.Credentials{"existing_user", hashedPassword}
+	repo.creds = userRepository.Credentials{1, hashedPassword}
 
 	t.Run("Valid auth", func(t *testing.T) {
 		repo.err = nil
@@ -53,7 +53,7 @@ func TestAuthenticate(t *testing.T) {
 	})
 }
 
-func createTokenString(secret []byte, userID string, tokenExp int) (string, error) {
+func createTokenString(secret []byte, userID int, tokenExp int) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id": userID,
 		"exp":     time.Now().Add(time.Hour * time.Duration(tokenExp)).Unix(),
@@ -69,11 +69,11 @@ func TestVerifyToken(t *testing.T) {
 	auth := New("secret-key", 24, repo)
 
 	t.Run("valid token", func(t *testing.T) {
-		token, _ := createTokenString([]byte("secret-key"), "existing_user", 24)
+		token, _ := createTokenString([]byte("secret-key"), 1, 24)
 		userID, err := auth.VerifyToken(token)
 
 		assert.Nil(t, err, "unexpected error occurred: %w", err)
-		assert.Equal(t, "existing_user", userID)
+		assert.Equal(t, 1, userID)
 	})
 
 	t.Run("invalid token", func(t *testing.T) {
@@ -81,22 +81,22 @@ func TestVerifyToken(t *testing.T) {
 		userID, err := auth.VerifyToken(invalidToken)
 
 		assert.Equal(t, ErrInvalidToken, err)
-		assert.Equal(t, "", userID,
+		assert.Equal(t, 0, userID,
 			"user id should be empty when token is invalid")
 	})
 
 	t.Run("invalid signing method", func(t *testing.T) {
-		invalidToken, _ := createTokenString([]byte("invalid-secret-key"), "existing_user", 24)
+		invalidToken, _ := createTokenString([]byte("invalid-secret-key"), 1, 24)
 		userID, err := auth.VerifyToken(invalidToken)
 
 		assert.Equal(t, ErrInvalidToken, err)
-		assert.Equal(t, "", userID,
+		assert.Equal(t, 0, userID,
 			"user id should be empty when token was signed by invalid method")
 	})
 
 	t.Run("expired token", func(t *testing.T) {
 		auth.exp = 0
-		token, _ := createTokenString([]byte("secret-key"), "existing_user", 0)
+		token, _ := createTokenString([]byte("secret-key"), 1, 0)
 		userID, err := auth.VerifyToken(token)
 
 		assert.Equal(t, ErrExpiredToken, err)
