@@ -1,6 +1,7 @@
 package handler
 
 import (
+	userRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/repository"
 	"encoding/json"
 	"errors"
 	"github.com/gorilla/mux"
@@ -19,21 +20,17 @@ type credentials struct {
 	Password string `json:"password"`
 }
 
-type repository interface {
-	CreateUser(username string, passwordHash string, role string) (userId string, err error)
-}
-
 type auth interface {
 	Authenticate(username string, passwordHash string) (token string, err error)
-	VerifyToken(token string) (userID string, err error)
+	VerifyToken(token string) (userID int, err error)
 }
 
 type httpHandler struct {
 	auth auth
-	r    repository
+	r    userRepository.Repository
 }
 
-func New(router *mux.Router, auth auth, repository repository) httpHandler {
+func New(router *mux.Router, auth auth, repository userRepository.Repository) httpHandler {
 	handler := httpHandler{auth: auth, r: repository}
 	handler.setRoutes(router)
 
@@ -107,7 +104,7 @@ func (h httpHandler) createUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"user_id": id})
+	json.NewEncoder(w).Encode(map[string]int{"user_id": id})
 }
 
 func (h httpHandler) getUsersHandler(w http.ResponseWriter, r *http.Request) {

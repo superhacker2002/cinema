@@ -1,6 +1,7 @@
 package handler
 
 import (
+	userRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/repository"
 	"errors"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
@@ -50,8 +51,8 @@ type mockAuth struct {
 func (m mockAuth) Authenticate(username string, password string) (string, error) {
 	return m.token, m.err
 }
-func (m mockAuth) VerifyToken(returnTokenString string) (string, error) {
-	return "", nil
+func (m mockAuth) VerifyToken(returnTokenString string) (int, error) {
+	return 0, nil
 }
 
 func TestLoginHandler(t *testing.T) {
@@ -101,14 +102,14 @@ func TestLoginHandler(t *testing.T) {
 
 type mockRepository struct {
 	err    error
-	userId string
+	userId int
 }
 
-func (m mockRepository) User(username string) (string, error) {
-	return "", nil
+func (m mockRepository) GetUser(username string) (userRepository.Credentials, error) {
+	return userRepository.Credentials{}, nil
 }
 
-func (m mockRepository) CreateUser(username string, passwordHash string, role string) (string, error) {
+func (m mockRepository) CreateUser(username string, passwordHash string, role string) (int, error) {
 	return m.userId, m.err
 }
 
@@ -117,7 +118,7 @@ func TestCreateUserHandler(t *testing.T) {
 	repo := mockRepository{}
 	t.Run("successful registration", func(t *testing.T) {
 		repo.err = nil
-		repo.userId = "1"
+		repo.userId = 1
 		req, err := http.NewRequest(http.MethodPost, "users/",
 			strings.NewReader(`{"username": "test_user", "password": "test_password"}`))
 		require.NoError(t, err, "failed to create test request")
@@ -126,7 +127,7 @@ func TestCreateUserHandler(t *testing.T) {
 		handler := httpHandler{auth: auth, r: repo}.createUserHandler
 		handler(response, req)
 
-		assert.Equal(t, "{\"user_id\":\"1\"}\n", response.Body.String())
+		assert.Equal(t, "{\"user_id\":1}\n", response.Body.String())
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
 
