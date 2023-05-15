@@ -51,7 +51,7 @@ type mockAuth struct {
 func (m mockAuth) Authenticate(username string, password string) (string, error) {
 	return m.token, m.err
 }
-func (m mockAuth) VerifyToken(returnTokenString string) (int, error) {
+func (m mockAuth) VerifyToken(token string) (int, error) {
 	return 0, nil
 }
 

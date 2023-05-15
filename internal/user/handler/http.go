@@ -30,8 +30,8 @@ type httpHandler struct {
 	r userRepository.Repository
 }
 
-func New(router *mux.Router, auth auth, repository userRepository.Repository) httpHandler {
-	handler := httpHandler{a: auth, r: repository}
+func New(router *mux.Router, auth auth, repo userRepository.Repository) httpHandler {
+	handler := httpHandler{a: auth, r: repo}
 	handler.setRoutes(router)
 
 	return handler
