@@ -29,6 +29,7 @@ func (h httpHandler) setRoutes(router *mux.Router) {
 }
 
 func (h httpHandler) loginHandler(w http.ResponseWriter, _ *http.Request) {
+	// TODO: login user using JWT authentication service
 	w.WriteHeader(http.StatusOK)
 }
 

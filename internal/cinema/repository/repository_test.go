@@ -31,7 +31,7 @@ func TestGetMovie(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"id", "title", "genre", "release_date", "duration"}).
 			AddRow(expectedMovie.ID, expectedMovie.Title, expectedMovie.Genre, expectedMovie.ReleaseDate, expectedMovie.Duration))
 
-	repo := NewMovieRepository(db)
+	repo := New(db)
 
 	movie, err := repo.GetMovie(movieID)
 	if err != nil {

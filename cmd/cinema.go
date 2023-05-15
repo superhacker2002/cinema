@@ -2,9 +2,10 @@ package main
 
 import (
 	cinemaHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinema/handler"
+	cinemaRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinema/repository"
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/config"
-	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/repository"
 	userHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/handler"
+	userRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/repository"
 	"database/sql"
 	"github.com/gorilla/mux"
 	"log"
@@ -22,11 +23,13 @@ func main() {
 		log.Fatal(err)
 	}
 	defer db.Close()
-	repository := repository.New(db)
+	userRepository := userRepository.New(db)
+	cinemaRepository := cinemaRepository.New(db)
 
 	router := mux.NewRouter()
-	userHandler.New(router, repository)
-	cinemaHandler.New(router, repository)
+
+	userHandler.New(router, userRepository)
+	cinemaHandler.New(router, cinemaRepository)
 
 	log.Fatal(http.ListenAndServe(":"+config.Port, router))
 }

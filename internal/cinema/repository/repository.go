@@ -7,8 +7,12 @@ import (
 	"github.com/lib/pq"
 )
 
-type repository struct {
+type CinemaRepository struct {
 	db *sql.DB
+}
+
+func New(db *sql.DB) CinemaRepository {
+	return CinemaRepository{db: db}
 }
 
 type Movie struct {
@@ -19,15 +23,7 @@ type Movie struct {
 	Duration    int
 }
 
-func New(db *sql.DB) repository {
-	return repository{db: db}
-}
-
-func NewMovieRepository(db *sql.DB) *repository {
-	return &repository{db: db}
-}
-
-func (r *repository) GetMovie(movieID int) (*Movie, error) {
+func (r CinemaRepository) GetMovie(movieID int) (*Movie, error) {
 	var movie Movie
 
 	err := r.db.QueryRow("SELECT id, title, genre, release_date, duration FROM movies WHERE id = $1", movieID).
