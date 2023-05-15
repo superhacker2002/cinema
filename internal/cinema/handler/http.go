@@ -20,14 +20,8 @@ func New(router *mux.Router, repository repository) httpHandler {
 }
 
 func (h httpHandler) setRoutes(router *mux.Router) {
-	s := router.PathPrefix("/halls").Subrouter()
-	s.HandleFunc("/", h.getHallsHandler).Methods("GET")
-	s.HandleFunc("/", h.createHallHandler).Methods("POST")
-	s.HandleFunc("/{hallId}/", h.getHallHandler).Methods("GET")
-	s.HandleFunc("/{hallId}/", h.updateHallHandler).Methods("PUT")
-	s.HandleFunc("/{hallId}/", h.deleteHallHandler).Methods("DELETE")
 
-	s = router.PathPrefix("/movies").Subrouter()
+	s := router.PathPrefix("/movies").Subrouter()
 	s.HandleFunc("/", h.getMoviesHandler).Methods("GET")
 	s.HandleFunc("/", h.createMovieHandler).Methods("POST")
 	s.HandleFunc("/{movieId}/", h.getMovieHandler).Methods("GET")
@@ -46,31 +40,6 @@ func (h httpHandler) setRoutes(router *mux.Router) {
 	s.HandleFunc("/", h.createTicketHandler).Methods("POST")
 	s.HandleFunc("/{ticketId}/", h.getTicketHandler).Methods("GET")
 	s.HandleFunc("/{userId}/", h.getUserTicketsHandler).Methods("GET")
-}
-
-func (h httpHandler) getHallsHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: return all halls
-	w.WriteHeader(http.StatusOK)
-}
-
-func (h httpHandler) createHallHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: create new hall (only for admins)
-	w.WriteHeader(http.StatusOK)
-}
-
-func (h httpHandler) getHallHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: return hall by id
-	w.WriteHeader(http.StatusOK)
-}
-
-func (h httpHandler) updateHallHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: update hall by id (only for admins)
-	w.WriteHeader(http.StatusOK)
-}
-
-func (h httpHandler) deleteHallHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: delete hall by id (only for admins)
-	w.WriteHeader(http.StatusOK)
 }
 
 func (h httpHandler) getMoviesHandler(w http.ResponseWriter, r *http.Request) {
