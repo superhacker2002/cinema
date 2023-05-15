@@ -812,6 +812,8 @@ paths:
                     type: string
                     format: sha256
                     description: Unique JWT token for the user
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '500':
