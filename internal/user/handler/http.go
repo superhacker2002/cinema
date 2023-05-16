@@ -74,6 +74,13 @@ func (h httpHandler) loginHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"token": token})
 }
 
+func (c credentials) validate() error {
+	if c.Username == "" || c.Password == "" {
+		return ErrNoUsernameOrPassword
+	}
+	return nil
+}
+
 func (h httpHandler) createUserHandler(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -83,14 +90,14 @@ func (h httpHandler) createUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var creds credentials
-	err = json.Unmarshal(body, &creds)
-	if err != nil {
+
+	if err = json.Unmarshal(body, &creds); err != nil {
 		log.Println(err)
 		http.Error(w, ErrReadRequestFail.Error(), http.StatusBadRequest)
 		return
 	}
 
-	if creds.Username == "" || creds.Password == "" {
+	if err = creds.validate(); err != nil {
 		log.Println(err)
 		http.Error(w, ErrNoUsernameOrPassword.Error(), http.StatusBadRequest)
 		return
