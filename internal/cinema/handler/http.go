@@ -122,18 +122,22 @@ func (h HttpHandler) getSessionsHandler(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, ErrInvalidHallId.Error()+hallIdStr, http.StatusBadRequest)
 		return
 	}
+
 	currentTime := time.Now().Format("2006-01-02 15:04:05")
 	session, err := h.r.SessionsForHall(hallId, currentTime)
+
 	if errors.Is(err, cinemaRepository.ErrCinemaSessionsNotFound) {
 		log.Println(err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
 	if err != nil {
 		log.Println(err)
 		http.Error(w, ErrInternalError.Error(), http.StatusInternalServerError)
 		return
 	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(session)
 }
