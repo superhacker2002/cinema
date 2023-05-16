@@ -26,10 +26,10 @@ INSERT INTO cinema_sessions (movie_id, hall_id, start_time, end_time, price)
 VALUES (1, 2, '2023-05-10 20:00:00', '2023-05-10 22:00:00', 10.00);
 
 INSERT INTO cinema_sessions (movie_id, hall_id, start_time, end_time, price)
-VALUES (3, 2, '2023-05-17 19:00:00', '2023-05-10 22:00:00', 10.00);
+VALUES (3, 2, '2023-05-16 19:00:00', '2023-05-16 22:00:00', 10.00);
 
 INSERT INTO cinema_sessions (movie_id, hall_id, start_time, end_time, price)
-VALUES (3, 2, '2023-05-18 20:00:00', '2023-05-10 22:00:00', 10.00);
+VALUES (3, 2, '2023-05-18 20:00:00', '2023-05-18 22:00:00', 10.00);
 
 INSERT INTO tickets (session_id, user_id, seat_number) VALUES (1, 2, 1);
 INSERT INTO tickets (session_id, user_id, seat_number) VALUES (1, 3, 2);
