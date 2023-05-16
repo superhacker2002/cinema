@@ -11,7 +11,7 @@ func TestValidateConfig(t *testing.T) {
 			Port:      "8080",
 			Db:        "localhost:3306/mydb",
 			JWTSecret: "secret-key",
-			TokenExp:  "24",
+			TokenExp:  24,
 		}
 		assert.NoError(t, config.Validate())
 	})
@@ -21,7 +21,7 @@ func TestValidateConfig(t *testing.T) {
 			Port:      "",
 			Db:        "localhost:3306/mydb",
 			JWTSecret: "secret-key",
-			TokenExp:  "24",
+			TokenExp:  24,
 		}
 		assert.EqualError(t, config.Validate(), ErrNoPort.Error())
 	})
@@ -31,7 +31,7 @@ func TestValidateConfig(t *testing.T) {
 			Port:      "8080",
 			Db:        "",
 			JWTSecret: "secret-key",
-			TokenExp:  "24",
+			TokenExp:  24,
 		}
 		assert.EqualError(t, config.Validate(), ErrNoDataBaseURL.Error())
 	})
@@ -41,7 +41,7 @@ func TestValidateConfig(t *testing.T) {
 			Port:      "8080",
 			Db:        "localhost:9999/mydb",
 			JWTSecret: "",
-			TokenExp:  "24",
+			TokenExp:  24,
 		}
 		assert.EqualError(t, config.Validate(), ErrNoJWTSecret.Error())
 	})
@@ -51,8 +51,8 @@ func TestValidateConfig(t *testing.T) {
 			Port:      "8080",
 			Db:        "localhost:9999/mydb",
 			JWTSecret: "secret-key",
-			TokenExp:  "",
+			TokenExp:  0,
 		}
-		assert.EqualError(t, config.Validate(), ErrNoTokenExpiration.Error())
+		assert.EqualError(t, config.Validate(), ErrBadTokenExpiration.Error())
 	})
 }
