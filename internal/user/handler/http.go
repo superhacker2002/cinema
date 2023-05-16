@@ -103,7 +103,7 @@ func (h httpHandler) createUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.r.CreateUser(creds.Username, creds.Password, "user")
+	id, err := h.r.CreateUser(creds.Username, creds.Password)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "failed to sign up: "+err.Error(), http.StatusInternalServerError)

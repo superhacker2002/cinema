@@ -15,7 +15,7 @@ type Credentials struct {
 
 type Repository interface {
 	GetUser(username string) (Credentials, error)
-	CreateUser(username string, passwordHash string, role string) (userId int, err error)
+	CreateUser(username string, passwordHash string) (userId int, err error)
 }
 
 type UserRepository struct {
@@ -39,7 +39,8 @@ func (r UserRepository) GetUser(username string) (Credentials, error) {
 	return credentials, nil
 }
 
-func (r UserRepository) CreateUser(username string, passwordHash string, role string) (userId int, err error) {
+func (r UserRepository) CreateUser(username string, passwordHash string) (userId int, err error) {
+	const roleID int = 2
 	err = r.db.QueryRow("SELECT user_id FROM users WHERE username = $1", username).
 		Scan(&userId)
 	if err == nil {
@@ -48,13 +49,6 @@ func (r UserRepository) CreateUser(username string, passwordHash string, role st
 	if !errors.Is(err, sql.ErrNoRows) {
 		return 0, fmt.Errorf("failed to check if user with username %q exists: %w",
 			username, err)
-	}
-
-	var roleID string
-	err = r.db.QueryRow("SELECT role_id FROM roles WHERE role_name = $1", role).
-		Scan(&roleID)
-	if err != nil {
-		return 0, fmt.Errorf("could not get role id: %w", err)
 	}
 
 	err = r.db.QueryRow("INSERT INTO users (username, hashed_password, role_id) "+

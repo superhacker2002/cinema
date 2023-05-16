@@ -109,7 +109,7 @@ func (m mockRepository) GetUser(username string) (userRepository.Credentials, er
 	return userRepository.Credentials{}, nil
 }
 
-func (m mockRepository) CreateUser(username string, passwordHash string, role string) (int, error) {
+func (m mockRepository) CreateUser(username string, passwordHash string) (int, error) {
 	return m.userId, m.err
 }
 

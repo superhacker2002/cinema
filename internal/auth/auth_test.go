@@ -19,7 +19,7 @@ func (m mockRepository) GetUser(username string) (userRepository.Credentials, er
 	return m.creds, m.err
 }
 
-func (m mockRepository) CreateUser(username string, passwordHash string, role string) (int, error) {
+func (m mockRepository) CreateUser(username string, passwordHash string) (int, error) {
 	return 0, nil
 }
 
