@@ -12,17 +12,19 @@ import (
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
-	"strconv"
 )
 
 func main() {
 	log.SetFlags(log.Lshortfile)
-	config := config.New()
-	if err := config.Validate(); err != nil {
+	configs, err := config.New()
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err = configs.Validate(); err != nil {
 		log.Fatal(err)
 	}
 
-	db, err := sql.Open("postgres", config.Db)
+	db, err := sql.Open("postgres", configs.Db)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -31,14 +33,10 @@ func main() {
 	cinemaRepository := cinemaRepository.New(db)
 
 	router := mux.NewRouter()
-	exp, err := strconv.Atoi(config.TokenExp)
-	if err != nil {
-		log.Fatal(err)
-	}
-	authentication := auth.New(config.JWTSecret, exp, userRepository)
+	authentication := auth.New(configs.JWTSecret, configs.TokenExp, userRepository)
 
 	userHandler.New(router, authentication, userRepository)
 	cinemaHandler.New(router, cinemaRepository)
 
-	log.Fatal(http.ListenAndServe(":"+config.Port, router))
+	log.Fatal(http.ListenAndServe(":"+configs.Port, router))
 }
