@@ -3,7 +3,6 @@ package handler
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -121,7 +120,6 @@ func (h HttpHandler) getSessionsHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	currentTime := time.Now().Format("2006-01-02 15:04:05")
-	fmt.Println(currentTime)
 	session, err := h.r.SessionsForHall(hallId, currentTime)
 	if err != nil {
 		log.Println(err)
