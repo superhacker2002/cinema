@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/lib/pq"
+	"log"
+	"time"
 )
 
 type CinemaRepository struct {
@@ -53,31 +55,50 @@ func (c *CinemaRepository) GetMovie(movieID int) (*Movie, error) {
 
 func (c *CinemaRepository) SessionsForHall(hallId int, timestamp string) ([]CinemaSession, error) {
 	var cinemaSessions []CinemaSession
+	fmt.Println(timestamp)
 	rows, err := c.db.Query("SELECT session_id, movie_id, start_time, end_time "+
-		"FROM cinema_sessions WHERE hall_id = $1	AND start_time >= $2", hallId, timestamp)
+		"FROM cinema_sessions WHERE hall_id = $1 AND end_time > $2", hallId, timestamp)
+	if err == sql.ErrNoRows {
+		log.Println(err)
+		return nil, fmt.Errorf("no available cinema sessions were found in hall with ID %d", hallId)
+	}
+
+	if err != nil {
+		log.Println(err)
+		return nil, fmt.Errorf("failed to get cinema session: %w", err)
+	}
+
 	for rows.Next() {
 		var session CinemaSession
-		err := rows.Scan(&session.ID, &session.MovieId, &session.StartTime, &session.EndTime)
-		session.setStatus(timestamp)
-		if err != nil {
+		if err := rows.Scan(&session.ID, &session.MovieId, &session.StartTime, &session.EndTime); err != nil {
+			return nil, err
+		}
+		if err := session.setStatus(timestamp); err != nil {
 			return nil, err
 		}
 		cinemaSessions = append(cinemaSessions, session)
 	}
-
-	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("no available cinema sessions were found in hall with ID %d", hallId)
-	}
-	if err != nil {
-		return nil, fmt.Errorf("failed to get cinema session: %w", err)
-	}
 	return cinemaSessions, nil
 }
 
-func (c *CinemaSession) setStatus(timestamp string) {
-	if c.StartTime <= timestamp && timestamp <= c.EndTime {
+func (c *CinemaSession) setStatus(timestamp string) error {
+	start, err := time.Parse(time.RFC3339, c.StartTime)
+	if err != nil {
+		return err
+	}
+	end, err := time.Parse(time.RFC3339, c.EndTime)
+	if err != nil {
+		return err
+	}
+	current, err := time.Parse("2006-01-02 15:04:05", timestamp)
+	if err != nil {
+		return err
+	}
+
+	if start.Before(current) && end.After(current) {
 		c.Status = "on_air"
 	} else {
 		c.Status = "scheduled"
 	}
+	return nil
 }
