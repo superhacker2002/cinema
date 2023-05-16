@@ -1,19 +1,26 @@
 package handler
 
 import (
+	"errors"
+	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 )
 
-type repository interface{}
+var ErrInvalidHallId = errors.New("invalid hall id provided")
+
+type repository interface {
+	SessionsForHall(hallId int) error
+}
 
 type httpHandler struct {
-	repository repository
+	r repository
 }
 
 func New(router *mux.Router, repository repository) httpHandler {
-	handler := httpHandler{repository: repository}
+	handler := httpHandler{r: repository}
 	handler.setRoutes(router)
 
 	return handler
@@ -36,11 +43,12 @@ func (h httpHandler) setRoutes(router *mux.Router) {
 	s.HandleFunc("/watched/{userId}/", h.watchedMoviesHandler).Methods("GET")
 
 	s = router.PathPrefix("/cinema-sessions").Subrouter()
-	s.HandleFunc("/", h.getMoviesHandler).Methods("GET")
-	s.HandleFunc("/", h.createMovieHandler).Methods("POST")
-	s.HandleFunc("/{sessionId}/", h.getMovieHandler).Methods("GET")
-	s.HandleFunc("/{sessionId}/", h.updateMovieHandler).Methods("PUT")
-	s.HandleFunc("/{sessionId}/", h.deleteMovieHandler).Methods("DELETE")
+	s.HandleFunc("/{hallId}/", h.getSessionsHandler).Methods("GET")
+	//s.HandleFunc("/", h.getSessionsHandler).Methods("GET")
+	s.HandleFunc("/", h.createSessionHandler).Methods("POST")
+	s.HandleFunc("/{sessionId}/", h.getSessionHandler).Methods("GET")
+	s.HandleFunc("/{sessionId}/", h.updateSessionHandler).Methods("PUT")
+	s.HandleFunc("/{sessionId}/", h.deleteSessionHandler).Methods("DELETE")
 
 	s = router.PathPrefix("/tickets").Subrouter()
 	s.HandleFunc("/", h.createTicketHandler).Methods("POST")
@@ -74,27 +82,27 @@ func (h httpHandler) deleteHallHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h httpHandler) getMoviesHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: return all halls
+	// TODO: return all movies
 	w.WriteHeader(http.StatusOK)
 }
 
 func (h httpHandler) createMovieHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: create new hall (only for admins)
+	// TODO: create new movie (only for admins)
 	w.WriteHeader(http.StatusOK)
 }
 
 func (h httpHandler) getMovieHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: return hall by id
+	// TODO: return movie by id
 	w.WriteHeader(http.StatusOK)
 }
 
 func (h httpHandler) updateMovieHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: update hall by id (only for admins)
+	// TODO: update movie by id (only for admins)
 	w.WriteHeader(http.StatusOK)
 }
 
 func (h httpHandler) deleteMovieHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: delete hall by id (only for admins)
+	// TODO: delete movie by id (only for admins)
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -104,7 +112,21 @@ func (h httpHandler) watchedMoviesHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (h httpHandler) getSessionsHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: return all cinema sessions
+	vars := mux.Vars(r)
+	hallIdStr := vars["hallId"]
+	hallId, err := strconv.Atoi(hallIdStr)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, ErrInvalidHallId.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err = h.r.SessionsForHall(hallId); err != nil {
+		log.Println(err)
+		http.Error(w, "failed to get cinema sessions: "+ErrInvalidHallId.Error(), http.StatusBadRequest)
+		return
+	}
+	// TODO: return today's sessions for the particular hall
 	w.WriteHeader(http.StatusOK)
 }
 

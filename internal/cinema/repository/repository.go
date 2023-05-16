@@ -23,10 +23,16 @@ type Movie struct {
 	Duration    int
 }
 
-func (r CinemaRepository) GetMovie(movieID int) (*Movie, error) {
+type cinemaSession struct {
+	id      int
+	movieId int
+	status  string
+}
+
+func (c CinemaRepository) GetMovie(movieID int) (*Movie, error) {
 	var movie Movie
 
-	err := r.db.QueryRow("SELECT id, title, genre, release_date, duration FROM movies WHERE id = $1", movieID).
+	err := c.db.QueryRow("SELECT movie_id, title, genre, release_date, duration FROM movies WHERE movie_id = $1", movieID).
 		Scan(&movie.ID, &movie.Title, &movie.Genre, &movie.ReleaseDate, &movie.Duration)
 
 	if err != nil {
@@ -37,4 +43,15 @@ func (r CinemaRepository) GetMovie(movieID int) (*Movie, error) {
 	}
 
 	return &movie, nil
+}
+
+func (c CinemaRepository) SessionsForHall(hallId int) error {
+	var session cinemaSession
+	err := c.db.QueryRow("SELECT session_id, movie_id FROM cinema_sessions WHERE hall_id = $1", hallId).
+		Scan(&session.id, &session.movieId)
+	fmt.Println(session.id, session.movieId)
+	if err != nil {
+		return err
+	}
+	return nil
 }
