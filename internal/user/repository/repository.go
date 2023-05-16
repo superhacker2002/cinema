@@ -32,7 +32,7 @@ func (r UserRepository) GetUser(username string) (Credentials, error) {
 		Scan(&credentials.ID, &credentials.PasswordHash)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return Credentials{}, fmt.Errorf("%w: %v", ErrUserNotFound, err)
+			return Credentials{}, ErrUserNotFound
 		}
 		return Credentials{}, fmt.Errorf("could not get user credentials: %w", err)
 	}

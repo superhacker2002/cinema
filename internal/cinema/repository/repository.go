@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/lib/pq"
-	"log"
 	"time"
 )
 
@@ -58,13 +57,11 @@ func (c *CinemaRepository) SessionsForHall(hallId int, timestamp string) ([]Cine
 	fmt.Println(timestamp)
 	rows, err := c.db.Query("SELECT session_id, movie_id, start_time, end_time "+
 		"FROM cinema_sessions WHERE hall_id = $1 AND end_time > $2", hallId, timestamp)
-	if err == sql.ErrNoRows {
-		log.Println(err)
+	if !rows.Next() {
 		return nil, fmt.Errorf("no available cinema sessions were found in hall with ID %d", hallId)
 	}
 
 	if err != nil {
-		log.Println(err)
 		return nil, fmt.Errorf("failed to get cinema session: %w", err)
 	}
 
