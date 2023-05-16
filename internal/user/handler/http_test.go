@@ -167,7 +167,7 @@ func TestCreateUserHandler(t *testing.T) {
 		handler := httpHandler{a: auth, r: repo}.createUserHandler
 		handler(response, req)
 
-		assert.Equal(t, "failed to sign up: something went wrong\n", response.Body.String())
+		assert.Equal(t, "failed to sign up: internal server error\n", response.Body.String())
 		assert.Equal(t, http.StatusInternalServerError, response.Code)
 	})
 }

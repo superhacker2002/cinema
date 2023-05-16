@@ -6,7 +6,10 @@ import (
 	"fmt"
 )
 
-var ErrUserNotFound = errors.New("user not found")
+var (
+	ErrUserNotFound = errors.New("user not found")
+	ErrUserExists   = errors.New("user already exists")
+)
 
 type Credentials struct {
 	ID           int
@@ -32,7 +35,7 @@ func (r UserRepository) GetUser(username string) (Credentials, error) {
 		Scan(&credentials.ID, &credentials.PasswordHash)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return Credentials{}, fmt.Errorf("%w: %v", ErrUserNotFound, err)
+			return Credentials{}, ErrUserNotFound
 		}
 		return Credentials{}, fmt.Errorf("could not get user credentials: %w", err)
 	}
@@ -44,7 +47,7 @@ func (r UserRepository) CreateUser(username string, passwordHash string) (userId
 	err = r.db.QueryRow("SELECT user_id FROM users WHERE username = $1", username).
 		Scan(&userId)
 	if err == nil {
-		return 0, fmt.Errorf("user with username %q already exists", username)
+		return 0, fmt.Errorf("%w: %q", ErrUserExists, username)
 	}
 	if !errors.Is(err, sql.ErrNoRows) {
 		return 0, fmt.Errorf("failed to check if user with username %q exists: %w",
