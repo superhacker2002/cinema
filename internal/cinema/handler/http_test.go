@@ -9,7 +9,7 @@ import (
 )
 
 func TestSetRoutes(t *testing.T) {
-	handler := httpHandler{}
+	handler := HttpHandler{}
 	router := mux.NewRouter()
 	handler.setRoutes(router)
 
