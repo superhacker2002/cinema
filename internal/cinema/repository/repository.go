@@ -3,10 +3,13 @@ package repository
 import "C"
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/lib/pq"
 	"time"
 )
+
+var ErrCinemaSessionsNotFound = errors.New("no available cinema sessions were found")
 
 type CinemaRepository struct {
 	db *sql.DB
@@ -58,20 +61,20 @@ func (c *CinemaRepository) SessionsForHall(hallId int, timestamp string) ([]Cine
 	rows, err := c.db.Query("SELECT session_id, movie_id, start_time, end_time "+
 		"FROM cinema_sessions WHERE hall_id = $1 AND end_time > $2", hallId, timestamp)
 	if !rows.Next() {
-		return nil, fmt.Errorf("no available cinema sessions were found in hall with ID %d", hallId)
+		return nil, ErrCinemaSessionsNotFound
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to get cinema session: %w", err)
+		return nil, fmt.Errorf("failed to get cinema sessions: %w", err)
 	}
 
 	for rows.Next() {
 		var session CinemaSession
 		if err := rows.Scan(&session.ID, &session.MovieId, &session.StartTime, &session.EndTime); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to get cinema session: %w", err)
 		}
 		if err := session.setStatus(timestamp); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to set cinema session status: %w", err)
 		}
 		cinemaSessions = append(cinemaSessions, session)
 	}

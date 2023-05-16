@@ -12,7 +12,10 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var ErrInvalidHallId = errors.New("invalid hall id provided")
+var (
+	ErrInvalidHallId = errors.New("invalid hall id provided")
+	ErrInternalError = errors.New("internal server error")
+)
 
 type HttpHandler struct {
 	r cinemaRepository.Repository
@@ -121,9 +124,14 @@ func (h HttpHandler) getSessionsHandler(w http.ResponseWriter, r *http.Request) 
 	}
 	currentTime := time.Now().Format("2006-01-02 15:04:05")
 	session, err := h.r.SessionsForHall(hallId, currentTime)
-	if err != nil {
+	if errors.Is(err, cinemaRepository.ErrCinemaSessionsNotFound) {
 		log.Println(err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if err != nil {
+		log.Println(err)
+		http.Error(w, ErrInternalError.Error(), http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
