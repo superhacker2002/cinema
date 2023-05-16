@@ -29,14 +29,14 @@ func main() {
 		log.Fatal(err)
 	}
 	defer db.Close()
-	userRepository := userRepository.New(db)
-	cinemaRepository := cinemaRepository.New(db)
+	userRepo := userRepository.New(db)
+	cinemaRepo := cinemaRepository.New(db)
 
 	router := mux.NewRouter()
-	authentication := auth.New(configs.JWTSecret, configs.TokenExp, userRepository)
+	authentication := auth.New(configs.JWTSecret, configs.TokenExp, userRepo)
 
-	userHandler.New(router, authentication, userRepository)
-	cinemaHandler.New(router, cinemaRepository)
+	userHandler.New(router, authentication, userRepo)
+	cinemaHandler.New(router, cinemaRepo)
 
 	log.Fatal(http.ListenAndServe(":"+configs.Port, router))
 }
