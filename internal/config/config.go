@@ -12,7 +12,7 @@ func (e constError) Error() string {
 	return string(e)
 }
 
-var (
+const (
 	ErrNoEnvFile          = constError("no .env file found")
 	ErrNoJWTSecret        = constError("missing JWT secret key variable")
 	ErrNoPort             = constError("missing server port variable")
