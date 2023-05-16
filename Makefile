@@ -3,7 +3,7 @@ DATABASE_CONTAINER=cinema-container
 DATABASE_IMAGE=cinema-image
 
 .PHONY: run
-run: clean-docker docker_db
+run: clean-docker docker-db
 	go run cmd/cinema.go
 
 .PHONY: test
@@ -36,8 +36,8 @@ test_get_sessions:
     'localhost:8080/cinema-sessions/2/' \
     -H 'accept: application/json'
 
-.PHONY: docker_db
-docker_db:
+.PHONY: docker-db
+docker-db:
 	docker build -f database/Dockerfile -t $(DATABASE_IMAGE) .
 	docker run --name $(DATABASE_CONTAINER) -d -p 5432:5432 $(DATABASE_IMAGE)
 
