@@ -84,7 +84,7 @@ func TestGetSessionsHandler(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, response.Code)
 	})
 
-	t.Run("internal error", func(t *testing.T) {
+	t.Run("repository error", func(t *testing.T) {
 		session := repository.CinemaSession{}
 		repo.session = session
 		repo.hallId = 2
