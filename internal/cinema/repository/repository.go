@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/lib/pq"
+	"log"
 	"time"
 )
 
@@ -56,27 +57,27 @@ func (c *CinemaRepository) GetMovie(movieID int) (*Movie, error) {
 }
 
 func (c *CinemaRepository) SessionsForHall(hallId int, timestamp string) ([]CinemaSession, error) {
-	var cinemaSessions []CinemaSession
-	fmt.Println(timestamp)
+	log.Println(timestamp)
 	rows, err := c.db.Query("SELECT session_id, movie_id, start_time, end_time "+
 		"FROM cinema_sessions WHERE hall_id = $1 AND end_time > $2", hallId, timestamp)
-	if !rows.Next() {
-		return nil, ErrCinemaSessionsNotFound
-	}
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get cinema sessions: %w", err)
 	}
 
+	var cinemaSessions []CinemaSession
 	for rows.Next() {
 		var session CinemaSession
-		if err := rows.Scan(&session.ID, &session.MovieId, &session.StartTime, &session.EndTime); err != nil {
+		if err = rows.Scan(&session.ID, &session.MovieId, &session.StartTime, &session.EndTime); err != nil {
 			return nil, fmt.Errorf("failed to get cinema session: %w", err)
 		}
-		if err := session.setStatus(timestamp); err != nil {
+		if err = session.setStatus(timestamp); err != nil {
 			return nil, fmt.Errorf("failed to set cinema session status: %w", err)
 		}
 		cinemaSessions = append(cinemaSessions, session)
+	}
+	if len(cinemaSessions) == 0 {
+		return nil, ErrCinemaSessionsNotFound
 	}
 	return cinemaSessions, nil
 }
