@@ -31,9 +31,10 @@ test_create_user:
     "password": "10a6e6cc8311a3e2bcc09bf6c199adecd5dd59408c343e926b129c4914f3cb01" \
     }'
 
+.PHONY: test_get_sessions
 test_get_sessions:
 	 curl -i -X 'GET' \
-    'localhost:8080/cinema-sessions/2/' \
+    'localhost:8080/cinema-sessions/2?date=2023-05-18' \
     -H 'accept: application/json'
 
 .PHONY: docker-db
