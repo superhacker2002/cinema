@@ -10,8 +10,8 @@ run: clean-docker docker-db
 test:
 	go test ./...
 
-.PHONY: test_auth
-test_auth:
+.PHONY: test-auth
+test-auth:
 	 curl -i -X 'POST' \
     'localhost:8080/auth/' \
     -H 'accept: application/json' \
@@ -21,7 +21,8 @@ test_auth:
     "password": "10a6e6cc8311a3e2bcc09bf6c199adecd5dd59408c343e926b129c4914f3cb01" \
     }'
 
-test_create_user:
+.PHONY: test-create-user
+test-create-user:
 	 curl -i -X 'POST' \
     'localhost:8080/users/' \
     -H 'accept: application/json' \
@@ -31,8 +32,8 @@ test_create_user:
     "password": "10a6e6cc8311a3e2bcc09bf6c199adecd5dd59408c343e926b129c4914f3cb01" \
     }'
 
-.PHONY: test_get_sessions
-test_get_sessions:
+.PHONY: test-get-sessions
+test-get-sessions:
 	 curl -i -X 'GET' \
     'localhost:8080/cinema-sessions/2?date=2023-05-18' \
     -H 'accept: application/json'
