@@ -122,15 +122,7 @@ func (h HttpHandler) getSessionsHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	var currentTime string
-	date := r.URL.Query().Get("date")
-	if date == "" {
-		currentTime = time.Now().Format("2006-01-02 15:04:05")
-	} else {
-		currentTime = date + " 00:00:00"
-	}
-
-	sessions, err := h.r.SessionsForHall(hallId, currentTime)
+	sessions, err := h.r.SessionsForHall(hallId, date(r))
 
 	if errors.Is(err, cinemaRepository.ErrCinemaSessionsNotFound) {
 		log.Println(err)
@@ -146,6 +138,15 @@ func (h HttpHandler) getSessionsHandler(w http.ResponseWriter, r *http.Request) 
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(sessions)
+}
+
+func date(r *http.Request) string {
+	date := r.URL.Query().Get("date")
+	if date == "" {
+		return time.Now().Format("2006-01-02 15:04:05")
+	} else {
+		return date + " 00:00:00"
+	}
 }
 
 func (h HttpHandler) createSessionHandler(w http.ResponseWriter, r *http.Request) {
