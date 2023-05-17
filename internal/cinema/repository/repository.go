@@ -76,9 +76,11 @@ func (c *CinemaRepository) SessionsForHall(hallId int, timestamp string) ([]Cine
 		}
 		cinemaSessions = append(cinemaSessions, session)
 	}
+
 	if len(cinemaSessions) == 0 {
 		return nil, ErrCinemaSessionsNotFound
 	}
+
 	return cinemaSessions, nil
 }
 

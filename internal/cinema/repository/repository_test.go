@@ -26,7 +26,7 @@ func TestGetMovie(t *testing.T) {
 		Duration:    120,
 	}
 
-	mock.ExpectQuery(`SELECT ID, title, genre, release_date, duration FROM movies WHERE ID = ?`).
+	mock.ExpectQuery(`SELECT movie_id, title, genre, release_date, duration FROM movies WHERE movie_id = ?`).
 		WithArgs(movieID).
 		WillReturnRows(sqlmock.NewRows([]string{"ID", "title", "genre", "release_date", "duration"}).
 			AddRow(expectedMovie.ID, expectedMovie.Title, expectedMovie.Genre, expectedMovie.ReleaseDate, expectedMovie.Duration))
