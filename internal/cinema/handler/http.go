@@ -113,8 +113,23 @@ func (h HttpHandler) watchedMoviesHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (h HttpHandler) getAllSessionsHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: return list of all available cinema sessions
-	w.WriteHeader(http.StatusOK)
+	// TODO: add getting offset and limit from URL
+	sessions, err := h.r.AllSessions(date(r), 0, 10)
+
+	if errors.Is(err, cinemaRepository.ErrCinemaSessionsNotFound) {
+		log.Println(err)
+		http.Error(w, err.Error()+"for all halls", http.StatusBadRequest)
+		return
+	}
+
+	if err != nil {
+		log.Println(err)
+		http.Error(w, ErrInternalError.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(sessions)
 }
 
 func (h HttpHandler) getSessionsHandler(w http.ResponseWriter, r *http.Request) {

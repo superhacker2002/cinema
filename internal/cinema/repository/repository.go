@@ -18,6 +18,7 @@ type CinemaRepository struct {
 
 type Repository interface {
 	SessionsForHall(hallId int, timestamp string, offset, limit int) ([]CinemaSession, error)
+	AllSessions(timestamp string, offset, limit int) ([]CinemaSession, error)
 }
 
 func New(db *sql.DB) *CinemaRepository {
