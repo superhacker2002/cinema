@@ -17,7 +17,7 @@ type CinemaRepository struct {
 }
 
 type Repository interface {
-	SessionsForHall(hallId int, timestamp string) ([]CinemaSession, error)
+	SessionsForHall(hallId int, timestamp string, offset, limit int) ([]CinemaSession, error)
 }
 
 func New(db *sql.DB) *CinemaRepository {
@@ -56,10 +56,11 @@ func (c *CinemaRepository) GetMovie(movieID int) (*Movie, error) {
 	return &movie, nil
 }
 
-func (c *CinemaRepository) SessionsForHall(hallId int, timestamp string) ([]CinemaSession, error) {
+func (c *CinemaRepository) SessionsForHall(hallId int, timestamp string, offset, limit int) ([]CinemaSession, error) {
 	log.Println(timestamp)
 	rows, err := c.db.Query("SELECT session_id, movie_id, start_time, end_time "+
-		"FROM cinema_sessions WHERE hall_id = $1 AND end_time > $2", hallId, timestamp)
+		"FROM cinema_sessions WHERE hall_id = $1 AND end_time > $2"+
+		"ORDER BY start_time OFFSET $3 LIMIT $4", hallId, timestamp, offset, limit)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get cinema sessions: %w", err)
@@ -75,6 +76,10 @@ func (c *CinemaRepository) SessionsForHall(hallId int, timestamp string) ([]Cine
 			return nil, fmt.Errorf("failed to set cinema session status: %w", err)
 		}
 		cinemaSessions = append(cinemaSessions, session)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error while iterating over cinema sessions: %w", err)
 	}
 
 	if len(cinemaSessions) == 0 {

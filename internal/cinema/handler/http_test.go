@@ -17,7 +17,7 @@ type mockRepo struct {
 	err     error
 }
 
-func (m *mockRepo) SessionsForHall(hallId int, currentTime string) ([]repository.CinemaSession, error) {
+func (m *mockRepo) SessionsForHall(hallId int, currentTime string, offset, limit int) ([]repository.CinemaSession, error) {
 	var cinemaSessions []repository.CinemaSession
 	if hallId != m.hallId {
 		return nil, repository.ErrCinemaSessionsNotFound

@@ -122,7 +122,8 @@ func (h HttpHandler) getSessionsHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	sessions, err := h.r.SessionsForHall(hallId, date(r))
+	// TODO: add getting offset and limit from URL
+	sessions, err := h.r.SessionsForHall(hallId, date(r), 0, 10)
 
 	if errors.Is(err, cinemaRepository.ErrCinemaSessionsNotFound) {
 		log.Println(err)
