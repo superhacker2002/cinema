@@ -44,8 +44,8 @@ func (h HttpHandler) setRoutes(router *mux.Router) {
 	s.HandleFunc("/watched/{userId}/", h.watchedMoviesHandler).Methods("GET")
 
 	s = router.PathPrefix("/cinema-sessions").Subrouter()
+	s.HandleFunc("/", h.getAllSessionsHandler).Methods("GET")
 	s.HandleFunc("/{hallId}", h.getSessionsHandler).Methods("GET")
-	//s.HandleFunc("/", h.getSessionsHandler).Methods("GET")
 	//s.HandleFunc("/", h.createSessionHandler).Methods("POST")
 	//s.HandleFunc("/{sessionId}/", h.getSessionHandler).Methods("GET")
 	//s.HandleFunc("/{sessionId}/", h.updateSessionHandler).Methods("PUT")
@@ -109,6 +109,11 @@ func (h HttpHandler) deleteMovieHandler(w http.ResponseWriter, r *http.Request) 
 
 func (h HttpHandler) watchedMoviesHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO: return list of watched movies by user
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h HttpHandler) getAllSessionsHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO: return list of all available cinema sessions
 	w.WriteHeader(http.StatusOK)
 }
 

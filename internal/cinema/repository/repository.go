@@ -66,19 +66,46 @@ func (c *CinemaRepository) SessionsForHall(hallId int, timestamp string, offset,
 		return nil, fmt.Errorf("failed to get cinema sessions: %w", err)
 	}
 
+	cinemaSessions, err := readCinemaSessions(rows, timestamp)
+	if err != nil {
+		return nil, err
+	}
+
+	return cinemaSessions, nil
+}
+
+func (c *CinemaRepository) AllSessions(timestamp string, offset, limit int) ([]CinemaSession, error) {
+	log.Println(timestamp)
+	rows, err := c.db.Query("SELECT session_id, movie_id, start_time, end_time "+
+		"FROM cinema_sessions WHERE end_time > $1 ORDER BY hall_id, start_time OFFSET $2 LIMIT $3",
+		timestamp, offset, limit)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to get cinema sessions: %w", err)
+	}
+
+	cinemaSessions, err := readCinemaSessions(rows, timestamp)
+	if err != nil {
+		return nil, err
+	}
+
+	return cinemaSessions, nil
+}
+
+func readCinemaSessions(rows *sql.Rows, timestamp string) ([]CinemaSession, error) {
 	var cinemaSessions []CinemaSession
 	for rows.Next() {
 		var session CinemaSession
-		if err = rows.Scan(&session.ID, &session.MovieId, &session.StartTime, &session.EndTime); err != nil {
+		if err := rows.Scan(&session.ID, &session.MovieId, &session.StartTime, &session.EndTime); err != nil {
 			return nil, fmt.Errorf("failed to get cinema session: %w", err)
 		}
-		if err = session.setStatus(timestamp); err != nil {
+		if err := session.setStatus(timestamp); err != nil {
 			return nil, fmt.Errorf("failed to set cinema session status: %w", err)
 		}
 		cinemaSessions = append(cinemaSessions, session)
 	}
 
-	if err = rows.Err(); err != nil {
+	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("error while iterating over cinema sessions: %w", err)
 	}
 
