@@ -116,9 +116,9 @@ func (h HttpHandler) getSessionsHandler(w http.ResponseWriter, r *http.Request) 
 	vars := mux.Vars(r)
 	hallIdStr := vars["hallId"]
 	hallId, err := strconv.Atoi(hallIdStr)
-	if err != nil {
+	if err != nil || hallId <= 0 {
 		log.Println(err)
-		http.Error(w, ErrInvalidHallId.Error()+hallIdStr, http.StatusBadRequest)
+		http.Error(w, ErrInvalidHallId.Error()+": "+hallIdStr, http.StatusBadRequest)
 		return
 	}
 

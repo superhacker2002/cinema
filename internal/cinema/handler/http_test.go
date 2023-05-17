@@ -1,59 +1,104 @@
 package handler
 
 import (
+	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinema/repository"
+	"errors"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
-func TestSetRoutes(t *testing.T) {
-	handler := HttpHandler{}
-	router := mux.NewRouter()
-	handler.setRoutes(router)
+type mockRepo struct {
+	session repository.CinemaSession
+	hallId  int
+	err     error
+}
 
-	server := httptest.NewServer(router)
-	defer server.Close()
-
-	client := server.Client()
-
-	testCases := []struct {
-		path   string
-		status int
-		method string
-	}{
-		{path: "/halls/", status: http.StatusOK, method: "POST"},
-		{path: "/halls/", status: http.StatusOK, method: "GET"},
-		{path: "/halls/1/", status: http.StatusOK, method: "GET"},
-		{path: "/halls/1/", status: http.StatusOK, method: "PUT"},
-		{path: "/halls/1/", status: http.StatusOK, method: "DELETE"},
-
-		{path: "/movies/", status: http.StatusOK, method: "POST"},
-		{path: "/movies/", status: http.StatusOK, method: "GET"},
-		{path: "/movies/1/", status: http.StatusOK, method: "GET"},
-		{path: "/movies/1/", status: http.StatusOK, method: "PUT"},
-		{path: "/movies/1/", status: http.StatusOK, method: "DELETE"},
-		{path: "/movies/watched/1/", status: http.StatusOK, method: "GET"},
-
-		{path: "/cinema-sessions/", status: http.StatusOK, method: "POST"},
-		{path: "/cinema-sessions/", status: http.StatusOK, method: "GET"},
-		{path: "/cinema-sessions/1/", status: http.StatusOK, method: "GET"},
-		{path: "/cinema-sessions/1/", status: http.StatusOK, method: "PUT"},
-		{path: "/cinema-sessions/1/", status: http.StatusOK, method: "DELETE"},
-
-		{path: "/tickets/1/", status: http.StatusOK, method: "GET"},
-		{path: "/tickets/", status: http.StatusOK, method: "POST"},
-
-		{path: "/invalid/", status: http.StatusNotFound, method: "GET"},
+func (m *mockRepo) SessionsForHall(hallId int, currentTime string) ([]repository.CinemaSession, error) {
+	var cinemaSessions []repository.CinemaSession
+	if hallId != m.hallId {
+		return nil, repository.ErrCinemaSessionsNotFound
 	}
+	cinemaSessions = append(cinemaSessions, m.session)
+	return cinemaSessions, m.err
+}
 
-	for _, tc := range testCases {
-		req, err := http.NewRequest(tc.method, server.URL+tc.path, nil)
-		assert.NoError(t, err)
+func TestGetSessionsHandler(t *testing.T) {
+	repo := mockRepo{}
+	t.Run("successful sessions get", func(t *testing.T) {
+		session := repository.CinemaSession{
+			ID:        1,
+			MovieId:   1,
+			StartTime: "2023-05-18 20:00:00",
+			EndTime:   "2023-05-18 22:00:00",
+			Status:    "scheduled",
+		}
+		repo.session = session
+		repo.hallId = 1
+		repo.err = nil
 
-		resp, clientErr := client.Do(req)
-		assert.NoError(t, clientErr)
-		assert.Equal(t, tc.status, resp.StatusCode, "Request to %s, method %s", tc.path, tc.method)
-	}
+		req, err := http.NewRequest(http.MethodGet, "cinema-sessions/1", nil)
+		req = mux.SetURLVars(req, map[string]string{"hallId": "1"})
+		require.NoError(t, err, "failed to create test request")
+
+		response := httptest.NewRecorder()
+		handler := HttpHandler{r: &repo}.getSessionsHandler
+		handler(response, req)
+
+		assert.Equal(t, "[{\"ID\":1,\"MovieId\":1,\"StartTime\":\"2023-05-18 20:00:00\","+
+			"\"EndTime\":\"2023-05-18 22:00:00\",\"Status\":\"scheduled\"}]\n", response.Body.String())
+		assert.Equal(t, http.StatusOK, response.Code)
+	})
+
+	t.Run("invalid hall id", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "cinema-sessions/0", nil)
+		req = mux.SetURLVars(req, map[string]string{"hallId": "0"})
+		require.NoError(t, err, "failed to create test request")
+
+		response := httptest.NewRecorder()
+		handler := HttpHandler{r: &repo}.getSessionsHandler
+		handler(response, req)
+
+		assert.Equal(t, ErrInvalidHallId.Error()+": 0\n", response.Body.String())
+		assert.Equal(t, http.StatusBadRequest, response.Code)
+	})
+
+	t.Run("no cinema sessions", func(t *testing.T) {
+		session := repository.CinemaSession{}
+		repo.session = session
+		repo.hallId = 1
+		repo.err = repository.ErrCinemaSessionsNotFound
+
+		req, err := http.NewRequest(http.MethodGet, "cinema-sessions/2", nil)
+		req = mux.SetURLVars(req, map[string]string{"hallId": "2"})
+		require.NoError(t, err, "failed to create test request")
+
+		response := httptest.NewRecorder()
+		handler := HttpHandler{r: &repo}.getSessionsHandler
+		handler(response, req)
+
+		assert.Equal(t, repository.ErrCinemaSessionsNotFound.Error()+" for hall 2\n", response.Body.String())
+		assert.Equal(t, http.StatusBadRequest, response.Code)
+	})
+
+	t.Run("internal error", func(t *testing.T) {
+		session := repository.CinemaSession{}
+		repo.session = session
+		repo.hallId = 2
+		repo.err = errors.New("something went wrong")
+
+		req, err := http.NewRequest(http.MethodGet, "cinema-sessions/2", nil)
+		req = mux.SetURLVars(req, map[string]string{"hallId": "2"})
+		require.NoError(t, err, "failed to create test request")
+
+		response := httptest.NewRecorder()
+		handler := HttpHandler{r: &repo}.getSessionsHandler
+		handler(response, req)
+
+		assert.Equal(t, ErrInternalError.Error()+"\n", response.Body.String())
+		assert.Equal(t, http.StatusInternalServerError, response.Code)
+	})
 }
