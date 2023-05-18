@@ -11,40 +11,6 @@ import (
 	"testing"
 )
 
-<<<<<<< HEAD
-func TestSetRoutes(t *testing.T) {
-	handler := HttpHandler{}
-	router := mux.NewRouter()
-	handler.setRoutes(router)
-
-	server := httptest.NewServer(router)
-	defer server.Close()
-
-	client := server.Client()
-
-	testCases := []struct {
-		path   string
-		status int
-		method string
-	}{
-		{path: "/users/", status: http.StatusOK, method: "GET"},
-		{path: "/users/1/", status: http.StatusOK, method: "GET"},
-		{path: "/users/1/", status: http.StatusOK, method: "PUT"},
-		{path: "/users/1/", status: http.StatusOK, method: "DELETE"},
-	}
-
-	for _, tc := range testCases {
-		req, err := http.NewRequest(tc.method, server.URL+tc.path, nil)
-		assert.NoError(t, err)
-
-		resp, clientErr := client.Do(req)
-		assert.NoError(t, clientErr)
-		assert.Equal(t, tc.status, resp.StatusCode, "Request to %s using method %s", tc.path, tc.method)
-	}
-}
-
-=======
->>>>>>> 626ff3e0ac326aff91322baaf9723be3af8a438b
 type mockAuth struct {
 	token string
 	err   error
@@ -95,7 +61,7 @@ func TestLoginHandler(t *testing.T) {
 		require.NoError(t, err, "failed to create test request")
 
 		response := httptest.NewRecorder()
-		handler := httpHandler{a: auth}.loginHandler
+		handler := HttpHandler{a: auth}.loginHandler
 		handler(response, req)
 
 		assert.Equal(t, ErrNoUsernameOrPassword.Error()+"\n", response.Body.String())
