@@ -43,7 +43,7 @@ func (r UserRepository) GetUser(username string) (Credentials, error) {
 }
 
 func (r UserRepository) CreateUser(username string, passwordHash string) (userId int, err error) {
-	const roleID int = 2
+	const roleID = 2
 	err = r.db.QueryRow("SELECT user_id FROM users WHERE username = $1", username).
 		Scan(&userId)
 	if err == nil {
