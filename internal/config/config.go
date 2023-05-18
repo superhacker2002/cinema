@@ -1,38 +1,28 @@
 package config
 
 import (
-	"errors"
+	"context"
 	"github.com/joho/godotenv"
-	"log"
-	"os"
-)
-
-var (
-	ErrNoPort        = errors.New("missing server port variable")
-	ErrNoDataBaseURL = errors.New("missing database URL variable")
+	"github.com/sethvargo/go-envconfig"
 )
 
 type Config struct {
-	Port string
-	Db   string
+	Port      string `env:"PORT,default=8080"`
+	JWTSecret string `env:"JWT_SECRET,default=secret-key"`
+	Db        string `env:"DATABASE_URL,default=localhost:5432/cinema"`
+	TokenExp  int    `env:"TOKEN_EXP_IN_HOURS,default=24"`
 }
 
-func New() Config {
+func New() (Config, error) {
+	var c Config
 	if err := godotenv.Load(); err != nil {
-		log.Print("no .env file found")
+		return c, err
 	}
-	return Config{
-		Port: os.Getenv("PORT"),
-		Db:   os.Getenv("DATABASE_URL"),
-	}
-}
 
-func (c Config) Validate() error {
-	if c.Port == "" {
-		return ErrNoPort
+	ctx := context.Background()
+	if err := envconfig.Process(ctx, &c); err != nil {
+		return c, err
 	}
-	if c.Db == "" {
-		return ErrNoDataBaseURL
-	}
-	return nil
+
+	return c, nil
 }
