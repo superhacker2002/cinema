@@ -2,13 +2,9 @@ package handler
 
 import (
 	cinemaRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinema/repository"
-	"encoding/json"
 	"errors"
 	"github.com/gorilla/mux"
-	"log"
 	"net/http"
-	"strconv"
-	"time"
 )
 
 var (
@@ -42,14 +38,6 @@ func (h HttpHandler) setRoutes(router *mux.Router) {
 	s.HandleFunc("/{movieId}/", h.updateMovieHandler).Methods("PUT")
 	s.HandleFunc("/{movieId}/", h.deleteMovieHandler).Methods("DELETE")
 	s.HandleFunc("/watched/{userId}/", h.watchedMoviesHandler).Methods("GET")
-
-	s = router.PathPrefix("/cinema-sessions").Subrouter()
-	s.HandleFunc("/", h.getAllSessionsHandler).Methods("GET")
-	s.HandleFunc("/{hallId}", h.getSessionsHandler).Methods("GET")
-	//s.HandleFunc("/", h.createSessionHandler).Methods("POST")
-	//s.HandleFunc("/{sessionId}/", h.getSessionHandler).Methods("GET")
-	//s.HandleFunc("/{sessionId}/", h.updateSessionHandler).Methods("PUT")
-	//s.HandleFunc("/{sessionId}/", h.deleteSessionHandler).Methods("DELETE")
 
 	s = router.PathPrefix("/tickets").Subrouter()
 	s.HandleFunc("/", h.createTicketHandler).Methods("POST")
@@ -110,64 +98,6 @@ func (h HttpHandler) deleteMovieHandler(w http.ResponseWriter, r *http.Request) 
 func (h HttpHandler) watchedMoviesHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO: return list of watched movies by user
 	w.WriteHeader(http.StatusOK)
-}
-
-func (h HttpHandler) getAllSessionsHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: add getting offset and limit from URL
-	sessions, err := h.r.AllSessions(date(r), 0, 10)
-
-	if errors.Is(err, cinemaRepository.ErrCinemaSessionsNotFound) {
-		log.Println(err)
-		http.Error(w, err.Error()+"for all halls", http.StatusBadRequest)
-		return
-	}
-
-	if err != nil {
-		log.Println(err)
-		http.Error(w, ErrInternalError.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(sessions)
-}
-
-func (h HttpHandler) getSessionsHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	hallIdStr := vars["hallId"]
-	hallId, err := strconv.Atoi(hallIdStr)
-	if err != nil || hallId <= 0 {
-		log.Println(err)
-		http.Error(w, ErrInvalidHallId.Error()+": "+hallIdStr, http.StatusBadRequest)
-		return
-	}
-
-	// TODO: add getting offset and limit from URL
-	sessions, err := h.r.SessionsForHall(hallId, date(r), 0, 10)
-
-	if errors.Is(err, cinemaRepository.ErrCinemaSessionsNotFound) {
-		log.Println(err)
-		http.Error(w, err.Error()+" for hall "+hallIdStr, http.StatusBadRequest)
-		return
-	}
-
-	if err != nil {
-		log.Println(err)
-		http.Error(w, ErrInternalError.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(sessions)
-}
-
-func date(r *http.Request) string {
-	date := r.URL.Query().Get("date")
-	if date == "" {
-		return time.Now().Format("2006-01-02 15:04:05")
-	} else {
-		return date + " 00:00:00"
-	}
 }
 
 func (h HttpHandler) createSessionHandler(w http.ResponseWriter, r *http.Request) {

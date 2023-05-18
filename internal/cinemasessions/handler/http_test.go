@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinema/repository"
+	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasessions/repository"
 	"errors"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
@@ -15,6 +15,10 @@ type mockRepo struct {
 	session repository.CinemaSession
 	hallId  int
 	err     error
+}
+
+func (m *mockRepo) AllSessions(timestamp string, offset, limit int) ([]repository.CinemaSession, error) {
+	return nil, nil
 }
 
 func (m *mockRepo) SessionsForHall(hallId int, currentTime string, offset, limit int) ([]repository.CinemaSession, error) {
