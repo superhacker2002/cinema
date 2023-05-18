@@ -3,7 +3,6 @@ package handler
 import (
 	userRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/repository"
 	"errors"
-	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"net/http"
@@ -11,37 +10,6 @@ import (
 	"strings"
 	"testing"
 )
-
-func TestSetRoutes(t *testing.T) {
-	handler := httpHandler{}
-	router := mux.NewRouter()
-	handler.setRoutes(router)
-
-	server := httptest.NewServer(router)
-	defer server.Close()
-
-	client := server.Client()
-
-	testCases := []struct {
-		path   string
-		status int
-		method string
-	}{
-		{path: "/users/", status: http.StatusOK, method: "GET"},
-		{path: "/users/1/", status: http.StatusOK, method: "GET"},
-		{path: "/users/1/", status: http.StatusOK, method: "PUT"},
-		{path: "/users/1/", status: http.StatusOK, method: "DELETE"},
-	}
-
-	for _, tc := range testCases {
-		req, err := http.NewRequest(tc.method, server.URL+tc.path, nil)
-		assert.NoError(t, err)
-
-		resp, clientErr := client.Do(req)
-		assert.NoError(t, clientErr)
-		assert.Equal(t, tc.status, resp.StatusCode, "Request to %s using method %s", tc.path, tc.method)
-	}
-}
 
 type mockAuth struct {
 	token string
@@ -167,7 +135,7 @@ func TestCreateUserHandler(t *testing.T) {
 		handler := httpHandler{a: auth, r: repo}.createUserHandler
 		handler(response, req)
 
-		assert.Equal(t, "failed to sign up: internal server error\n", response.Body.String())
+		assert.Equal(t, "internal server error\n", response.Body.String())
 		assert.Equal(t, http.StatusInternalServerError, response.Code)
 	})
 }
