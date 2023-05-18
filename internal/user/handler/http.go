@@ -64,6 +64,12 @@ func (h httpHandler) loginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err = creds.validate(); err != nil {
+		log.Println(err)
+		http.Error(w, ErrNoUsernameOrPassword.Error(), http.StatusBadRequest)
+		return
+	}
+
 	token, err := h.a.Authenticate(creds.Username, creds.Password)
 	if err != nil {
 		log.Println(err)
