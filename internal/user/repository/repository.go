@@ -6,7 +6,7 @@ import (
 	"fmt"
 )
 
-const roleID = 2
+const UserRoleID = 2
 
 var (
 	ErrUserNotFound = errors.New("user not found")
@@ -56,7 +56,7 @@ func (r UserRepository) CreateUser(username string, passwordHash string) (userId
 	}
 
 	err = r.db.QueryRow("INSERT INTO users (username, hashed_password, role_id) "+
-		"VALUES ($1, $2, $3) RETURNING user_id", username, passwordHash, roleID).Scan(&userId)
+		"VALUES ($1, $2, $3) RETURNING user_id", username, passwordHash, UserRoleID).Scan(&userId)
 	if err != nil {
 		return 0, fmt.Errorf("could not create user: %w", err)
 	}

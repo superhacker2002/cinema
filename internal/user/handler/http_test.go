@@ -64,7 +64,22 @@ func TestLoginHandler(t *testing.T) {
 		handler := HttpHandler{a: auth}.loginHandler
 		handler(response, req)
 
-		assert.Equal(t, ErrNoUsernameOrPassword.Error()+"\n", response.Body.String())
+		assert.Equal(t, ErrNoUsername.Error()+"\n", response.Body.String())
+		assert.Equal(t, http.StatusBadRequest, response.Code)
+	})
+
+	t.Run("no password provided", func(t *testing.T) {
+		auth.token = "test_token"
+		auth.err = nil
+		req, err := http.NewRequest(http.MethodPost, "auth/",
+			strings.NewReader(`{"username": "test_user"}`))
+		require.NoError(t, err, "failed to create test request")
+
+		response := httptest.NewRecorder()
+		handler := httpHandler{a: auth}.loginHandler
+		handler(response, req)
+
+		assert.Equal(t, ErrNoPassword.Error()+"\n", response.Body.String())
 		assert.Equal(t, http.StatusBadRequest, response.Code)
 	})
 
@@ -136,7 +151,7 @@ func TestCreateUserHandler(t *testing.T) {
 		handler := HttpHandler{a: auth, r: repo}.createUserHandler
 		handler(response, req)
 
-		assert.Equal(t, ErrNoUsernameOrPassword.Error()+"\n", response.Body.String())
+		assert.Equal(t, ErrNoPassword.Error()+"\n", response.Body.String())
 		assert.Equal(t, http.StatusBadRequest, response.Code)
 	})
 

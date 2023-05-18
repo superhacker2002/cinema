@@ -11,9 +11,10 @@ import (
 )
 
 var (
-	ErrReadRequestFail      = errors.New("failed to read request body")
-	ErrNoUsernameOrPassword = errors.New("missing username or password")
-	ErrInternalError        = errors.New("internal server error")
+	ErrReadRequestFail = errors.New("failed to read request body")
+	ErrNoUsername      = errors.New("missing username")
+	ErrNoPassword      = errors.New("missing password")
+	ErrInternalError   = errors.New("internal server error")
 )
 
 type credentials struct {
@@ -66,7 +67,7 @@ func (h HttpHandler) loginHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err = creds.validate(); err != nil {
 		log.Println(err)
-		http.Error(w, ErrNoUsernameOrPassword.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -82,8 +83,10 @@ func (h HttpHandler) loginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c credentials) validate() error {
-	if c.Username == "" || c.Password == "" {
-		return ErrNoUsernameOrPassword
+	if c.Username == "" {
+		return ErrNoUsername
+	} else if c.Password == "" {
+		return ErrNoPassword
 	}
 	return nil
 }
@@ -105,7 +108,7 @@ func (h HttpHandler) createUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err = creds.validate(); err != nil {
 		log.Println(err)
-		http.Error(w, ErrNoUsernameOrPassword.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
