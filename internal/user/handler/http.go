@@ -13,6 +13,7 @@ import (
 var (
 	ErrReadRequestFail      = errors.New("failed to read request body")
 	ErrNoUsernameOrPassword = errors.New("missing username or password")
+	ErrInternalError        = errors.New("internal server error")
 )
 
 type credentials struct {
@@ -63,6 +64,12 @@ func (h HttpHandler) loginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err = creds.validate(); err != nil {
+		log.Println(err)
+		http.Error(w, ErrNoUsernameOrPassword.Error(), http.StatusBadRequest)
+		return
+	}
+
 	token, err := h.a.Authenticate(creds.Username, creds.Password)
 	if err != nil {
 		log.Println(err)
@@ -90,7 +97,6 @@ func (h HttpHandler) createUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var creds credentials
-
 	if err = json.Unmarshal(body, &creds); err != nil {
 		log.Println(err)
 		http.Error(w, ErrReadRequestFail.Error(), http.StatusBadRequest)
@@ -104,9 +110,15 @@ func (h HttpHandler) createUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id, err := h.r.CreateUser(creds.Username, creds.Password)
+	if errors.Is(err, userRepository.ErrUserExists) {
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusConflict)
+		return
+	}
+
 	if err != nil {
 		log.Println(err)
-		http.Error(w, "failed to sign up: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, ErrInternalError.Error(), http.StatusInternalServerError)
 		return
 	}
 

@@ -15,6 +15,7 @@ var (
 	ErrInvalidSigningMethod      = errors.New("invalid signing method")
 	ErrInvalidToken              = errors.New("invalid token")
 	ErrExpiredToken              = errors.New("token is expired")
+	ErrInternalError             = errors.New("internal server error")
 )
 
 type Auth struct {
@@ -37,7 +38,7 @@ func (a Auth) Authenticate(username string, passwordHash string) (token string, 
 		return "", ErrInvalidUsernameOrPassword
 	}
 	if err != nil {
-		return "", err
+		return "", ErrInternalError
 	}
 
 	if passwordHash != userCreds.PasswordHash {

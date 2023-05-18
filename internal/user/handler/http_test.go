@@ -3,7 +3,6 @@ package handler
 import (
 	userRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/repository"
 	"errors"
-	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"net/http"
@@ -12,6 +11,7 @@ import (
 	"testing"
 )
 
+<<<<<<< HEAD
 func TestSetRoutes(t *testing.T) {
 	handler := HttpHandler{}
 	router := mux.NewRouter()
@@ -43,6 +43,8 @@ func TestSetRoutes(t *testing.T) {
 	}
 }
 
+=======
+>>>>>>> 626ff3e0ac326aff91322baaf9723be3af8a438b
 type mockAuth struct {
 	token string
 	err   error
@@ -81,7 +83,22 @@ func TestLoginHandler(t *testing.T) {
 		handler := HttpHandler{a: auth}.loginHandler
 		handler(response, req)
 
-		assert.Equal(t, "failed to read request body\n", response.Body.String())
+		assert.Equal(t, ErrReadRequestFail.Error()+"\n", response.Body.String())
+		assert.Equal(t, http.StatusBadRequest, response.Code)
+	})
+
+	t.Run("no username provided", func(t *testing.T) {
+		auth.token = "test_token"
+		auth.err = nil
+		req, err := http.NewRequest(http.MethodPost, "auth/",
+			strings.NewReader(`{"password": "test_password"}`))
+		require.NoError(t, err, "failed to create test request")
+
+		response := httptest.NewRecorder()
+		handler := httpHandler{a: auth}.loginHandler
+		handler(response, req)
+
+		assert.Equal(t, ErrNoUsernameOrPassword.Error()+"\n", response.Body.String())
 		assert.Equal(t, http.StatusBadRequest, response.Code)
 	})
 
@@ -140,7 +157,7 @@ func TestCreateUserHandler(t *testing.T) {
 		handler := HttpHandler{a: auth, r: repo}.createUserHandler
 		handler(response, req)
 
-		assert.Equal(t, "failed to read request body\n", response.Body.String())
+		assert.Equal(t, ErrReadRequestFail.Error()+"\n", response.Body.String())
 		assert.Equal(t, http.StatusBadRequest, response.Code)
 	})
 
@@ -153,7 +170,7 @@ func TestCreateUserHandler(t *testing.T) {
 		handler := HttpHandler{a: auth, r: repo}.createUserHandler
 		handler(response, req)
 
-		assert.Equal(t, "missing username or password\n", response.Body.String())
+		assert.Equal(t, ErrNoUsernameOrPassword.Error()+"\n", response.Body.String())
 		assert.Equal(t, http.StatusBadRequest, response.Code)
 	})
 
@@ -167,7 +184,7 @@ func TestCreateUserHandler(t *testing.T) {
 		handler := HttpHandler{a: auth, r: repo}.createUserHandler
 		handler(response, req)
 
-		assert.Equal(t, "failed to sign up: something went wrong\n", response.Body.String())
+		assert.Equal(t, ErrInternalError.Error()+"\n", response.Body.String())
 		assert.Equal(t, http.StatusInternalServerError, response.Code)
 	})
 }

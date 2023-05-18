@@ -20,10 +20,7 @@ func main() {
 	log.SetFlags(log.Lshortfile)
 	configs, err := config.New()
 	if err != nil {
-		log.Fatal(err)
-	}
-	if err = configs.Validate(); err != nil {
-		log.Fatal(err)
+		log.Fatalf("config loading failed: %v", err)
 	}
 
 	db, err := sql.Open("postgres", configs.Db)
