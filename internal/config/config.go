@@ -1,23 +1,18 @@
 package config
 
 import (
+	"errors"
 	"github.com/joho/godotenv"
 	"os"
 	"strconv"
 )
 
-type constError string
-
-func (e constError) Error() string {
-	return string(e)
-}
-
-const (
-	ErrNoEnvFile          = constError("no .env file found")
-	ErrNoJWTSecret        = constError("missing JWT secret key variable")
-	ErrNoPort             = constError("missing server port variable")
-	ErrNoDataBaseURL      = constError("missing database URL variable")
-	ErrBadTokenExpiration = constError("missing or incorrect token expiration time variable")
+var (
+	ErrNoEnvFile          = errors.New("no .env file found")
+	ErrNoJWTSecret        = errors.New("missing JWT secret key variable")
+	ErrNoPort             = errors.New("missing server port variable")
+	ErrNoDataBaseURL      = errors.New("missing database URL variable")
+	ErrBadTokenExpiration = errors.New("missing or incorrect token expiration time variable")
 )
 
 type Config struct {
