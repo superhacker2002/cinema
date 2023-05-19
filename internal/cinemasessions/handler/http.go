@@ -4,19 +4,27 @@ import (
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasessions/repository"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 var (
 	ErrInvalidHallId = errors.New("invalid hall id provided")
 	ErrInternalError = errors.New("internal server error")
+	ErrInvalidDate   = errors.New("invalid date format")
 )
 
 type HttpHandler struct {
 	r repository.Repository
+}
+
+type page struct {
+	offset int
+	limit  int
 }
 
 func New(router *mux.Router, repository repository.Repository) HttpHandler {
@@ -43,7 +51,7 @@ func (h HttpHandler) getAllSessionsHandler(w http.ResponseWriter, r *http.Reques
 
 	if errors.Is(err, repository.ErrCinemaSessionsNotFound) {
 		log.Println(err)
-		http.Error(w, err.Error()+"for all halls", http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("%v for all halls", err), http.StatusBadRequest)
 		return
 	}
 
@@ -63,17 +71,22 @@ func (h HttpHandler) getSessionsHandler(w http.ResponseWriter, r *http.Request) 
 	hallId, err := strconv.Atoi(hallIdStr)
 	if err != nil || hallId <= 0 {
 		log.Println(err)
-		http.Error(w, ErrInvalidHallId.Error()+": "+hallIdStr, http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("%v: %s", ErrInvalidHallId, hallIdStr), http.StatusBadRequest)
 		return
 	}
 
 	// TODO: add getting offset and limit from URL
-	date := r.URL.Query().Get("date")
+	date, err := date(r)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, fmt.Sprintf("%v: %s", ErrInvalidDate, date), http.StatusBadRequest)
+		return
+	}
 	sessions, err := h.r.SessionsForHall(hallId, date, 0, 10)
 
 	if errors.Is(err, repository.ErrCinemaSessionsNotFound) {
 		log.Println(err)
-		http.Error(w, err.Error()+" for hall "+hallIdStr, http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("%v for hall %s", err, hallIdStr), http.StatusBadRequest)
 		return
 	}
 
@@ -85,6 +98,19 @@ func (h HttpHandler) getSessionsHandler(w http.ResponseWriter, r *http.Request) 
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(sessions)
+}
+
+func date(r *http.Request) (string, error) {
+	date := r.URL.Query().Get("date")
+	layout := "2006-01-02"
+	if date == "" {
+		return time.Now().Format(layout), nil
+	}
+	_, err := time.Parse(layout, date)
+	if err != nil {
+		return "", err
+	}
+	return date, nil
 }
 
 func (h HttpHandler) createSessionHandler(w http.ResponseWriter, r *http.Request) {
