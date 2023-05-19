@@ -217,7 +217,7 @@ paths:
             type: integer
       responses:
         '200':
-          description: Successfull operation
+          description: Successful operation
           content:
             application/json:
               schema:
@@ -364,7 +364,7 @@ paths:
           description: ID of the movie to retrieve
       responses:
         '200':
-          description: Successfull operation
+          description: Successful operation
           content:
             application/json:
               schema:
@@ -395,7 +395,7 @@ paths:
           description: ID of the movie to retrieve
       responses:
         '200':
-          description: Successfull operation
+          description: Successful operation
           content:
             application/json:
               schema:
@@ -602,7 +602,7 @@ paths:
           description: ID of the cinema session to retrieve
       responses:
         '200':
-          description: Successfull operation
+          description: Successful operation
           content:
             application/json:
               schema:
@@ -798,7 +798,7 @@ paths:
             type: boolean
       responses:
         '200':
-          description: Successfull operation
+          description: Successful operation
           content:
             application/json:
               schema:
@@ -906,7 +906,7 @@ paths:
           description: ID of the user to retrieve
       responses:
         '200':
-          description: Successfull operation
+          description: Successful operation
           content:
             application/json:
               schema:
