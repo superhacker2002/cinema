@@ -16,7 +16,7 @@ type SessionsRepository struct {
 
 type Repository interface {
 	SessionsForHall(hallId int, date string) ([]CinemaSession, error)
-	AllSessions(timestamp string, offset, limit int) ([]CinemaSession, error)
+	AllSessions(date string, offset, limit int) ([]CinemaSession, error)
 }
 
 func New(db *sql.DB) *SessionsRepository {
@@ -49,19 +49,19 @@ func (c *SessionsRepository) SessionsForHall(hallId int, date string) ([]CinemaS
 	return cinemaSessions, nil
 }
 
-func (c *SessionsRepository) AllSessions(timestamp string, offset, limit int) ([]CinemaSession, error) {
+func (c *SessionsRepository) AllSessions(date string, offset, limit int) ([]CinemaSession, error) {
 	rows, err := c.db.Query("SELECT session_id, movie_id, start_time, end_time "+
 		"FROM cinema_sessions "+
 		"WHERE date_trunc('day', start_time) = $1 "+
 		"ORDER BY hall_id, start_time "+
 		"OFFSET $2 "+
-		"LIMIT $3", timestamp, offset, limit)
+		"LIMIT $3", date, offset, limit)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get cinema sessions: %w", err)
 	}
 
-	cinemaSessions, err := readCinemaSessions(rows, timestamp)
+	cinemaSessions, err := readCinemaSessions(rows, date)
 	if err != nil {
 		return nil, err
 	}

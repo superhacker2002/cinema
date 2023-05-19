@@ -12,35 +12,35 @@ import (
 )
 
 type mockRepo struct {
-	session repository.CinemaSession
-	hallId  int
-	err     error
+	sessions []repository.CinemaSession
+	hallId   int
+	err      error
 }
 
-func (m *mockRepo) AllSessions(timestamp string, offset, limit int) ([]repository.CinemaSession, error) {
-	return nil, nil
+func (m *mockRepo) AllSessions(date string, offset, limit int) ([]repository.CinemaSession, error) {
+	return m.sessions, m.err
 }
 
 func (m *mockRepo) SessionsForHall(hallId int, date string) ([]repository.CinemaSession, error) {
-	var cinemaSessions []repository.CinemaSession
 	if hallId != m.hallId {
 		return nil, repository.ErrCinemaSessionsNotFound
 	}
-	cinemaSessions = append(cinemaSessions, m.session)
-	return cinemaSessions, m.err
+	return m.sessions, m.err
 }
 
 func TestGetSessionsHandler(t *testing.T) {
 	repo := mockRepo{}
 	t.Run("successful sessions get", func(t *testing.T) {
-		session := repository.CinemaSession{
-			ID:        1,
-			MovieId:   1,
-			StartTime: "2023-05-18 20:00:00",
-			EndTime:   "2023-05-18 22:00:00",
-			Status:    "scheduled",
+		session := []repository.CinemaSession{
+			{
+				ID:        1,
+				MovieId:   1,
+				StartTime: "2024-05-18 20:00:00",
+				EndTime:   "2024-05-18 22:00:00",
+				Status:    "scheduled",
+			},
 		}
-		repo.session = session
+		repo.sessions = session
 		repo.hallId = 1
 		repo.err = nil
 
@@ -52,8 +52,8 @@ func TestGetSessionsHandler(t *testing.T) {
 		handler := HttpHandler{r: &repo}.getSessionsHandler
 		handler(response, req)
 
-		assert.Equal(t, "[{\"ID\":1,\"MovieId\":1,\"StartTime\":\"2023-05-18 20:00:00\","+
-			"\"EndTime\":\"2023-05-18 22:00:00\",\"Status\":\"scheduled\"}]\n", response.Body.String())
+		assert.Equal(t, "[{\"ID\":1,\"MovieId\":1,\"StartTime\":\"2024-05-18 20:00:00\","+
+			"\"EndTime\":\"2024-05-18 22:00:00\",\"Status\":\"scheduled\"}]\n", response.Body.String())
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
 
@@ -71,8 +71,7 @@ func TestGetSessionsHandler(t *testing.T) {
 	})
 
 	t.Run("no cinema sessions", func(t *testing.T) {
-		session := repository.CinemaSession{}
-		repo.session = session
+		repo.sessions = []repository.CinemaSession{{}}
 		repo.hallId = 1
 		repo.err = repository.ErrCinemaSessionsNotFound
 
@@ -89,8 +88,7 @@ func TestGetSessionsHandler(t *testing.T) {
 	})
 
 	t.Run("repository error", func(t *testing.T) {
-		session := repository.CinemaSession{}
-		repo.session = session
+		repo.sessions = []repository.CinemaSession{{}}
 		repo.hallId = 2
 		repo.err = errors.New("something went wrong")
 
@@ -104,5 +102,146 @@ func TestGetSessionsHandler(t *testing.T) {
 
 		assert.Equal(t, ErrInternalError.Error()+"\n", response.Body.String())
 		assert.Equal(t, http.StatusInternalServerError, response.Code)
+	})
+}
+
+//
+//func TestGetAllSessionsHandler(t *testing.T) {
+//	repo := mockRepo{}
+//	t.Run("successful sessions get", func(t *testing.T) {
+//		sessions := []repository.CinemaSession{
+//			{
+//				ID:        1,
+//				MovieId:   1,
+//				StartTime: "2024-05-18 20:00:00",
+//				EndTime:   "2024-05-18 22:00:00",
+//				Status:    "scheduled",
+//			},
+//		}
+//		repo.sessions = sessions
+//		repo.hallId = 1
+//		repo.err = nil
+//
+//		req, err := http.NewRequest(http.MethodGet, "cinema-sessions/1", nil)
+//		require.NoError(t, err, "failed to create test request")
+//
+//		response := httptest.NewRecorder()
+//		handler := HttpHandler{r: &repo}.getAllSessionsHandler
+//		handler(response, req)
+//
+//		assert.Equal(t, "[{\"ID\":1,\"MovieId\":1,\"StartTime\":\"2023-05-18 20:00:00\","+
+//			"\"EndTime\":\"2023-05-18 22:00:00\",\"Status\":\"scheduled\"}]\n", response.Body.String())
+//		assert.Equal(t, http.StatusOK, response.Code)
+//	})
+//
+//	t.Run("invalid hall id", func(t *testing.T) {
+//		req, err := http.NewRequest(http.MethodGet, "cinema-sessions/0", nil)
+//		req = mux.SetURLVars(req, map[string]string{"hallId": "0"})
+//		require.NoError(t, err, "failed to create test request")
+//
+//		response := httptest.NewRecorder()
+//		handler := HttpHandler{r: &repo}.getAllSessionsHandler
+//		handler(response, req)
+//
+//		assert.Equal(t, ErrInvalidHallId.Error()+": 0\n", response.Body.String())
+//		assert.Equal(t, http.StatusBadRequest, response.Code)
+//	})
+//
+//	t.Run("no cinema sessions", func(t *testing.T) {
+//		session := repository.CinemaSession{}
+//		repo.session = session
+//		repo.hallId = 1
+//		repo.err = repository.ErrCinemaSessionsNotFound
+//
+//		req, err := http.NewRequest(http.MethodGet, "cinema-sessions/2", nil)
+//		req = mux.SetURLVars(req, map[string]string{"hallId": "2"})
+//		require.NoError(t, err, "failed to create test request")
+//
+//		response := httptest.NewRecorder()
+//		handler := HttpHandler{r: &repo}.getAllSessionsHandler
+//		handler(response, req)
+//
+//		assert.Equal(t, repository.ErrCinemaSessionsNotFound.Error()+" for hall 2\n", response.Body.String())
+//		assert.Equal(t, http.StatusBadRequest, response.Code)
+//	})
+//
+//	t.Run("repository error", func(t *testing.T) {
+//		session := repository.CinemaSession{}
+//		repo.session = session
+//		repo.hallId = 2
+//		repo.err = errors.New("something went wrong")
+//
+//		req, err := http.NewRequest(http.MethodGet, "cinema-sessions/2", nil)
+//		req = mux.SetURLVars(req, map[string]string{"hallId": "2"})
+//		require.NoError(t, err, "failed to create test request")
+//
+//		response := httptest.NewRecorder()
+//		handler := HttpHandler{r: &repo}.getAllSessionsHandler
+//		handler(response, req)
+//
+//		assert.Equal(t, ErrInternalError.Error()+"\n", response.Body.String())
+//		assert.Equal(t, http.StatusInternalServerError, response.Code)
+//	})
+//}
+
+func TestPage(t *testing.T) {
+	t.Run("valid request", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "resource?offset=10&limit=20", nil)
+		require.NoError(t, err, "failed to create test request")
+		page, err := page(req)
+		assert.NoError(t, err)
+		assert.Equal(t, 10, page.Offset)
+		assert.Equal(t, 20, page.Limit)
+	})
+
+	t.Run("invalid request", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "resource?offset=-10&limit=20", nil)
+		require.NoError(t, err, "failed to create test request")
+		page, err := page(req)
+		assert.Error(t, err)
+		assert.Equal(t, 20, page.Limit)
+	})
+
+	t.Run("not a number offset", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "resource?offset=invalid&limit=20", nil)
+		require.NoError(t, err, "failed to create test request")
+		page, err := page(req)
+		assert.Error(t, err)
+		assert.Empty(t, page)
+	})
+
+	t.Run("empty offset", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "resource?limit=20", nil)
+		require.NoError(t, err, "failed to create test request")
+		page, err := page(req)
+		assert.Error(t, err)
+		assert.Equal(t, 0, page.Offset)
+		assert.Equal(t, 10, page.Limit)
+	})
+}
+
+func TestDate(t *testing.T) {
+	t.Run("valid date", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "resource?date=2023-01-05", nil)
+		require.NoError(t, err, "failed to create test request")
+		date, err := date(req)
+		assert.NoError(t, err)
+		assert.Equal(t, date, "2023-01-05")
+	})
+
+	t.Run("invalid date", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "resource?date=2023/01/05", nil)
+		require.NoError(t, err, "failed to create test request")
+		date, err := date(req)
+		assert.Error(t, err)
+		assert.Equal(t, date, "")
+	})
+
+	t.Run("missing date", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "resource/", nil)
+		require.NoError(t, err, "failed to create test request")
+		date, err := date(req)
+		assert.NoError(t, err)
+		assert.NotEmpty(t, date)
 	})
 }

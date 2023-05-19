@@ -130,7 +130,7 @@ func page(r *http.Request) (Page, error) {
 	if p.Offset, err = strconv.Atoi(offsetStr); err != nil {
 		return p, err
 	}
-	if p.Limit, err = strconv.Atoi(offsetStr); err != nil {
+	if p.Limit, err = strconv.Atoi(limitStr); err != nil {
 		return p, err
 	}
 
