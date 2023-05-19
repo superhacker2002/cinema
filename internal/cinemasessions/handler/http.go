@@ -123,7 +123,8 @@ func page(r *http.Request) (Page, error) {
 	if offsetStr == "" || limitStr == "" {
 		p.Offset = defaultOffset
 		p.Limit = defaultLimit
-		return p, fmt.Errorf("missing offset or limit, default values are used")
+		log.Println("missing offset or limit, default values are used")
+		return p, nil
 	}
 
 	var err error
