@@ -15,7 +15,7 @@ type SessionsRepository struct {
 }
 
 type Repository interface {
-	SessionsForHall(hallId int, date string, offset, limit int) ([]CinemaSession, error)
+	SessionsForHall(hallId int, date string) ([]CinemaSession, error)
 	AllSessions(timestamp string, offset, limit int) ([]CinemaSession, error)
 }
 
@@ -31,10 +31,11 @@ type CinemaSession struct {
 	Status    string
 }
 
-func (c *SessionsRepository) SessionsForHall(hallId int, date string, offset, limit int) ([]CinemaSession, error) {
+func (c *SessionsRepository) SessionsForHall(hallId int, date string) ([]CinemaSession, error) {
 	rows, err := c.db.Query("SELECT session_id, movie_id, start_time, end_time "+
-		"FROM cinema_sessions WHERE hall_id = $1 AND date_trunc('day', start_time) = $2 "+
-		"ORDER BY start_time OFFSET $3 LIMIT $4", hallId, date, offset, limit)
+		"FROM cinema_sessions "+
+		"WHERE hall_id = $1 AND date_trunc('day', start_time) = $2 "+
+		"ORDER BY start_time ", hallId, date)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get cinema sessions: %w", err)
@@ -50,8 +51,11 @@ func (c *SessionsRepository) SessionsForHall(hallId int, date string, offset, li
 
 func (c *SessionsRepository) AllSessions(timestamp string, offset, limit int) ([]CinemaSession, error) {
 	rows, err := c.db.Query("SELECT session_id, movie_id, start_time, end_time "+
-		"FROM cinema_sessions WHERE end_time > $1 ORDER BY hall_id, start_time OFFSET $2 LIMIT $3",
-		timestamp, offset, limit)
+		"FROM cinema_sessions "+
+		"WHERE date_trunc('day', start_time) = $1 "+
+		"ORDER BY hall_id, start_time "+
+		"OFFSET $2 "+
+		"LIMIT $3", timestamp, offset, limit)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get cinema sessions: %w", err)

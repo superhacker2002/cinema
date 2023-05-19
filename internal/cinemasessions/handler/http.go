@@ -22,9 +22,9 @@ type HttpHandler struct {
 	r repository.Repository
 }
 
-type page struct {
-	offset int
-	limit  int
+type Page struct {
+	Offset int
+	Limit  int
 }
 
 func New(router *mux.Router, repository repository.Repository) HttpHandler {
@@ -45,9 +45,21 @@ func (h HttpHandler) setRoutes(router *mux.Router) {
 }
 
 func (h HttpHandler) getAllSessionsHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: add getting offset and limit from URL
-	date := r.URL.Query().Get("date")
-	sessions, err := h.r.AllSessions(date, 0, 10)
+	date, err := date(r)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, fmt.Sprintf("%v: %s", ErrInvalidDate, date), http.StatusBadRequest)
+		return
+	}
+
+	page, err := page(r)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	sessions, err := h.r.AllSessions(date, page.Offset, page.Limit)
 
 	if errors.Is(err, repository.ErrCinemaSessionsNotFound) {
 		log.Println(err)
@@ -75,14 +87,14 @@ func (h HttpHandler) getSessionsHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// TODO: add getting offset and limit from URL
 	date, err := date(r)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, fmt.Sprintf("%v: %s", ErrInvalidDate, date), http.StatusBadRequest)
 		return
 	}
-	sessions, err := h.r.SessionsForHall(hallId, date, 0, 10)
+
+	sessions, err := h.r.SessionsForHall(hallId, date)
 
 	if errors.Is(err, repository.ErrCinemaSessionsNotFound) {
 		log.Println(err)
@@ -98,6 +110,38 @@ func (h HttpHandler) getSessionsHandler(w http.ResponseWriter, r *http.Request) 
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(sessions)
+}
+
+func page(r *http.Request) (Page, error) {
+	const (
+		defaultOffset = 0
+		defaultLimit  = 10
+	)
+	offsetStr := r.URL.Query().Get("offset")
+	limitStr := r.URL.Query().Get("limit")
+	var p Page
+	if offsetStr == "" || limitStr == "" {
+		p.Offset = defaultOffset
+		p.Limit = defaultLimit
+		return p, fmt.Errorf("missing offset or limit, default values are used")
+	}
+
+	var err error
+	if p.Offset, err = strconv.Atoi(offsetStr); err != nil {
+		return p, err
+	}
+	if p.Limit, err = strconv.Atoi(offsetStr); err != nil {
+		return p, err
+	}
+
+	if p.Offset < 0 {
+		return p, errors.New(fmt.Sprintf("invalid offset parameter: %d", p.Offset))
+	}
+	if p.Limit < 0 {
+		return p, errors.New(fmt.Sprintf("invalid limit parameter: %d", p.Offset))
+	}
+
+	return p, nil
 }
 
 func date(r *http.Request) (string, error) {

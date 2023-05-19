@@ -76,7 +76,7 @@ func TestLoginHandler(t *testing.T) {
 		require.NoError(t, err, "failed to create test request")
 
 		response := httptest.NewRecorder()
-		handler := httpHandler{a: auth}.loginHandler
+		handler := HttpHandler{a: auth}.loginHandler
 		handler(response, req)
 
 		assert.Equal(t, ErrNoPassword.Error()+"\n", response.Body.String())
