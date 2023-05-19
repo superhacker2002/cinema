@@ -8,7 +8,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"time"
 )
 
 var (
@@ -86,15 +85,6 @@ func (h HttpHandler) getSessionsHandler(w http.ResponseWriter, r *http.Request) 
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(sessions)
-}
-
-func addTime(r *http.Request) string {
-	date := r.URL.Query().Get("date")
-	if date == "" {
-		return time.Now().Format("2006-01-02 15:04:05")
-	} else {
-		return date + " 00:00:00"
-	}
 }
 
 func (h HttpHandler) createSessionHandler(w http.ResponseWriter, r *http.Request) {

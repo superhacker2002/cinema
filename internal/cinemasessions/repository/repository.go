@@ -16,7 +16,7 @@ type SessionsRepository struct {
 }
 
 type Repository interface {
-	SessionsForHall(hallId int, timestamp string, offset, limit int) ([]CinemaSession, error)
+	SessionsForHall(hallId int, date string, offset, limit int) ([]CinemaSession, error)
 	AllSessions(timestamp string, offset, limit int) ([]CinemaSession, error)
 }
 
@@ -32,17 +32,16 @@ type CinemaSession struct {
 	Status    string
 }
 
-func (c *SessionsRepository) SessionsForHall(hallId int, timestamp string, offset, limit int) ([]CinemaSession, error) {
-	log.Println(timestamp)
+func (c *SessionsRepository) SessionsForHall(hallId int, date string, offset, limit int) ([]CinemaSession, error) {
 	rows, err := c.db.Query("SELECT session_id, movie_id, start_time, end_time "+
-		"FROM cinema_sessions WHERE hall_id = $1 AND end_time > $2"+
-		"ORDER BY start_time OFFSET $3 LIMIT $4", hallId, timestamp, offset, limit)
+		"FROM cinema_sessions WHERE hall_id = $1 AND date_trunc('day', start_time) = $2 "+
+		"ORDER BY start_time OFFSET $3 LIMIT $4", hallId, date, offset, limit)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get cinema sessions: %w", err)
 	}
 
-	cinemaSessions, err := readCinemaSessions(rows, timestamp)
+	cinemaSessions, err := readCinemaSessions(rows, date)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +74,7 @@ func readCinemaSessions(rows *sql.Rows, timestamp string) ([]CinemaSession, erro
 		if err := rows.Scan(&session.ID, &session.MovieId, &session.StartTime, &session.EndTime); err != nil {
 			return nil, fmt.Errorf("failed to get cinema session: %w", err)
 		}
-		if err := session.setStatus(timestamp); err != nil {
+		if err := session.setStatus(); err != nil {
 			return nil, fmt.Errorf("failed to set cinema session status: %w", err)
 		}
 		cinemaSessions = append(cinemaSessions, session)
@@ -92,22 +91,22 @@ func readCinemaSessions(rows *sql.Rows, timestamp string) ([]CinemaSession, erro
 	return cinemaSessions, nil
 }
 
-func (c *CinemaSession) setStatus(timestamp string) error {
-	start, err := time.Parse(time.RFC3339, c.StartTime)
+func (c *CinemaSession) setStatus() error {
+	layout := time.RFC3339
+	start, err := time.Parse(layout, c.StartTime)
 	if err != nil {
 		return err
 	}
-	end, err := time.Parse(time.RFC3339, c.EndTime)
+	end, err := time.Parse(layout, c.EndTime)
 	if err != nil {
 		return err
 	}
-	current, err := time.Parse("2006-01-02 15:04:05", timestamp)
-	if err != nil {
-		return err
-	}
+	current := time.Now()
 
 	if start.Before(current) && end.After(current) {
 		c.Status = "on_air"
+	} else if end.Before(current) {
+		c.Status = "passed"
 	} else {
 		c.Status = "scheduled"
 	}

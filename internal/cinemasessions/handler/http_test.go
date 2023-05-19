@@ -21,7 +21,7 @@ func (m *mockRepo) AllSessions(timestamp string, offset, limit int) ([]repositor
 	return nil, nil
 }
 
-func (m *mockRepo) SessionsForHall(hallId int, currentTime string, offset, limit int) ([]repository.CinemaSession, error) {
+func (m *mockRepo) SessionsForHall(hallId int, date string, offset, limit int) ([]repository.CinemaSession, error) {
 	var cinemaSessions []repository.CinemaSession
 	if hallId != m.hallId {
 		return nil, repository.ErrCinemaSessionsNotFound
