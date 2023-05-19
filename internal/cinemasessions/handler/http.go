@@ -38,10 +38,6 @@ func (h HttpHandler) setRoutes(router *mux.Router) {
 	s := router.PathPrefix("/cinema-sessions").Subrouter()
 	s.HandleFunc("/", h.getAllSessionsHandler).Methods("GET")
 	s.HandleFunc("/{hallId}", h.getSessionsHandler).Methods("GET")
-	//s.HandleFunc("/", h.createSessionHandler).Methods("POST")
-	//s.HandleFunc("/{sessionId}/", h.getSessionHandler).Methods("GET")
-	//s.HandleFunc("/{sessionId}/", h.updateSessionHandler).Methods("PUT")
-	//s.HandleFunc("/{sessionId}/", h.deleteSessionHandler).Methods("DELETE")
 }
 
 func (h HttpHandler) getAllSessionsHandler(w http.ResponseWriter, r *http.Request) {
@@ -74,7 +70,12 @@ func (h HttpHandler) getAllSessionsHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(sessions)
+	err = json.NewEncoder(w).Encode(sessions)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, ErrInternalError.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (h HttpHandler) getSessionsHandler(w http.ResponseWriter, r *http.Request) {
@@ -109,7 +110,12 @@ func (h HttpHandler) getSessionsHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(sessions)
+	err = json.NewEncoder(w).Encode(sessions)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, ErrInternalError.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func page(r *http.Request) (Page, error) {
