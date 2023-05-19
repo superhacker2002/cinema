@@ -41,7 +41,7 @@ func (c *SessionsRepository) SessionsForHall(hallId int, date string) ([]CinemaS
 		return nil, fmt.Errorf("failed to get cinema sessions: %w", err)
 	}
 
-	cinemaSessions, err := readCinemaSessions(rows, date)
+	cinemaSessions, err := readCinemaSessions(rows)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func (c *SessionsRepository) SessionsForHall(hallId int, date string) ([]CinemaS
 func (c *SessionsRepository) AllSessions(date string, offset, limit int) ([]CinemaSession, error) {
 	rows, err := c.db.Query("SELECT session_id, movie_id, start_time, end_time "+
 		"FROM cinema_sessions "+
-		"WHERE date_trunc('day', start_time) = $1 "+
+		"WHERE start_time >= $1 "+
 		"ORDER BY hall_id, start_time "+
 		"OFFSET $2 "+
 		"LIMIT $3", date, offset, limit)
@@ -61,7 +61,7 @@ func (c *SessionsRepository) AllSessions(date string, offset, limit int) ([]Cine
 		return nil, fmt.Errorf("failed to get cinema sessions: %w", err)
 	}
 
-	cinemaSessions, err := readCinemaSessions(rows, date)
+	cinemaSessions, err := readCinemaSessions(rows)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +69,7 @@ func (c *SessionsRepository) AllSessions(date string, offset, limit int) ([]Cine
 	return cinemaSessions, nil
 }
 
-func readCinemaSessions(rows *sql.Rows, timestamp string) ([]CinemaSession, error) {
+func readCinemaSessions(rows *sql.Rows) ([]CinemaSession, error) {
 	var cinemaSessions []CinemaSession
 	for rows.Next() {
 		var session CinemaSession
