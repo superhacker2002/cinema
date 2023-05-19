@@ -30,8 +30,8 @@ components:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          example: 1
           description: Unique identifier of the hall. Generated on the server side.
           readOnly: true
         name:
@@ -46,8 +46,8 @@ components:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          example: 1
           description: Unique identifier of the user. Generated on the server side.
           readOnly: true
         username:
@@ -68,8 +68,8 @@ components:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          example: 1
           description: Unique identifier of the movie. Generated on the server side.
           readOnly: true
         title:
@@ -89,38 +89,48 @@ components:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          example: 1
           description: Unique identifier of the cinema session. Generated on the server side.
           readOnly: true
         hall_id:
-          type: string
-          format: uuid
+          type: integer
+          example: 1
           description: ID of the hall in which the cinema session takes place.
         movie_id:
-          type: string
-          format: uuid
+          type: integer
+          example: 1
           description: ID of the movie being shown in the cinema session.
         start_time:
           type: string
-          format: date-time
-          description: Start time of the cinema session in ISO 8601 format.
+          format: timestamp
+          description: Start time of the cinema session
+          example: 2024-05-18 20:00:00
+        end_time:
+          type: string
+          format: timestamp
+          description: Start time of the cinema session.
+          example: 2024-05-18 22:00:00
+        status:
+          type: string
+          description: Current status of the movie
+          example: scheduled
 
     Ticket:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
+          type: integer
+          example: 1
           description: Unique identifier of the ticket. Generated on the server side.
           readOnly: true
         user_id:
-          type: string
-          format: uuid
+          type: integer
+          example: 1
           description: ID of the user who purchased the ticket.
         cinema_session_id:
-          type: string
-          format: uuid
+          type: integer
+          example: 1
           description: ID of the cinema session for which the ticket was purchased.
         seat_number:
           type: integer
@@ -204,8 +214,7 @@ paths:
           description: ID of hall to return
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
       responses:
         '200':
           description: Successfull operation
@@ -235,8 +244,7 @@ paths:
           description: The ID of the hall to update
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
       requestBody:
         description: The hall was updated successfully
         required: true
@@ -273,8 +281,7 @@ paths:
           description: The ID of the hall to delete
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
       responses:
         '204':
           description: The hall was deleted successfully
@@ -353,8 +360,7 @@ paths:
           name: userId
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
           description: ID of the movie to retrieve
       responses:
         '200':
@@ -385,8 +391,7 @@ paths:
           name: movieId
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
           description: ID of the movie to retrieve
       responses:
         '200':
@@ -416,8 +421,7 @@ paths:
           name: movieId
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
           description: ID of the movie to update
       requestBody:
         required: true
@@ -455,8 +459,7 @@ paths:
           name: movieId
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
           description: ID of the movie to delete
       responses:
         '204':
@@ -474,11 +477,32 @@ paths:
     get:
       tags:
         - cinema sessions
-      summary: Returns a list of all cinema sessions
+      summary: Returns a list of all cinema sessions for all halls
       operationId: getAllCinemaSessions
+      parameters:
+        - name: offset
+          in: query
+          description: The number of records to be skipped
+          required: false
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          description: The number of records to be returned
+          required: false
+          schema:
+            type: integer
+        - name: date
+          in: query
+          description: The date for which the movie sessions should be displayed in format YYYY-MM-DD
+          required: false
+          schema:
+            type: string
+            format: date
+
       responses:
         '200':
-          description: Successfull operation
+          description: Successful operation
           content:
             application/json:
               schema:
@@ -525,6 +549,44 @@ paths:
       security:
         - bearerAuth: []
 
+  /cinema-sessions/{hallId}:
+    get:
+      tags:
+        - cinema sessions
+      summary: Returns all cinema sessions
+      operationId: getCinemaSessionsForHall
+      parameters:
+        - in: path
+          name: hallId
+          required: true
+          schema:
+            type: integer
+          description: ID of the hall to retrieve movies
+        - name: date
+          in: query
+          description: The date for which the movie sessions should be displayed in format YYYY-MM-DD
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CinemaSession'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - bearerAuth: []
+
   /cinema-sessions/{sessionId}:
     get:
       tags:
@@ -536,8 +598,7 @@ paths:
           name: sessionId
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
           description: ID of the cinema session to retrieve
       responses:
         '200':
@@ -567,8 +628,7 @@ paths:
           name: sessionId
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
           description: ID of the cinema session to update
       requestBody:
         required: true
@@ -606,8 +666,7 @@ paths:
           name: sessionId
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
           description: ID of the cinema session to delete
       responses:
         '204':
@@ -672,7 +731,6 @@ paths:
           required: true
           schema:
             type: integer
-            format: int64
       responses:
         '200':
           description: OK
@@ -707,7 +765,6 @@ paths:
           required: true
           schema:
             type: integer
-            format: int64
       responses:
         '200':
           description: OK
@@ -845,8 +902,7 @@ paths:
           name: userId
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
           description: ID of the user to retrieve
       responses:
         '200':
@@ -876,8 +932,7 @@ paths:
           name: userId
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
           description: ID of the user to update
       requestBody:
         required: true
@@ -915,8 +970,7 @@ paths:
           name: userId
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
           description: ID of the user to delete
       responses:
         '204':
