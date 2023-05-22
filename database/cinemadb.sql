@@ -31,8 +31,8 @@ CREATE TABLE cinema_sessions (
     session_id SERIAL PRIMARY KEY,
     movie_id INTEGER NOT NULL,
     hall_id INTEGER NOT NULL,
-    start_time TIMESTAMP NOT NULL,
-    end_time TIMESTAMP NOT NULL,
+    start_time timestamptz NOT NULL,
+    end_time timestamptz NOT NULL,
     price DECIMAL(5,2) NOT NULL,
     CONSTRAINT cinema_sessions_movie_id_fkey FOREIGN KEY (movie_id)
         REFERENCES movies (movie_id) ON DELETE CASCADE,
