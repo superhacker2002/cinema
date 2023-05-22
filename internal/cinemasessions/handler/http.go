@@ -27,6 +27,13 @@ type Page struct {
 	Limit  int
 }
 
+type session struct {
+	Id        int    `json:"id"`
+	MovieId   int    `json:"movieId"`
+	StartTime string `json:"startTime"`
+	Status    string `json:"status"`
+}
+
 func New(router *mux.Router, repository repository.Repository) HttpHandler {
 	handler := HttpHandler{r: repository}
 	handler.setRoutes(router)
@@ -70,7 +77,7 @@ func (h HttpHandler) getAllSessionsHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(sessions)
+	err = json.NewEncoder(w).Encode(convert(sessions))
 	if err != nil {
 		log.Println(err)
 		http.Error(w, ErrInternalError.Error(), http.StatusInternalServerError)
@@ -110,13 +117,36 @@ func (h HttpHandler) getSessionsHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(sessions)
+	err = json.NewEncoder(w).Encode(convert(sessions))
 	if err != nil {
 		log.Println(err)
 		http.Error(w, ErrInternalError.Error(), http.StatusInternalServerError)
 		return
 	}
 }
+
+func (h HttpHandler) createSessionHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO: create new cinema session (only for admins)
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h HttpHandler) getSessionHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO: return cinema session by id
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h HttpHandler) updateSessionHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO: update cinema session by id (only for admins)
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h HttpHandler) deleteSessionHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO: delete cinema session by id (only for admins)
+	w.WriteHeader(http.StatusOK)
+}
+
+
+func
 
 func page(r *http.Request) (Page, error) {
 	const (
@@ -164,22 +194,18 @@ func date(r *http.Request) (string, error) {
 	return date, nil
 }
 
-func (h HttpHandler) createSessionHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: create new cinema session (only for admins)
-	w.WriteHeader(http.StatusOK)
+func convert(sessions []repository.CinemaSession) []session {
+	var jsonSessions []session
+	for _, s := range sessions {
+		jsonSession := session{
+			Id:        s.ID,
+			MovieId:   s.MovieId,
+			StartTime: s.StartTime,
+			Status:    s.Status,
+		}
+
+		jsonSessions = append(jsonSessions, jsonSession)
+	}
+	return jsonSessions
 }
 
-func (h HttpHandler) getSessionHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: return cinema session by id
-	w.WriteHeader(http.StatusOK)
-}
-
-func (h HttpHandler) updateSessionHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: update cinema session by id (only for admins)
-	w.WriteHeader(http.StatusOK)
-}
-
-func (h HttpHandler) deleteSessionHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: delete cinema session by id (only for admins)
-	w.WriteHeader(http.StatusOK)
-}
