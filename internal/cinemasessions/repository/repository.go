@@ -38,8 +38,8 @@ type CinemaSession struct {
 	Status    string
 }
 
-func (c *SessionsRepository) SessionsForHall(hallId int, date string) ([]CinemaSession, error) {
-	rows, err := c.db.Query("SELECT session_id, movie_id, start_time, end_time "+
+func (s *SessionsRepository) SessionsForHall(hallId int, date string) ([]CinemaSession, error) {
+	rows, err := s.db.Query("SELECT session_id, movie_id, start_time, end_time "+
 		"FROM cinema_sessions "+
 		"WHERE hall_id = $1 AND date_trunc('day', start_time) = $2 "+
 		"ORDER BY start_time ", hallId, date)
@@ -56,8 +56,8 @@ func (c *SessionsRepository) SessionsForHall(hallId int, date string) ([]CinemaS
 	return cinemaSessions, nil
 }
 
-func (c *SessionsRepository) AllSessions(date string, offset, limit int) ([]CinemaSession, error) {
-	rows, err := c.db.Query("SELECT session_id, movie_id, start_time, end_time "+
+func (s *SessionsRepository) AllSessions(date string, offset, limit int) ([]CinemaSession, error) {
+	rows, err := s.db.Query("SELECT session_id, movie_id, start_time, end_time "+
 		"FROM cinema_sessions "+
 		"WHERE start_time >= $1 "+
 		"ORDER BY hall_id, start_time "+
@@ -74,6 +74,10 @@ func (c *SessionsRepository) AllSessions(date string, offset, limit int) ([]Cine
 	}
 
 	return cinemaSessions, nil
+}
+
+func (s *SessionsRepository) deleteSession(id int) error {
+
 }
 
 func readCinemaSessions(rows *sql.Rows) ([]CinemaSession, error) {
@@ -100,24 +104,24 @@ func readCinemaSessions(rows *sql.Rows) ([]CinemaSession, error) {
 	return cinemaSessions, nil
 }
 
-func (c *CinemaSession) setStatus() error {
+func (s *CinemaSession) setStatus() error {
 	layout := time.RFC3339
-	start, err := time.Parse(layout, c.StartTime)
+	start, err := time.Parse(layout, s.StartTime)
 	if err != nil {
 		return err
 	}
-	end, err := time.Parse(layout, c.EndTime)
+	end, err := time.Parse(layout, s.EndTime)
 	if err != nil {
 		return err
 	}
 	current := time.Now().UTC()
 
 	if start.Before(current) && end.After(current) {
-		c.Status = StatusOnAir
+		s.Status = StatusOnAir
 	} else if end.Before(current) {
-		c.Status = StatusPassed
+		s.Status = StatusPassed
 	} else {
-		c.Status = StatusScheduled
+		s.Status = StatusScheduled
 	}
 	return nil
 }
