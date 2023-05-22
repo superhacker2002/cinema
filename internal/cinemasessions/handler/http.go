@@ -48,21 +48,21 @@ func (h HttpHandler) setRoutes(router *mux.Router) {
 }
 
 func (h HttpHandler) getAllSessionsHandler(w http.ResponseWriter, r *http.Request) {
-	date, err := date(r)
+	d, err := date(r)
 	if err != nil {
 		log.Println(err)
-		http.Error(w, fmt.Sprintf("%v: %s", ErrInvalidDate, date), http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("%v: %s", ErrInvalidDate, d), http.StatusBadRequest)
 		return
 	}
 
-	page, err := page(r)
+	p, err := page(r)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	sessions, err := h.r.AllSessions(date, page.Offset, page.Limit)
+	sessions, err := h.r.AllSessions(d, p.Offset, p.Limit)
 
 	if errors.Is(err, repository.ErrCinemaSessionsNotFound) {
 		log.Println(err)
@@ -95,14 +95,14 @@ func (h HttpHandler) getSessionsHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	date, err := date(r)
+	d, err := date(r)
 	if err != nil {
 		log.Println(err)
-		http.Error(w, fmt.Sprintf("%v: %s", ErrInvalidDate, date), http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("%v: %s", ErrInvalidDate, d), http.StatusBadRequest)
 		return
 	}
 
-	sessions, err := h.r.SessionsForHall(hallId, date)
+	sessions, err := h.r.SessionsForHall(hallId, d)
 
 	if errors.Is(err, repository.ErrCinemaSessionsNotFound) {
 		log.Println(err)
