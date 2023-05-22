@@ -9,6 +9,10 @@ require (
 	github.com/stretchr/testify v1.8.2
 )
 
+require github.com/dgrijalva/jwt-go v3.2.0+incompatible
+
+require github.com/sethvargo/go-envconfig v0.9.0
+
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/davecgh/go-spew v1.1.1 // indirect
