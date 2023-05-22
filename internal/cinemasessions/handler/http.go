@@ -145,9 +145,6 @@ func (h HttpHandler) deleteSessionHandler(w http.ResponseWriter, r *http.Request
 	w.WriteHeader(http.StatusOK)
 }
 
-
-func
-
 func page(r *http.Request) (Page, error) {
 	const (
 		defaultOffset = 0
@@ -208,4 +205,3 @@ func convert(sessions []repository.CinemaSession) []session {
 	}
 	return jsonSessions
 }
-
