@@ -110,7 +110,7 @@ func (c *CinemaSession) setStatus() error {
 	if err != nil {
 		return err
 	}
-	current := time.Now()
+	current := time.Now().UTC()
 
 	if start.Before(current) && end.After(current) {
 		c.Status = StatusOnAir
