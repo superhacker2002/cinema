@@ -219,9 +219,9 @@ func readCinemaSessions(rows *sql.Rows) ([]CinemaSession, error) {
 		if err := session.setStatus(); err != nil {
 			return nil, fmt.Errorf("failed to set cinema session status: %w", err)
 		}
-		cinemaSessions = append(cinemaSessions, session)
 		session.StartTime = session.StartTime.In(timeZone)
 		session.EndTime = session.EndTime.In(timeZone)
+		cinemaSessions = append(cinemaSessions, session)
 	}
 
 	if err := rows.Err(); err != nil {
@@ -235,24 +235,15 @@ func readCinemaSessions(rows *sql.Rows) ([]CinemaSession, error) {
 	return cinemaSessions, nil
 }
 
-func (s *CinemaSession) setStatus() error {
-	//const layout = time.RFC3339
-	//start, err := time.Parse(layout, s.StartTime)
-	//if err != nil {
-	//	return err
-	//}
-	//end, err := time.Parse(layout, s.EndTime)
-	//if err != nil {
-	//	return err
-	//}
+func (c *CinemaSession) setStatus() error {
 	current := time.Now().UTC()
 
-	if s.StartTime.Before(current) && s.EndTime.After(current) {
-		s.Status = StatusOnAir
-	} else if s.EndTime.Before(current) {
-		s.Status = StatusPassed
+	if c.StartTime.Before(current) && c.EndTime.After(current) {
+		c.Status = StatusOnAir
+	} else if c.EndTime.Before(current) {
+		c.Status = StatusPassed
 	} else {
-		s.Status = StatusScheduled
+		c.Status = StatusScheduled
 	}
 	return nil
 }
