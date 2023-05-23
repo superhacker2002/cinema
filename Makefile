@@ -28,6 +28,7 @@ test-create-user:
     -H 'accept: application/json' \
     -H 'Content-Type: application/json' \
     -d '{ \
+    "username": "test_user, \
     "password": "10a6e6cc8311a3e2bcc09bf6c199adecd5dd59408c343e926b129c4914f3cb01" \
     }'
 
@@ -37,9 +38,29 @@ test-get-sessions:
         'localhost:8080/cinema-sessions/2?date=2023-05-22' \
         -H 'accept: application/json' | jq .
 
+.PHONY: test-get-all-sessions
+test-get-all-sessions:
+	curl -X 'GET' \
+        'localhost:8080/cinema-sessions/' \
+        -H 'accept: application/json'
+
+
+.PHONY: test-delete-session
 test-delete-session:
 	curl -X 'DELETE' \
-        'localhost:8080/cinema-sessions/10'
+        'localhost:8080/cinema-sessions/4'
+
+.PHONY: test-create-session
+test-create-session:
+	curl -i -X 'POST' \
+        'localhost:8080/cinema-sessions/2' \
+		-H 'accept: application/json' \
+		-H 'Content-Type: application/json' \
+		-d '{ \
+		"movieId": 1, \
+		"starTime": "2023-05-23 17:30:00 +04", \
+		"price": 10.0 \
+		}'
 
 .PHONY: docker-db
 docker-db:

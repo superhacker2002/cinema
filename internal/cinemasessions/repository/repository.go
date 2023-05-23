@@ -22,6 +22,8 @@ const (
 	StatusScheduled = "scheduled"
 )
 
+var timeZone = time.FixedZone("UTC+4", 4*60*60)
+
 type SessionsRepository struct {
 	db *sql.DB
 }
@@ -40,8 +42,8 @@ func New(db *sql.DB) *SessionsRepository {
 type CinemaSession struct {
 	ID        int
 	MovieId   int
-	StartTime string
-	EndTime   string
+	StartTime time.Time
+	EndTime   time.Time
 	Status    string
 }
 
@@ -89,7 +91,6 @@ func (s *SessionsRepository) CreateSession(movieId, hallId int, startTime string
 		log.Println(err)
 		return 0, fmt.Errorf("failed to check if hall with id %d exists: %w", hallId, err)
 	}
-
 	if !exists {
 		return 0, fmt.Errorf("%w: id %d", ErrHallNotFound, hallId)
 	}
@@ -109,6 +110,8 @@ func (s *SessionsRepository) CreateSession(movieId, hallId int, startTime string
 		return 0, fmt.Errorf("%w at the time %s", ErrHallIsBusy, startTime)
 	}
 
+	log.Println(startTime)
+	log.Println(endTime)
 	err = s.db.QueryRow("INSERT INTO cinema_sessions (movie_id, hall_id, start_time, end_time, price)"+
 		"VALUES ($1, $2, $3, $4, $5)"+
 		"RETURNING session_id", movieId, hallId, startTime, endTime, price).Scan(&sessionId)
@@ -116,6 +119,10 @@ func (s *SessionsRepository) CreateSession(movieId, hallId int, startTime string
 		log.Println(err)
 		return 0, err
 	}
+
+	var start string
+	_ = s.db.QueryRow("SELECT start_time FROM cinema_sessions WHERE session_id = $1", sessionId).Scan(&start)
+	log.Println(start)
 
 	return sessionId, nil
 }
@@ -213,6 +220,8 @@ func readCinemaSessions(rows *sql.Rows) ([]CinemaSession, error) {
 			return nil, fmt.Errorf("failed to set cinema session status: %w", err)
 		}
 		cinemaSessions = append(cinemaSessions, session)
+		session.StartTime = session.StartTime.In(timeZone)
+		session.EndTime = session.EndTime.In(timeZone)
 	}
 
 	if err := rows.Err(); err != nil {
@@ -227,20 +236,20 @@ func readCinemaSessions(rows *sql.Rows) ([]CinemaSession, error) {
 }
 
 func (s *CinemaSession) setStatus() error {
-	const layout = time.RFC3339
-	start, err := time.Parse(layout, s.StartTime)
-	if err != nil {
-		return err
-	}
-	end, err := time.Parse(layout, s.EndTime)
-	if err != nil {
-		return err
-	}
+	//const layout = time.RFC3339
+	//start, err := time.Parse(layout, s.StartTime)
+	//if err != nil {
+	//	return err
+	//}
+	//end, err := time.Parse(layout, s.EndTime)
+	//if err != nil {
+	//	return err
+	//}
 	current := time.Now().UTC()
 
-	if start.Before(current) && end.After(current) {
+	if s.StartTime.Before(current) && s.EndTime.After(current) {
 		s.Status = StatusOnAir
-	} else if end.Before(current) {
+	} else if s.EndTime.Before(current) {
 		s.Status = StatusPassed
 	} else {
 		s.Status = StatusScheduled

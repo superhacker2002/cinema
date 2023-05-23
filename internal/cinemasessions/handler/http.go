@@ -31,10 +31,10 @@ type Page struct {
 }
 
 type session struct {
-	Id        int    `json:"id"`
-	MovieId   int    `json:"movieId"`
-	StartTime string `json:"startTime"`
-	Status    string `json:"status"`
+	Id        int       `json:"id"`
+	MovieId   int       `json:"movieId"`
+	StartTime time.Time `json:"startTime"`
+	Status    string    `json:"status"`
 }
 
 func New(router *mux.Router, repository repository.Repository) HttpHandler {
