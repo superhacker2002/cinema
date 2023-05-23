@@ -27,6 +27,7 @@ CREATE TABLE halls (
     hall_name VARCHAR(50) NOT NULL,
     capacity INTEGER NOT NULL
 );
+
 CREATE TABLE cinema_sessions (
     session_id SERIAL PRIMARY KEY,
     movie_id INTEGER NOT NULL,
