@@ -153,14 +153,16 @@ func (h HttpHandler) deleteSessionHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	err = h.r.DeleteSession(sessionId)
-	if errors.Is(repository.ErrCinemaSessionsNotFound, err) {
+	if errors.Is(err, repository.ErrCinemaSessionsNotFound) {
 		log.Println(err)
 		http.Error(w, err.Error(), http.StatusNotFound)
+		return
 	}
 
 	if err != nil {
 		log.Println(err)
 		http.Error(w, ErrInternalError.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	w.WriteHeader(http.StatusOK)
