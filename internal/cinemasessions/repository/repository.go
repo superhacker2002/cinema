@@ -10,6 +10,7 @@ import (
 
 var (
 	ErrCinemaSessionsNotFound = errors.New("no cinema sessions were found")
+	ErrHallNotFound           = errors.New("hall does not exist")
 	ErrHallIsBusy             = errors.New("hall is busy")
 )
 
@@ -83,6 +84,15 @@ func (s *SessionsRepository) AllSessions(date string, offset, limit int) ([]Cine
 }
 
 func (s *SessionsRepository) CreateSession(movieId, hallId int, startTime string, price float32) (sessionId int, err error) {
+	exists, err := s.hallExists(hallId)
+	if err != nil {
+		return 0, fmt.Errorf("failed to check if hall with id %d exists: %w", hallId, err)
+	}
+
+	if !exists {
+		return 0, fmt.Errorf("%w: id %d", ErrHallNotFound, hallId)
+	}
+
 	endTime, err := s.sessionEndTime(movieId, startTime)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get session end time: %w", err)
@@ -167,6 +177,16 @@ func (s *SessionsRepository) DeleteSession(id int) error {
 func (s *SessionsRepository) sessionExists(id int) (bool, error) {
 	var count int
 	err := s.db.QueryRow("SELECT COUNT(*) FROM cinema_sessions WHERE session_id = $1", id).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}
+
+func (s *SessionsRepository) hallExists(id int) (bool, error) {
+	var count int
+	err := s.db.QueryRow("SELECT COUNT(*) FROM halls WHERE hall_id = $1", id).Scan(&count)
 	if err != nil {
 		return false, err
 	}
