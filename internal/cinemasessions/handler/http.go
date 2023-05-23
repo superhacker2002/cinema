@@ -47,6 +47,7 @@ func New(router *mux.Router, repository repository.Repository) HttpHandler {
 func (h HttpHandler) setRoutes(router *mux.Router) {
 	s := router.PathPrefix("/cinema-sessions").Subrouter()
 	s.HandleFunc("/", h.getAllSessionsHandler).Methods("GET")
+	s.HandleFunc("/{sessionId}", h.deleteSessionHandler).Methods("DELETE")
 	s.HandleFunc("/{hallId}", h.getSessionsHandler).Methods("GET")
 	s.HandleFunc("/{hallId}", h.createSessionHandler).Methods("POST")
 }
@@ -70,7 +71,7 @@ func (h HttpHandler) getAllSessionsHandler(w http.ResponseWriter, r *http.Reques
 
 	if errors.Is(err, repository.ErrCinemaSessionsNotFound) {
 		log.Println(err)
-		http.Error(w, fmt.Sprintf("%v for all halls", err), http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("%v for all halls for date %s", err, d), http.StatusBadRequest)
 		return
 	}
 
@@ -154,22 +155,26 @@ func (h HttpHandler) createSessionHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	//id, err := h.r.CreateUser(creds.Username, creds.Password)
-	//if errors.Is(err, userRepository.ErrUserExists) {
-	//	log.Println(err)
-	//	http.Error(w, err.Error(), http.StatusConflict)
-	//	return
-	//}
-	//
-	//if err != nil {
-	//	log.Println(err)
-	//	http.Error(w, ErrInternalError.Error(), http.StatusInternalServerError)
-	//	return
-	//}
-	//
-	//w.Header().Set("Content-Type", "application/json")
-	//json.NewEncoder(w).Encode(map[string]int{"user_id": id})
-	//w.WriteHeader(http.StatusOK)
+	id, err := h.r.CreateSession(hallId, session.MovieId, session.StarTime, session.Price)
+	if errors.Is(err, repository.ErrHallIsBusy) {
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusConflict)
+		return
+	}
+
+	if err != nil {
+		log.Println(err)
+		http.Error(w, ErrInternalError.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]int{"session_id": id})
+	if err != nil {
+		log.Println(err)
+		http.Error(w, ErrInternalError.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (h HttpHandler) getSessionHandler(w http.ResponseWriter, r *http.Request) {
@@ -194,14 +199,19 @@ func (h HttpHandler) deleteSessionHandler(w http.ResponseWriter, r *http.Request
 	if errors.Is(repository.ErrCinemaSessionsNotFound, err) {
 		log.Println(err)
 		http.Error(w, err.Error(), http.StatusNotFound)
+		return
 	}
 
 	if err != nil {
 		log.Println(err)
 		http.Error(w, ErrInternalError.Error(), http.StatusInternalServerError)
+		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	_, err = w.Write([]byte("Session was deleted successfully"))
+	if err != nil {
+		return
+	}
 }
 
 func pathVariable(r *http.Request, varName string) (int, error) {

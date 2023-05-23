@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"strconv"
 	"time"
 )
@@ -12,9 +13,8 @@ var (
 	ErrCinemaSessionsNotFound = errors.New("no cinema sessions were found")
 	ErrHallNotFound           = errors.New("hall does not exist")
 	ErrHallIsBusy             = errors.New("hall is busy")
+	ErrMovieNotFound          = errors.New("movie was not found")
 )
-
-type Status int
 
 const (
 	StatusPassed    = "passed"
@@ -86,6 +86,7 @@ func (s *SessionsRepository) AllSessions(date string, offset, limit int) ([]Cine
 func (s *SessionsRepository) CreateSession(movieId, hallId int, startTime string, price float32) (sessionId int, err error) {
 	exists, err := s.hallExists(hallId)
 	if err != nil {
+		log.Println(err)
 		return 0, fmt.Errorf("failed to check if hall with id %d exists: %w", hallId, err)
 	}
 
@@ -95,20 +96,24 @@ func (s *SessionsRepository) CreateSession(movieId, hallId int, startTime string
 
 	endTime, err := s.sessionEndTime(movieId, startTime)
 	if err != nil {
+		log.Println(err)
 		return 0, fmt.Errorf("failed to get session end time: %w", err)
 	}
 
 	hallBusy, err := s.hallIsBusy(movieId, hallId, startTime, endTime)
 	if err != nil {
+		log.Println(err)
 		return 0, fmt.Errorf("failed to check if cinema session can be created: %w", err)
 	}
 	if hallBusy {
 		return 0, fmt.Errorf("%w at the time %s", ErrHallIsBusy, startTime)
 	}
 
-	err = s.db.QueryRow("INSERT INTO cinema_sessions (movie_id, hall_id, start_time, end_time) VALUES ($1, $2, $3, $4)"+
-		"RETURNING session_id", movieId, hallId, startTime, price).Scan(&sessionId)
+	err = s.db.QueryRow("INSERT INTO cinema_sessions (movie_id, hall_id, start_time, end_time, price)"+
+		"VALUES ($1, $2, $3, $4, $5)"+
+		"RETURNING session_id", movieId, hallId, startTime, endTime, price).Scan(&sessionId)
 	if err != nil {
+		log.Println(err)
 		return 0, err
 	}
 
@@ -116,9 +121,9 @@ func (s *SessionsRepository) CreateSession(movieId, hallId int, startTime string
 }
 
 func (s *SessionsRepository) hallIsBusy(movieId, hallId int, startTime, endTime string) (bool, error) {
-	row := s.db.QueryRow("SELECT session_id"+
-		"FROM cinema_sessions"+
-		"WHERE hall_id = $1 AND $2 < start_time < $3 "+
+	row := s.db.QueryRow("SELECT session_id "+
+		"FROM cinema_sessions "+
+		"WHERE hall_id = $1 AND $2 < start_time AND start_time < $3 "+
 		"OR (start_time <= $2 AND end_time > $2)",
 		hallId, startTime, endTime)
 
@@ -138,12 +143,13 @@ func (s *SessionsRepository) sessionEndTime(id int, startTime string) (string, e
 	)
 	row := s.db.QueryRow("SELECT duration FROM movies WHERE movie_id = $1", id)
 	if err := row.Scan(&duration); err == sql.ErrNoRows {
-		return endTime, errors.New("movie was not found")
+		return endTime, fmt.Errorf("%w with id %d", ErrMovieNotFound, id)
 	} else if err != nil {
 		return endTime, err
 	}
 
-	start, err := time.Parse(time.RFC3339, startTime)
+	const layout = "2006-01-02 15:04:05 MST"
+	start, err := time.Parse(layout, startTime)
 	if err != nil {
 		return endTime, err
 	}
@@ -152,7 +158,7 @@ func (s *SessionsRepository) sessionEndTime(id int, startTime string) (string, e
 	if err != nil {
 		return endTime, err
 	}
-	endTime = start.Add(time.Minute * time.Duration(durationMinutes)).Format("2006-01-02")
+	endTime = start.Add(time.Minute * time.Duration(durationMinutes)).Format(layout)
 	return endTime, nil
 }
 
@@ -178,6 +184,7 @@ func (s *SessionsRepository) sessionExists(id int) (bool, error) {
 	var count int
 	err := s.db.QueryRow("SELECT COUNT(*) FROM cinema_sessions WHERE session_id = $1", id).Scan(&count)
 	if err != nil {
+		log.Println(err)
 		return false, err
 	}
 
@@ -188,6 +195,7 @@ func (s *SessionsRepository) hallExists(id int) (bool, error) {
 	var count int
 	err := s.db.QueryRow("SELECT COUNT(*) FROM halls WHERE hall_id = $1", id).Scan(&count)
 	if err != nil {
+		log.Println(err)
 		return false, err
 	}
 
@@ -219,7 +227,7 @@ func readCinemaSessions(rows *sql.Rows) ([]CinemaSession, error) {
 }
 
 func (s *CinemaSession) setStatus() error {
-	layout := time.RFC3339
+	const layout = time.RFC3339
 	start, err := time.Parse(layout, s.StartTime)
 	if err != nil {
 		return err
