@@ -15,6 +15,8 @@ const (
 	StatusScheduled = "scheduled"
 )
 
+var timeZone = time.FixedZone("UTC+4", 4*60*60)
+
 type SessionsRepository struct {
 	db *sql.DB
 }
@@ -113,6 +115,8 @@ func readCinemaSessions(rows *sql.Rows) ([]CinemaSession, error) {
 		if err := session.setStatus(); err != nil {
 			return nil, fmt.Errorf("failed to set cinema session status: %w", err)
 		}
+		session.StartTime = session.StartTime.In(timeZone)
+		session.EndTime = session.EndTime.In(timeZone)
 		cinemaSessions = append(cinemaSessions, session)
 	}
 
