@@ -46,7 +46,7 @@ func (h HttpHandler) setRoutes(router *mux.Router) {
 	s := router.PathPrefix("/cinema-sessions").Subrouter()
 	s.HandleFunc("/", h.getAllSessionsHandler).Methods("GET")
 	s.HandleFunc("/{hallId}", h.getSessionsHandler).Methods("GET")
-	s.HandleFunc("/{sessionId}", h.deleteSessionHandler).Methods("DELETE")
+	s.HandleFunc("/{hallId}", h.createSessionHandler).Methods("POST")
 }
 
 func (h HttpHandler) getAllSessionsHandler(w http.ResponseWriter, r *http.Request) {
@@ -88,12 +88,10 @@ func (h HttpHandler) getAllSessionsHandler(w http.ResponseWriter, r *http.Reques
 }
 
 func (h HttpHandler) getSessionsHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	hallIdStr := vars["hallId"]
-	hallId, err := strconv.Atoi(hallIdStr)
-	if err != nil || hallId <= 0 {
+	hallId, err := pathVariable(r, "hallId")
+	if err != nil {
 		log.Println(err)
-		http.Error(w, fmt.Sprintf("%v: %s", ErrInvalidHallId, hallIdStr), http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("%v: %d", ErrInvalidHallId, hallId), http.StatusBadRequest)
 		return
 	}
 
@@ -108,7 +106,7 @@ func (h HttpHandler) getSessionsHandler(w http.ResponseWriter, r *http.Request) 
 
 	if errors.Is(err, repository.ErrCinemaSessionsNotFound) {
 		log.Println(err)
-		http.Error(w, fmt.Sprintf("%v for hall %s", err, hallIdStr), http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("%v for hall %d", err, hallId), http.StatusBadRequest)
 		return
 	}
 
@@ -128,8 +126,42 @@ func (h HttpHandler) getSessionsHandler(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h HttpHandler) createSessionHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: create new cinema session (only for admins)
-	w.WriteHeader(http.StatusOK)
+	//body, err := io.ReadAll(r.Body)
+	//if err != nil {
+	//	log.Println(err)
+	//	http.Error(w, ErrReadRequestFail.Error(), http.StatusBadRequest)
+	//	return
+	//}
+	//
+	//var creds credentials
+	//if err = json.Unmarshal(body, &creds); err != nil {
+	//	log.Println(err)
+	//	http.Error(w, ErrReadRequestFail.Error(), http.StatusBadRequest)
+	//	return
+	//}
+	//
+	//if err = creds.validate(); err != nil {
+	//	log.Println(err)
+	//	http.Error(w, err.Error(), http.StatusBadRequest)
+	//	return
+	//}
+	//
+	//id, err := h.r.CreateUser(creds.Username, creds.Password)
+	//if errors.Is(err, userRepository.ErrUserExists) {
+	//	log.Println(err)
+	//	http.Error(w, err.Error(), http.StatusConflict)
+	//	return
+	//}
+	//
+	//if err != nil {
+	//	log.Println(err)
+	//	http.Error(w, ErrInternalError.Error(), http.StatusInternalServerError)
+	//	return
+	//}
+	//
+	//w.Header().Set("Content-Type", "application/json")
+	//json.NewEncoder(w).Encode(map[string]int{"user_id": id})
+	//w.WriteHeader(http.StatusOK)
 }
 
 func (h HttpHandler) getSessionHandler(w http.ResponseWriter, r *http.Request) {
@@ -143,29 +175,21 @@ func (h HttpHandler) updateSessionHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (h HttpHandler) deleteSessionHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	sessionIdStr := vars["sessionId"]
-	sessionId, err := strconv.Atoi(sessionIdStr)
-	if err != nil || sessionId <= 0 {
-		log.Println(err)
-		http.Error(w, fmt.Sprintf("%v: %s", ErrInvalidSessionId, sessionIdStr), http.StatusBadRequest)
-		return
-	}
-
-	err = h.r.DeleteSession(sessionId)
-	if errors.Is(err, repository.ErrCinemaSessionsNotFound) {
-		log.Println(err)
-		http.Error(w, err.Error(), http.StatusNotFound)
-		return
-	}
-
-	if err != nil {
-		log.Println(err)
-		http.Error(w, ErrInternalError.Error(), http.StatusInternalServerError)
-		return
-	}
-
+	// TODO: delete cinema session by id (only for admins)
 	w.WriteHeader(http.StatusOK)
+}
+
+func pathVariable(r *http.Request, varName string) (int, error) {
+	vars := mux.Vars(r)
+	varStr := vars[varName]
+	varInt, err := strconv.Atoi(varStr)
+	if err != nil {
+		return 0, err
+	}
+	if varInt <= 0 {
+		return 0, errors.New("parameter is less than zero")
+	}
+	return varInt, nil
 }
 
 func page(r *http.Request) (Page, error) {
