@@ -22,11 +22,19 @@ func (m *mockRepo) AllSessions(date string, offset, limit int) ([]repository.Cin
 	return m.sessions, m.err
 }
 
-func (m *mockRepo) SessionsForHall(hallId int, date string) ([]repository.CinemaSession, error) {
+func (m *mockRepo) SessionsForHall(hallId int, _ string) ([]repository.CinemaSession, error) {
 	if hallId != m.hallId {
 		return nil, repository.ErrCinemaSessionsNotFound
 	}
 	return m.sessions, m.err
+}
+
+func (m *mockRepo) DeleteSession(id int) error {
+	return m.err
+}
+
+func (m *mockRepo) CreateSession(movieId, hallId int, startTime string, price float32) (int, error) {
+	return 0, nil
 }
 
 func TestGetSessionsHandler(t *testing.T) {

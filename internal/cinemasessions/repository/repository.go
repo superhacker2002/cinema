@@ -4,10 +4,14 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 )
 
-var ErrCinemaSessionsNotFound = errors.New("no cinema sessions were found")
+var (
+	ErrCinemaSessionsNotFound = errors.New("no cinema sessions were found")
+	ErrHallIsBusy             = errors.New("hall is busy")
+)
 
 type Status int
 
@@ -24,6 +28,7 @@ type SessionsRepository struct {
 type Repository interface {
 	SessionsForHall(hallId int, date string) ([]CinemaSession, error)
 	AllSessions(date string, offset, limit int) ([]CinemaSession, error)
+	CreateSession(movieId, hallId int, startTime string, price float32) (sessionId int, err error)
 	DeleteSession(id int) error
 }
 
@@ -75,6 +80,70 @@ func (s *SessionsRepository) AllSessions(date string, offset, limit int) ([]Cine
 	}
 
 	return cinemaSessions, nil
+}
+
+func (s *SessionsRepository) CreateSession(movieId, hallId int, startTime string, price float32) (sessionId int, err error) {
+	endTime, err := s.sessionEndTime(movieId, startTime)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get session end time: %w", err)
+	}
+
+	hallBusy, err := s.hallIsBusy(movieId, hallId, startTime, endTime)
+	if err != nil {
+		return 0, fmt.Errorf("failed to check if cinema session can be created: %w", err)
+	}
+	if hallBusy {
+		return 0, fmt.Errorf("%w at the time %s", ErrHallIsBusy, startTime)
+	}
+
+	err = s.db.QueryRow("INSERT INTO cinema_sessions (movie_id, hall_id, start_time, end_time) VALUES ($1, $2, $3, $4)"+
+		"RETURNING session_id", movieId, hallId, startTime, price).Scan(&sessionId)
+	if err != nil {
+		return 0, err
+	}
+
+	return sessionId, nil
+}
+
+func (s *SessionsRepository) hallIsBusy(movieId, hallId int, startTime, endTime string) (bool, error) {
+	row := s.db.QueryRow("SELECT session_id"+
+		"FROM cinema_sessions"+
+		"WHERE hall_id = $1 AND $2 < start_time < $3 "+
+		"OR (start_time <= $2 AND end_time > $2)",
+		hallId, startTime, endTime)
+
+	var sessionId int
+	if err := row.Scan(&sessionId); err == nil {
+		return true, nil
+	} else if err != sql.ErrNoRows {
+		return true, err
+	}
+	return false, nil
+}
+
+func (s *SessionsRepository) sessionEndTime(id int, startTime string) (string, error) {
+	var (
+		duration string
+		endTime  string
+	)
+	row := s.db.QueryRow("SELECT duration FROM movies WHERE movie_id = $1", id)
+	if err := row.Scan(&duration); err == sql.ErrNoRows {
+		return endTime, errors.New("movie was not found")
+	} else if err != nil {
+		return endTime, err
+	}
+
+	start, err := time.Parse(time.RFC3339, startTime)
+	if err != nil {
+		return endTime, err
+	}
+
+	durationMinutes, err := strconv.Atoi(duration)
+	if err != nil {
+		return endTime, err
+	}
+	endTime = start.Add(time.Minute * time.Duration(durationMinutes)).Format("2006-01-02")
+	return endTime, nil
 }
 
 func (s *SessionsRepository) DeleteSession(id int) error {

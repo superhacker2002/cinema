@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
+	"io"
 	"log"
 	"net/http"
 	"strconv"
@@ -17,6 +18,7 @@ var (
 	ErrInternalError    = errors.New("internal server error")
 	ErrInvalidDate      = errors.New("invalid date format")
 	ErrInvalidSessionId = errors.New("invalid session id")
+	ErrReadRequestFail  = errors.New("failed to read request body")
 )
 
 type HttpHandler struct {
@@ -132,26 +134,26 @@ func (h HttpHandler) createSessionHandler(w http.ResponseWriter, r *http.Request
 		http.Error(w, fmt.Sprintf("%v: %d", ErrInvalidHallId, hallId), http.StatusBadRequest)
 		return
 	}
-	//body, err := io.ReadAll(r.Body)
-	//if err != nil {
-	//	log.Println(err)
-	//	http.Error(w, ErrReadRequestFail.Error(), http.StatusBadRequest)
-	//	return
-	//}
-	//
-	//var creds credentials
-	//if err = json.Unmarshal(body, &creds); err != nil {
-	//	log.Println(err)
-	//	http.Error(w, ErrReadRequestFail.Error(), http.StatusBadRequest)
-	//	return
-	//}
-	//
-	//if err = creds.validate(); err != nil {
-	//	log.Println(err)
-	//	http.Error(w, err.Error(), http.StatusBadRequest)
-	//	return
-	//}
-	//
+	type sessionInfo struct {
+		MovieId  int     `json:"movieId"`
+		StarTime string  `json:"starTime"`
+		Price    float32 `json:"price"`
+	}
+	var session sessionInfo
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, ErrReadRequestFail.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err = json.Unmarshal(body, &session); err != nil {
+		log.Println(err)
+		http.Error(w, ErrReadRequestFail.Error(), http.StatusBadRequest)
+		return
+	}
+
 	//id, err := h.r.CreateUser(creds.Username, creds.Password)
 	//if errors.Is(err, userRepository.ErrUserExists) {
 	//	log.Println(err)
@@ -181,12 +183,10 @@ func (h HttpHandler) updateSessionHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (h HttpHandler) deleteSessionHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	sessionIdStr := vars["sessionId"]
-	sessionId, err := strconv.Atoi(sessionIdStr)
-	if err != nil || sessionId <= 0 {
+	sessionId, err := pathVariable(r, "sessionId")
+	if err != nil {
 		log.Println(err)
-		http.Error(w, fmt.Sprintf("%v: %s", ErrInvalidSessionId, sessionIdStr), http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("%v: %d", ErrInvalidSessionId, sessionId), http.StatusBadRequest)
 		return
 	}
 
