@@ -208,7 +208,7 @@ func (h HttpHandler) deleteSessionHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	_, err = w.Write([]byte("Session was deleted successfully"))
+	_, err = w.Write([]byte("session was deleted successfully"))
 	if err != nil {
 		return
 	}
