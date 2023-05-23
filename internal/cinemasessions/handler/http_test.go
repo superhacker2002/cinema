@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 type mockRepo struct {
@@ -17,6 +18,8 @@ type mockRepo struct {
 	hallId   int
 	err      error
 }
+
+const layout = "2006-01-02 15:04:05 MST"
 
 func (m *mockRepo) AllSessions(date string, offset, limit int) ([]repository.CinemaSession, error) {
 	return m.sessions, m.err
@@ -32,12 +35,14 @@ func (m *mockRepo) SessionsForHall(hallId int, date string) ([]repository.Cinema
 func TestGetSessionsHandler(t *testing.T) {
 	repo := mockRepo{}
 	t.Run("successful sessions get", func(t *testing.T) {
+		start, _ := time.Parse(layout, "2024-05-18 20:00:00+4")
+		end, _ := time.Parse(layout, "2024-05-18 22:00:00+4")
 		session := []repository.CinemaSession{
 			{
 				ID:        1,
 				MovieId:   1,
-				StartTime: "2024-05-18 20:00:00",
-				EndTime:   "2024-05-18 22:00:00",
+				StartTime: start,
+				EndTime:   end,
 				Status:    "scheduled",
 			},
 		}
@@ -108,12 +113,14 @@ func TestGetSessionsHandler(t *testing.T) {
 func TestGetAllSessionsHandler(t *testing.T) {
 	repo := mockRepo{}
 	t.Run("successful sessions get", func(t *testing.T) {
+		start, _ := time.Parse(layout, "2024-05-18 20:00:00+4")
+		end, _ := time.Parse(layout, "2024-05-18 22:00:00+4")
 		sessions := []repository.CinemaSession{
 			{
 				ID:        1,
 				MovieId:   1,
-				StartTime: "2024-05-18 20:00:00",
-				EndTime:   "2024-05-18 22:00:00",
+				StartTime: start,
+				EndTime:   end,
 				Status:    "scheduled",
 			},
 		}

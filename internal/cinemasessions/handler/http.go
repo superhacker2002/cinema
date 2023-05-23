@@ -46,7 +46,6 @@ func (h HttpHandler) setRoutes(router *mux.Router) {
 	s := router.PathPrefix("/cinema-sessions").Subrouter()
 	s.HandleFunc("/", h.getAllSessionsHandler).Methods("GET")
 	s.HandleFunc("/{hallId}", h.getSessionsHandler).Methods("GET")
-	s.HandleFunc("/{sessionId}", h.deleteSessionHandler).Methods("DELETE")
 }
 
 func (h HttpHandler) getAllSessionsHandler(w http.ResponseWriter, r *http.Request) {
@@ -143,28 +142,7 @@ func (h HttpHandler) updateSessionHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (h HttpHandler) deleteSessionHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	sessionIdStr := vars["sessionId"]
-	sessionId, err := strconv.Atoi(sessionIdStr)
-	if err != nil || sessionId <= 0 {
-		log.Println(err)
-		http.Error(w, fmt.Sprintf("%v: %s", ErrInvalidSessionId, sessionIdStr), http.StatusBadRequest)
-		return
-	}
-
-	err = h.r.DeleteSession(sessionId)
-	if errors.Is(err, repository.ErrCinemaSessionsNotFound) {
-		log.Println(err)
-		http.Error(w, err.Error(), http.StatusNotFound)
-		return
-	}
-
-	if err != nil {
-		log.Println(err)
-		http.Error(w, ErrInternalError.Error(), http.StatusInternalServerError)
-		return
-	}
-
+	// TODO: delete cinema session by id (only for admins)
 	w.WriteHeader(http.StatusOK)
 }
 
