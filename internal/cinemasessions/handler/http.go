@@ -94,7 +94,7 @@ func (h HttpHandler) getSessionsHandler(w http.ResponseWriter, r *http.Request) 
 	hallId, err := pathVariable(r, "hallId")
 	if err != nil {
 		log.Println(err)
-		http.Error(w, fmt.Sprintf("%v: %d", ErrInvalidHallId, hallId), http.StatusBadRequest)
+		http.Error(w, ErrInvalidHallId.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -132,7 +132,7 @@ func (h HttpHandler) createSessionHandler(w http.ResponseWriter, r *http.Request
 	hallId, err := pathVariable(r, "hallId")
 	if err != nil {
 		log.Println(err)
-		http.Error(w, fmt.Sprintf("%v: %d", ErrInvalidHallId, hallId), http.StatusBadRequest)
+		http.Error(w, ErrInvalidHallId.Error(), http.StatusBadRequest)
 		return
 	}
 	type sessionInfo struct {
@@ -191,7 +191,7 @@ func (h HttpHandler) deleteSessionHandler(w http.ResponseWriter, r *http.Request
 	sessionId, err := pathVariable(r, "sessionId")
 	if err != nil {
 		log.Println(err)
-		http.Error(w, fmt.Sprintf("%v: %d", ErrInvalidSessionId, sessionId), http.StatusBadRequest)
+		http.Error(w, ErrInvalidSessionId.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -268,7 +268,7 @@ func date(r *http.Request) (string, error) {
 	}
 	_, err := time.Parse(layout, date)
 	if err != nil {
-		return "", err
+		return date, err
 	}
 	return date, nil
 }

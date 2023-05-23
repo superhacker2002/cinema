@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -142,7 +143,7 @@ func TestCreateSession(t *testing.T) {
 		response := httptest.NewRecorder()
 		handler(response, req)
 
-		assert.Equal(t, fmt.Sprintf("%v: 0\n", ErrInvalidHallId), response.Body.String())
+		assert.Equal(t, fmt.Sprintf("%v\n", ErrInvalidHallId), response.Body.String())
 		assert.Equal(t, http.StatusBadRequest, response.Code)
 	})
 
@@ -229,7 +230,7 @@ func TestDate(t *testing.T) {
 		require.NoError(t, err, "failed to create test request")
 		date, err := date(req)
 		assert.Error(t, err)
-		assert.Equal(t, date, "")
+		assert.Equal(t, "2023/01/05", date)
 	})
 
 	t.Run("missing date", func(t *testing.T) {
@@ -239,6 +240,12 @@ func TestDate(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotEmpty(t, date)
 	})
+}
+
+type errorReader struct{}
+
+func (e errorReader) Read(p []byte) (n int, err error) {
+	return 0, errors.New("read error")
 }
 
 func TestCreateSessionHandler(t *testing.T) {
@@ -282,7 +289,7 @@ func TestCreateSessionHandler(t *testing.T) {
 		handler(response, req)
 
 		assert.Equal(t, http.StatusBadRequest, response.Code)
-		assert.Equal(t, fmt.Sprintf("%s: %s\n", ErrInvalidHallId, hallId), response.Body.String())
+		assert.Equal(t, fmt.Sprintf("%s\n", ErrInvalidHallId), response.Body.String())
 	})
 
 	t.Run("failed to read request body", func(t *testing.T) {
@@ -338,8 +345,70 @@ func TestCreateSessionHandler(t *testing.T) {
 	})
 }
 
-type errorReader struct{}
+func TestDeleteSessionHandler(t *testing.T) {
+	repo := mockRepo{}
+	t.Run("successful session deletion", func(t *testing.T) {
+		sessionID := 1
+		repo.sessionId = sessionID
+		repo.err = nil
 
-func (e errorReader) Read(p []byte) (n int, err error) {
-	return 0, errors.New("read error")
+		req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("/cinema-sessions/%d", sessionID), nil)
+		req = mux.SetURLVars(req, map[string]string{"sessionId": strconv.Itoa(sessionID)})
+		require.NoError(t, err, "failed to create test request")
+
+		response := httptest.NewRecorder()
+		handler := HttpHandler{r: &repo}.deleteSessionHandler
+		handler(response, req)
+
+		assert.Equal(t, "Session was deleted successfully", response.Body.String())
+		assert.Equal(t, http.StatusOK, response.Code)
+	})
+
+	t.Run("invalid session ID", func(t *testing.T) {
+		sessionID := "invalid"
+		req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("/cinema-sessions/%s", sessionID), nil)
+		req = mux.SetURLVars(req, map[string]string{"sessionId": sessionID})
+		require.NoError(t, err, "failed to create test request")
+
+		response := httptest.NewRecorder()
+		handler := HttpHandler{r: &repo}.deleteSessionHandler
+		handler(response, req)
+
+		assert.Equal(t, fmt.Sprintf("%v\n", ErrInvalidSessionId), response.Body.String())
+		assert.Equal(t, http.StatusBadRequest, response.Code)
+	})
+
+	t.Run("session not found", func(t *testing.T) {
+		sessionID := 2
+		repo.sessionId = sessionID
+		repo.err = repository.ErrCinemaSessionsNotFound
+
+		req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("/cinema-sessions/%d", sessionID), nil)
+		req = mux.SetURLVars(req, map[string]string{"sessionId": strconv.Itoa(sessionID)})
+		require.NoError(t, err, "failed to create test request")
+
+		response := httptest.NewRecorder()
+		handler := HttpHandler{r: &repo}.deleteSessionHandler
+		handler(response, req)
+
+		assert.Equal(t, fmt.Sprintf("%v\n", repository.ErrCinemaSessionsNotFound), response.Body.String())
+		assert.Equal(t, http.StatusNotFound, response.Code)
+	})
+
+	t.Run("repository error", func(t *testing.T) {
+		sessionID := 3
+		repo.sessionId = sessionID
+		repo.err = errors.New("something went wrong")
+
+		req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("/cinema-sessions/%d", sessionID), nil)
+		req = mux.SetURLVars(req, map[string]string{"sessionId": strconv.Itoa(sessionID)})
+		require.NoError(t, err, "failed to create test request")
+
+		response := httptest.NewRecorder()
+		handler := HttpHandler{r: &repo}.deleteSessionHandler
+		handler(response, req)
+
+		assert.Equal(t, fmt.Sprintf("%v\n", ErrInternalError), response.Body.String())
+		assert.Equal(t, http.StatusInternalServerError, response.Code)
+	})
 }
