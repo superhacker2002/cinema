@@ -2,6 +2,7 @@ package handler
 
 import (
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasessions/repository"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
@@ -9,14 +10,16 @@ import (
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 )
 
 type mockRepo struct {
-	sessions []repository.CinemaSession
-	hallId   int
-	err      error
+	sessions  []repository.CinemaSession
+	sessionId int
+	hallId    int
+	err       error
 }
 
 const layout = "2006-01-02 15:04:05 MST"
@@ -37,90 +40,12 @@ func (m *mockRepo) DeleteSession(id int) error {
 }
 
 func (m *mockRepo) CreateSession(movieId, hallId int, startTime string, price float32) (int, error) {
-	return 0, nil
-}
-
-func TestGetSessionsHandler(t *testing.T) {
-	repo := mockRepo{}
-	t.Run("successful sessions get", func(t *testing.T) {
-		start, _ := time.Parse(layout, "2024-05-18 20:00:00+4")
-		end, _ := time.Parse(layout, "2024-05-18 22:00:00+4")
-		session := []repository.CinemaSession{
-			{
-				ID:        1,
-				MovieId:   1,
-				StartTime: start,
-				EndTime:   end,
-				Status:    "scheduled",
-			},
-		}
-		repo.sessions = session
-		repo.hallId = 1
-		repo.err = nil
-
-		req, err := http.NewRequest(http.MethodGet, "cinema-sessions/1", nil)
-		req = mux.SetURLVars(req, map[string]string{"hallId": "1"})
-		require.NoError(t, err, "failed to create test request")
-
-		response := httptest.NewRecorder()
-		handler := HttpHandler{r: &repo}.getSessionsHandler
-		handler(response, req)
-
-		assert.NotEmpty(t, response.Body.String())
-		assert.Equal(t, http.StatusOK, response.Code)
-	})
-
-	t.Run("invalid hall id", func(t *testing.T) {
-		req, err := http.NewRequest(http.MethodGet, "cinema-sessions/0", nil)
-		req = mux.SetURLVars(req, map[string]string{"hallId": "0"})
-		require.NoError(t, err, "failed to create test request")
-
-		response := httptest.NewRecorder()
-		handler := HttpHandler{r: &repo}.getSessionsHandler
-		handler(response, req)
-
-		assert.Equal(t, fmt.Sprintf("%v: 0\n", ErrInvalidHallId), response.Body.String())
-		assert.Equal(t, http.StatusBadRequest, response.Code)
-	})
-
-	t.Run("no cinema sessions", func(t *testing.T) {
-		repo.sessions = []repository.CinemaSession{{}}
-		repo.hallId = 1
-		repo.err = repository.ErrCinemaSessionsNotFound
-
-		req, err := http.NewRequest(http.MethodGet, "cinema-sessions/2", nil)
-		req = mux.SetURLVars(req, map[string]string{"hallId": "2"})
-		require.NoError(t, err, "failed to create test request")
-
-		response := httptest.NewRecorder()
-		handler := HttpHandler{r: &repo}.getSessionsHandler
-		handler(response, req)
-
-		assert.Equal(t, fmt.Sprintf("%v for hall 2\n", repository.ErrCinemaSessionsNotFound), response.Body.String())
-		assert.Equal(t, http.StatusBadRequest, response.Code)
-	})
-
-	t.Run("repository error", func(t *testing.T) {
-		repo.sessions = []repository.CinemaSession{{}}
-		repo.hallId = 2
-		repo.err = errors.New("something went wrong")
-
-		req, err := http.NewRequest(http.MethodGet, "cinema-sessions/2", nil)
-		req = mux.SetURLVars(req, map[string]string{"hallId": "2"})
-		require.NoError(t, err, "failed to create test request")
-
-		response := httptest.NewRecorder()
-		handler := HttpHandler{r: &repo}.getSessionsHandler
-		handler(response, req)
-
-		assert.Equal(t, fmt.Sprintf("%v\n", ErrInternalError), response.Body.String())
-		assert.Equal(t, http.StatusInternalServerError, response.Code)
-	})
+	return m.sessionId, m.err
 }
 
 func TestGetAllSessionsHandler(t *testing.T) {
 	repo := mockRepo{}
-	t.Run("successful sessions get", func(t *testing.T) {
+	t.Run("successful session creation", func(t *testing.T) {
 		start, _ := time.Parse(layout, "2024-05-18 20:00:00+4")
 		end, _ := time.Parse(layout, "2024-05-18 22:00:00+4")
 		sessions := []repository.CinemaSession{
@@ -172,6 +97,81 @@ func TestGetAllSessionsHandler(t *testing.T) {
 
 		response := httptest.NewRecorder()
 		handler := HttpHandler{r: &repo}.getAllSessionsHandler
+		handler(response, req)
+
+		assert.Equal(t, fmt.Sprintf("%v\n", ErrInternalError), response.Body.String())
+		assert.Equal(t, http.StatusInternalServerError, response.Code)
+	})
+}
+
+func TestCreateSession(t *testing.T) {
+	repo := mockRepo{}
+	handler := HttpHandler{r: &repo}.getSessionsHandler
+	t.Run("successful sessions get", func(t *testing.T) {
+		start, _ := time.Parse(layout, "2024-05-18 20:00:00+4")
+		end, _ := time.Parse(layout, "2024-05-18 22:00:00+4")
+		session := []repository.CinemaSession{
+			{
+				ID:        1,
+				MovieId:   1,
+				StartTime: start,
+				EndTime:   end,
+				Status:    "scheduled",
+			},
+		}
+		repo.sessions = session
+		repo.hallId = 1
+		repo.err = nil
+
+		req, err := http.NewRequest(http.MethodGet, "cinema-sessions/1", nil)
+		req = mux.SetURLVars(req, map[string]string{"hallId": "1"})
+		require.NoError(t, err, "failed to create test request")
+
+		response := httptest.NewRecorder()
+		handler(response, req)
+
+		assert.NotEmpty(t, response.Body.String())
+		assert.Equal(t, http.StatusOK, response.Code)
+	})
+
+	t.Run("invalid hall id", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "cinema-sessions/0", nil)
+		req = mux.SetURLVars(req, map[string]string{"hallId": "0"})
+		require.NoError(t, err, "failed to create test request")
+
+		response := httptest.NewRecorder()
+		handler(response, req)
+
+		assert.Equal(t, fmt.Sprintf("%v: 0\n", ErrInvalidHallId), response.Body.String())
+		assert.Equal(t, http.StatusBadRequest, response.Code)
+	})
+
+	t.Run("no cinema sessions", func(t *testing.T) {
+		repo.sessions = []repository.CinemaSession{{}}
+		repo.hallId = 1
+		repo.err = repository.ErrCinemaSessionsNotFound
+
+		req, err := http.NewRequest(http.MethodGet, "cinema-sessions/2", nil)
+		req = mux.SetURLVars(req, map[string]string{"hallId": "2"})
+		require.NoError(t, err, "failed to create test request")
+
+		response := httptest.NewRecorder()
+		handler(response, req)
+
+		assert.Equal(t, fmt.Sprintf("%v for hall 2\n", repository.ErrCinemaSessionsNotFound), response.Body.String())
+		assert.Equal(t, http.StatusBadRequest, response.Code)
+	})
+
+	t.Run("repository error", func(t *testing.T) {
+		repo.sessions = []repository.CinemaSession{{}}
+		repo.hallId = 2
+		repo.err = errors.New("something went wrong")
+
+		req, err := http.NewRequest(http.MethodGet, "cinema-sessions/2", nil)
+		req = mux.SetURLVars(req, map[string]string{"hallId": "2"})
+		require.NoError(t, err, "failed to create test request")
+
+		response := httptest.NewRecorder()
 		handler(response, req)
 
 		assert.Equal(t, fmt.Sprintf("%v\n", ErrInternalError), response.Body.String())
@@ -239,4 +239,107 @@ func TestDate(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotEmpty(t, date)
 	})
+}
+
+func TestCreateSessionHandler(t *testing.T) {
+	repo := mockRepo{}
+	handler := HttpHandler{r: &repo}.createSessionHandler
+
+	t.Run("successful session creation", func(t *testing.T) {
+		repo.sessionId = 1
+		repo.err = nil
+		hallId := "1"
+
+		request := fmt.Sprintf(`{"movieId": %d, "startTime": "%s", "price": %f}`, 1,
+			"2024-05-18 20:00:00+4", 10.5)
+		body := strings.NewReader(request)
+
+		req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("cinema-sessions/%s", hallId), body)
+		req = mux.SetURLVars(req, map[string]string{"hallId": hallId})
+		require.NoError(t, err, "failed to create test request")
+
+		response := httptest.NewRecorder()
+		handler(response, req)
+
+		assert.Equal(t, http.StatusOK, response.Code)
+
+		var responseBody map[string]int
+		err = json.Unmarshal(response.Body.Bytes(), &responseBody)
+		require.NoError(t, err, "failed to parse response body")
+
+		assert.Contains(t, responseBody, "session_id")
+		assert.NotZero(t, responseBody["session_id"])
+	})
+
+	t.Run("invalid hall id", func(t *testing.T) {
+		hallId := "0"
+
+		req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("cinema-sessions/%s", hallId), nil)
+		req = mux.SetURLVars(req, map[string]string{"hallId": hallId})
+		require.NoError(t, err, "failed to create test request")
+
+		response := httptest.NewRecorder()
+		handler(response, req)
+
+		assert.Equal(t, http.StatusBadRequest, response.Code)
+		assert.Equal(t, fmt.Sprintf("%s: %s\n", ErrInvalidHallId, hallId), response.Body.String())
+	})
+
+	t.Run("failed to read request body", func(t *testing.T) {
+		hallId := "1"
+
+		req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("cinema-sessions/%s", hallId), errorReader{})
+		req = mux.SetURLVars(req, map[string]string{"hallId": hallId})
+		require.NoError(t, err, "failed to create test request")
+
+		response := httptest.NewRecorder()
+		handler(response, req)
+
+		assert.Equal(t, http.StatusBadRequest, response.Code)
+		assert.Equal(t, ErrReadRequestFail.Error()+"\n", response.Body.String())
+	})
+
+	t.Run("hall is busy", func(t *testing.T) {
+		hallId := "1"
+		repo.err = repository.ErrHallIsBusy
+
+		request := fmt.Sprintf(`{"movieId": %d, "startTime": "%s", "price": %f}`,
+			1, "2024-05-18 20:00:00+4", 10.5)
+		body := strings.NewReader(request)
+		req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("cinema-sessions/%s", hallId), body)
+		req = mux.SetURLVars(req, map[string]string{"hallId": hallId})
+		require.NoError(t, err, "failed to create test request")
+
+		response := httptest.NewRecorder()
+		handler(response, req)
+
+		assert.Equal(t, http.StatusConflict, response.Code)
+		assert.Equal(t, fmt.Sprintf("%s\n", repository.ErrHallIsBusy), response.Body.String())
+	})
+
+	t.Run("internal server error", func(t *testing.T) {
+		hallId := "1"
+
+		request := fmt.Sprintf(`{"movieId": %d, "startTime": "%s", "price": %f}`,
+			1, "2024-05-18 20:00:00+4", 10.5)
+		body := strings.NewReader(request)
+
+		repo.err = errors.New("something went wrong")
+
+		req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("/cinema-sessions/%s", hallId), body)
+		req = mux.SetURLVars(req, map[string]string{"hallId": hallId})
+		require.NoError(t, err, "failed to create test request")
+
+		response := httptest.NewRecorder()
+		handler(response, req)
+
+		assert.Equal(t, http.StatusInternalServerError, response.Code)
+		assert.Equal(t, ErrInternalError.Error()+"\n", response.Body.String())
+	})
+}
+
+type errorReader struct{}
+
+func (e errorReader) Read(p []byte) (n int, err error) {
+	return 0, errors.New("read error")
 }

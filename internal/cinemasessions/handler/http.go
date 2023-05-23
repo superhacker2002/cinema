@@ -71,7 +71,7 @@ func (h HttpHandler) getAllSessionsHandler(w http.ResponseWriter, r *http.Reques
 
 	if errors.Is(err, repository.ErrCinemaSessionsNotFound) {
 		log.Println(err)
-		http.Error(w, fmt.Sprintf("%v for all halls for date %s", err, d), http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("%v for all halls", err), http.StatusBadRequest)
 		return
 	}
 
