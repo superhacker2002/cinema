@@ -13,12 +13,6 @@ import (
 
 type HTTPHandler struct {
 	repository repository.Repository
-	db         *sql.DB
-}
-
-func NewHTTPHandler(router *mux.Router, repository repository.Repository, db *sql.DB) {
-	handler := HTTPHandler{repository: repository, db: db}
-	handler.setRoutes(router)
 }
 
 func New(router *mux.Router, repository repository.Repository) HTTPHandler {
@@ -39,22 +33,10 @@ func (h HTTPHandler) setRoutes(router *mux.Router) {
 }
 
 func (h HTTPHandler) getHallsHandler(w http.ResponseWriter, r *http.Request) {
-	rows, err := h.db.Query("SELECT hall_id, hall_name, capacity FROM halls")
+	cinemaHalls, err := h.repository.GetCinemaHalls()
 	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
-	}
-	defer rows.Close()
-
-	var cinemaHalls []repository.CinemaHall
-	for rows.Next() {
-		var hall repository.CinemaHall
-		err := rows.Scan(&hall.ID, &hall.Name, &hall.Capacity)
-		if err != nil {
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
-		cinemaHalls = append(cinemaHalls, hall)
 	}
 
 	api.WriteResponse(w, cinemaHalls, http.StatusOK)
@@ -64,42 +46,32 @@ func (h HTTPHandler) createHallHandler(w http.ResponseWriter, r *http.Request) {
 	var newCinemaHall repository.CinemaHall
 	err := json.NewDecoder(r.Body).Decode(&newCinemaHall)
 	if err != nil {
-		api.HandleError(w, err, http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	result, err := h.db.Exec("INSERT INTO halls (hall_name, capacity, available) VALUES ($1, $2, $3)",
-		newCinemaHall.Name, newCinemaHall.Capacity, newCinemaHall.Available)
+	err = h.repository.CreateCinemaHall(&newCinemaHall)
 	if err != nil {
-		api.HandleError(w, err, http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		api.HandleError(w, err, http.StatusInternalServerError)
-		return
-	}
-
-	newCinemaHall.ID = int(rowsAffected)
 	api.WriteResponse(w, newCinemaHall, http.StatusOK)
 }
 
 func (h HTTPHandler) getHallHandler(w http.ResponseWriter, r *http.Request) {
 	hallID, err := api.GetHallID(r)
 	if err != nil {
-		api.HandleError(w, err, http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	row := h.db.QueryRow("SELECT hall_id, hall_name, capacity, available FROM halls WHERE hall_id = $1", hallID)
-	var hall repository.CinemaHall
-	err = row.Scan(&hall.ID, &hall.Name, &hall.Capacity, &hall.Available)
+	hall, err := h.repository.GetCinemaHallByID(hallID)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			api.HandleError(w, fmt.Errorf("Hall notfound"), http.StatusNotFound)
+		if err == repository.ErrHallNotFound {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 		} else {
-			api.HandleError(w, err, http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 		return
 	}
@@ -111,14 +83,13 @@ func (h HTTPHandler) updateHallHandler(w http.ResponseWriter, r *http.Request) {
 	var updatedCinemaHall repository.CinemaHall
 	err := json.NewDecoder(r.Body).Decode(&updatedCinemaHall)
 	if err != nil {
-		api.HandleError(w, err, http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	_, err = h.db.Exec("UPDATE halls SET hall_name = $1, capacity = $2 WHERE hall_id = $3",
-		updatedCinemaHall.Name, updatedCinemaHall.Capacity, updatedCinemaHall.ID)
+	err = h.repository.UpdateCinemaHall(&updatedCinemaHall)
 	if err != nil {
-		api.HandleError(w, err, http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -128,13 +99,13 @@ func (h HTTPHandler) updateHallHandler(w http.ResponseWriter, r *http.Request) {
 func (h HTTPHandler) deleteHallHandler(w http.ResponseWriter, r *http.Request) {
 	hallID, err := api.GetHallID(r)
 	if err != nil {
-		api.HandleError(w, err, http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	_, err = h.db.Exec("DELETE FROM halls WHERE hall_id = $1", hallID)
+	err = h.repository.DeleteCinemaHall(hallID)
 	if err != nil {
-		api.HandleError(w, err, http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -150,14 +121,13 @@ func (h HTTPHandler) updateAvailabilityHandler(w http.ResponseWriter, r *http.Re
 
 	err := json.NewDecoder(r.Body).Decode(&update)
 	if err != nil {
-		api.HandleError(w, err, http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	_, err = h.db.Exec("UPDATE halls SET available = $1 WHERE hall_id = $2",
-		update.Available, update.HallID)
+	err = h.repository.UpdateHallAvailability(update.HallID, update.Available)
 	if err != nil {
-		api.HandleError(w, err, http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -174,14 +144,14 @@ func AssignMovie(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 
 	err := json.NewDecoder(r.Body).Decode(&assignment)
 	if err != nil {
-		api.HandleError(w, err, http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	_, err = db.Exec("UPDATE halls SET assigned_movie = $1, seats_available = $2 WHERE hall_id = $3",
 		assignment.Movie, assignment.Seats, assignment.HallID)
 	if err != nil {
-		api.HandleError(w, err, http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 

@@ -10,12 +10,24 @@ import (
 )
 
 // Helper function to retrieve the hall ID from the request URL parameters
-func GetHallID(r *http.Request) (int, error) {
+func GetIntParam(r *http.Request, paramName string) (int, error) {
 	vars := mux.Vars(r)
-	hallID, err := strconv.Atoi(vars["hallID"])
+	paramValue := vars[paramName]
+
+	paramInt, err := strconv.Atoi(paramValue)
 	if err != nil {
-		return 0, fmt.Errorf("Invalid hall ID")
+		return 0, fmt.Errorf("Invalid %s", paramName)
 	}
+
+	return paramInt, nil
+}
+
+func GetHallID(r *http.Request) (int, error) {
+	hallID, err := GetIntParam(r, "hallID")
+	if err != nil {
+		return 0, err
+	}
+
 	return hallID, nil
 }
 
@@ -24,9 +36,4 @@ func WriteResponse(w http.ResponseWriter, data interface{}, statusCode int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 	json.NewEncoder(w).Encode(data)
-}
-
-// Helper function to handle errors and write an appropriate response
-func HandleError(w http.ResponseWriter, err error, statusCode int) {
-	http.Error(w, err.Error(), statusCode)
 }
