@@ -220,7 +220,7 @@ func convert(sessions []repository.CinemaSession) []session {
 		jsonSession := session{
 			Id:        s.ID,
 			MovieId:   s.MovieId,
-			StartTime: s.StartTime,
+			StartTime: s.StartTime.String(),
 			Status:    s.Status,
 		}
 

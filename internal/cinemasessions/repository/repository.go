@@ -9,8 +9,6 @@ import (
 
 var ErrCinemaSessionsNotFound = errors.New("no cinema sessions were found")
 
-type Status int
-
 const (
 	StatusPassed    = "passed"
 	StatusOnAir     = "on_air"
@@ -34,8 +32,8 @@ func New(db *sql.DB) *SessionsRepository {
 type CinemaSession struct {
 	ID        int
 	MovieId   int
-	StartTime string
-	EndTime   string
+	StartTime time.Time
+	EndTime   time.Time
 	Status    string
 }
 
@@ -129,24 +127,15 @@ func readCinemaSessions(rows *sql.Rows) ([]CinemaSession, error) {
 	return cinemaSessions, nil
 }
 
-func (s *CinemaSession) setStatus() error {
-	layout := time.RFC3339
-	start, err := time.Parse(layout, s.StartTime)
-	if err != nil {
-		return err
-	}
-	end, err := time.Parse(layout, s.EndTime)
-	if err != nil {
-		return err
-	}
+func (c *CinemaSession) setStatus() error {
 	current := time.Now().UTC()
 
-	if start.Before(current) && end.After(current) {
-		s.Status = StatusOnAir
-	} else if end.Before(current) {
-		s.Status = StatusPassed
+	if c.StartTime.Before(current) && c.EndTime.After(current) {
+		c.Status = StatusOnAir
+	} else if c.EndTime.Before(current) {
+		c.Status = StatusPassed
 	} else {
-		s.Status = StatusScheduled
+		c.Status = StatusScheduled
 	}
 	return nil
 }
