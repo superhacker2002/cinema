@@ -181,7 +181,26 @@ func (h HttpHandler) updateSessionHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (h HttpHandler) deleteSessionHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: delete cinema session by id (only for admins)
+	vars := mux.Vars(r)
+	sessionIdStr := vars["sessionId"]
+	sessionId, err := strconv.Atoi(sessionIdStr)
+	if err != nil || sessionId <= 0 {
+		log.Println(err)
+		http.Error(w, fmt.Sprintf("%v: %s", ErrInvalidSessionId, sessionIdStr), http.StatusBadRequest)
+		return
+	}
+
+	err = h.r.DeleteSession(sessionId)
+	if errors.Is(repository.ErrCinemaSessionsNotFound, err) {
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusNotFound)
+	}
+
+	if err != nil {
+		log.Println(err)
+		http.Error(w, ErrInternalError.Error(), http.StatusInternalServerError)
+	}
+
 	w.WriteHeader(http.StatusOK)
 }
 

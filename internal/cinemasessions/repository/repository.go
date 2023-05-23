@@ -24,6 +24,7 @@ type SessionsRepository struct {
 type Repository interface {
 	SessionsForHall(hallId int, date string) ([]CinemaSession, error)
 	AllSessions(date string, offset, limit int) ([]CinemaSession, error)
+	DeleteSession(id int) error
 }
 
 func New(db *sql.DB) *SessionsRepository {
@@ -74,6 +75,34 @@ func (s *SessionsRepository) AllSessions(date string, offset, limit int) ([]Cine
 	}
 
 	return cinemaSessions, nil
+}
+
+func (s *SessionsRepository) DeleteSession(id int) error {
+	exists, err := s.sessionExists(id)
+	if err != nil {
+		return fmt.Errorf("failed to check if cinema session with id %d exists: %w", id, err)
+	}
+
+	if !exists {
+		return fmt.Errorf("%w with id %d", ErrCinemaSessionsNotFound, id)
+	}
+
+	_, err = s.db.Exec("DELETE FROM cinema_sessions WHERE session_id = $1", id)
+	if err != nil {
+		return fmt.Errorf("failed to delete cinema session: %w", err)
+	}
+
+	return nil
+}
+
+func (s *SessionsRepository) sessionExists(id int) (bool, error) {
+	var count int
+	err := s.db.QueryRow("SELECT COUNT(*) FROM cinema_sessions WHERE session_id = $1", id).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
 }
 
 func readCinemaSessions(rows *sql.Rows) ([]CinemaSession, error) {
