@@ -13,9 +13,10 @@ import (
 )
 
 var (
-	ErrInvalidHallId = errors.New("invalid hall id provided")
-	ErrInternalError = errors.New("internal server error")
-	ErrInvalidDate   = errors.New("invalid date format")
+	ErrInvalidHallId    = errors.New("invalid hall id")
+	ErrInternalError    = errors.New("internal server error")
+	ErrInvalidDate      = errors.New("invalid date format")
+	ErrInvalidSessionId = errors.New("invalid session id")
 )
 
 type HttpHandler struct {
@@ -45,6 +46,7 @@ func (h HttpHandler) setRoutes(router *mux.Router) {
 	s := router.PathPrefix("/cinema-sessions").Subrouter()
 	s.HandleFunc("/", h.getAllSessionsHandler).Methods("GET")
 	s.HandleFunc("/{hallId}", h.getSessionsHandler).Methods("GET")
+	s.HandleFunc("/{sessionId}", h.deleteSessionHandler).Methods("DELETE")
 }
 
 func (h HttpHandler) getAllSessionsHandler(w http.ResponseWriter, r *http.Request) {
@@ -141,7 +143,26 @@ func (h HttpHandler) updateSessionHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (h HttpHandler) deleteSessionHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: delete cinema session by id (only for admins)
+	vars := mux.Vars(r)
+	sessionIdStr := vars["sessionId"]
+	sessionId, err := strconv.Atoi(sessionIdStr)
+	if err != nil || sessionId <= 0 {
+		log.Println(err)
+		http.Error(w, fmt.Sprintf("%v: %s", ErrInvalidSessionId, sessionIdStr), http.StatusBadRequest)
+		return
+	}
+
+	err = h.r.DeleteSession(sessionId)
+	if errors.Is(repository.ErrCinemaSessionsNotFound, err) {
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusNotFound)
+	}
+
+	if err != nil {
+		log.Println(err)
+		http.Error(w, ErrInternalError.Error(), http.StatusInternalServerError)
+	}
+
 	w.WriteHeader(http.StatusOK)
 }
 
