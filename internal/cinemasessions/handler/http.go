@@ -126,6 +126,12 @@ func (h HttpHandler) getSessionsHandler(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h HttpHandler) createSessionHandler(w http.ResponseWriter, r *http.Request) {
+	hallId, err := pathVariable(r, "hallId")
+	if err != nil {
+		log.Println(err)
+		http.Error(w, fmt.Sprintf("%v: %d", ErrInvalidHallId, hallId), http.StatusBadRequest)
+		return
+	}
 	//body, err := io.ReadAll(r.Body)
 	//if err != nil {
 	//	log.Println(err)
