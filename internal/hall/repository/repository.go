@@ -11,3 +11,12 @@ type HallRepository struct {
 func New(db *sql.DB) HallRepository {
 	return HallRepository{db: db}
 }
+
+type Repository interface{}
+
+type CinemaHall struct {
+	ID        int    `json:"id"`
+	Name      string `json:"name"`
+	Capacity  int    `json:"capacity"`
+	Available bool   `json:"available"`
+}
