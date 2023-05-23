@@ -347,6 +347,8 @@ func TestCreateSessionHandler(t *testing.T) {
 
 func TestDeleteSessionHandler(t *testing.T) {
 	repo := mockRepo{}
+	handler := HttpHandler{r: &repo}.deleteSessionHandler
+
 	t.Run("successful session deletion", func(t *testing.T) {
 		sessionID := 1
 		repo.sessionId = sessionID
@@ -357,7 +359,6 @@ func TestDeleteSessionHandler(t *testing.T) {
 		require.NoError(t, err, "failed to create test request")
 
 		response := httptest.NewRecorder()
-		handler := HttpHandler{r: &repo}.deleteSessionHandler
 		handler(response, req)
 
 		assert.Equal(t, "Session was deleted successfully", response.Body.String())
@@ -371,7 +372,6 @@ func TestDeleteSessionHandler(t *testing.T) {
 		require.NoError(t, err, "failed to create test request")
 
 		response := httptest.NewRecorder()
-		handler := HttpHandler{r: &repo}.deleteSessionHandler
 		handler(response, req)
 
 		assert.Equal(t, fmt.Sprintf("%v\n", ErrInvalidSessionId), response.Body.String())
@@ -388,7 +388,6 @@ func TestDeleteSessionHandler(t *testing.T) {
 		require.NoError(t, err, "failed to create test request")
 
 		response := httptest.NewRecorder()
-		handler := HttpHandler{r: &repo}.deleteSessionHandler
 		handler(response, req)
 
 		assert.Equal(t, fmt.Sprintf("%v\n", repository.ErrCinemaSessionsNotFound), response.Body.String())
@@ -405,7 +404,6 @@ func TestDeleteSessionHandler(t *testing.T) {
 		require.NoError(t, err, "failed to create test request")
 
 		response := httptest.NewRecorder()
-		handler := HttpHandler{r: &repo}.deleteSessionHandler
 		handler(response, req)
 
 		assert.Equal(t, fmt.Sprintf("%v\n", ErrInternalError), response.Body.String())
