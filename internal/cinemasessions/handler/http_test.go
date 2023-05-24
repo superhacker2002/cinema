@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasessions/repository"
+	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasessions/entity"
 	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
@@ -14,20 +14,20 @@ import (
 )
 
 type mockRepo struct {
-	sessions []repository.CinemaSession
+	sessions []entity.CinemaSession
 	hallId   int
 	err      error
 }
 
 const layout = "2006-01-02 15:04:05 MST"
 
-func (m *mockRepo) AllSessions(date string, offset, limit int) ([]repository.CinemaSession, error) {
+func (m *mockRepo) AllSessions(date string, offset, limit int) ([]entity.CinemaSession, error) {
 	return m.sessions, m.err
 }
 
-func (m *mockRepo) SessionsForHall(hallId int, date string) ([]repository.CinemaSession, error) {
+func (m *mockRepo) SessionsForHall(hallId int, date string) ([]entity.CinemaSession, error) {
 	if hallId != m.hallId {
-		return nil, repository.ErrCinemaSessionsNotFound
+		return nil, entity.ErrCinemaSessionsNotFound
 	}
 	return m.sessions, m.err
 }
@@ -37,9 +37,9 @@ func TestGetSessionsHandler(t *testing.T) {
 	t.Run("successful sessions get", func(t *testing.T) {
 		start, _ := time.Parse(layout, "2024-05-18 20:00:00+4")
 		end, _ := time.Parse(layout, "2024-05-18 22:00:00+4")
-		session := []repository.CinemaSession{
+		session := []entity.CinemaSession{
 			{
-				ID:        1,
+				Id:        1,
 				MovieId:   1,
 				StartTime: start,
 				EndTime:   end,
@@ -76,9 +76,9 @@ func TestGetSessionsHandler(t *testing.T) {
 	})
 
 	t.Run("no cinema sessions", func(t *testing.T) {
-		repo.sessions = []repository.CinemaSession{{}}
+		repo.sessions = []entity.CinemaSession{{}}
 		repo.hallId = 1
-		repo.err = repository.ErrCinemaSessionsNotFound
+		repo.err = entity.ErrCinemaSessionsNotFound
 
 		req, err := http.NewRequest(http.MethodGet, "cinema-sessions/2", nil)
 		req = mux.SetURLVars(req, map[string]string{"hallId": "2"})
@@ -88,12 +88,12 @@ func TestGetSessionsHandler(t *testing.T) {
 		handler := HttpHandler{r: &repo}.getSessionsHandler
 		handler(response, req)
 
-		assert.Equal(t, fmt.Sprintf("%v for hall 2\n", repository.ErrCinemaSessionsNotFound), response.Body.String())
+		assert.Equal(t, fmt.Sprintf("%v for hall 2\n", entity.ErrCinemaSessionsNotFound), response.Body.String())
 		assert.Equal(t, http.StatusBadRequest, response.Code)
 	})
 
 	t.Run("repository error", func(t *testing.T) {
-		repo.sessions = []repository.CinemaSession{{}}
+		repo.sessions = []entity.CinemaSession{{}}
 		repo.hallId = 2
 		repo.err = errors.New("something went wrong")
 
@@ -115,9 +115,9 @@ func TestGetAllSessionsHandler(t *testing.T) {
 	t.Run("successful sessions get", func(t *testing.T) {
 		start, _ := time.Parse(layout, "2024-05-18 20:00:00+4")
 		end, _ := time.Parse(layout, "2024-05-18 22:00:00+4")
-		sessions := []repository.CinemaSession{
+		sessions := []entity.CinemaSession{
 			{
-				ID:        1,
+				Id:        1,
 				MovieId:   1,
 				StartTime: start,
 				EndTime:   end,
@@ -139,9 +139,9 @@ func TestGetAllSessionsHandler(t *testing.T) {
 	})
 
 	t.Run("no cinema sessions", func(t *testing.T) {
-		sessions := []repository.CinemaSession{{}}
+		sessions := []entity.CinemaSession{{}}
 		repo.sessions = sessions
-		repo.err = repository.ErrCinemaSessionsNotFound
+		repo.err = entity.ErrCinemaSessionsNotFound
 
 		req, err := http.NewRequest(http.MethodGet, "cinema-sessions/", nil)
 		require.NoError(t, err, "failed to create test request")
@@ -150,12 +150,12 @@ func TestGetAllSessionsHandler(t *testing.T) {
 		handler := HttpHandler{r: &repo}.getAllSessionsHandler
 		handler(response, req)
 
-		assert.Equal(t, fmt.Sprintf("%v for all halls\n", repository.ErrCinemaSessionsNotFound), response.Body.String())
+		assert.Equal(t, fmt.Sprintf("%v for all halls\n", entity.ErrCinemaSessionsNotFound), response.Body.String())
 		assert.Equal(t, http.StatusBadRequest, response.Code)
 	})
 
 	t.Run("repository error", func(t *testing.T) {
-		sessions := []repository.CinemaSession{{}}
+		sessions := []entity.CinemaSession{{}}
 		repo.sessions = sessions
 		repo.err = errors.New("something went wrong")
 

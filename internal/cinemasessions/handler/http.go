@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasessions/repository"
+	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasessions/entity"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,6 +12,11 @@ import (
 	"time"
 )
 
+type repository interface {
+	SessionsForHall(hallId int, date string) ([]entity.CinemaSession, error)
+	AllSessions(date string, offset, limit int) ([]entity.CinemaSession, error)
+}
+
 var (
 	ErrInvalidHallId    = errors.New("invalid hall id")
 	ErrInternalError    = errors.New("internal server error")
@@ -20,7 +25,7 @@ var (
 )
 
 type HttpHandler struct {
-	r repository.Repository
+	r repository
 }
 
 type Page struct {
@@ -31,11 +36,12 @@ type Page struct {
 type session struct {
 	Id        int       `json:"id"`
 	MovieId   int       `json:"movieId"`
+	HallId    string    `json:"hallId,omitempty"`
 	StartTime time.Time `json:"startTime"`
 	Status    string    `json:"status"`
 }
 
-func New(router *mux.Router, repository repository.Repository) HttpHandler {
+func New(router *mux.Router, repository repository) HttpHandler {
 	handler := HttpHandler{r: repository}
 	handler.setRoutes(router)
 
@@ -65,7 +71,7 @@ func (h HttpHandler) getAllSessionsHandler(w http.ResponseWriter, r *http.Reques
 
 	sessions, err := h.r.AllSessions(d, p.Offset, p.Limit)
 
-	if errors.Is(err, repository.ErrCinemaSessionsNotFound) {
+	if errors.Is(err, entity.ErrCinemaSessionsNotFound) {
 		log.Println(err)
 		http.Error(w, fmt.Sprintf("%v for all halls", err), http.StatusBadRequest)
 		return
@@ -78,7 +84,7 @@ func (h HttpHandler) getAllSessionsHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(convert(sessions))
+	err = json.NewEncoder(w).Encode(entitiesToDTO(sessions))
 	if err != nil {
 		log.Println(err)
 		http.Error(w, ErrInternalError.Error(), http.StatusInternalServerError)
@@ -105,7 +111,7 @@ func (h HttpHandler) getSessionsHandler(w http.ResponseWriter, r *http.Request) 
 
 	sessions, err := h.r.SessionsForHall(hallId, d)
 
-	if errors.Is(err, repository.ErrCinemaSessionsNotFound) {
+	if errors.Is(err, entity.ErrCinemaSessionsNotFound) {
 		log.Println(err)
 		http.Error(w, fmt.Sprintf("%v for hall %s", err, hallIdStr), http.StatusBadRequest)
 		return
@@ -118,7 +124,7 @@ func (h HttpHandler) getSessionsHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(convert(sessions))
+	err = json.NewEncoder(w).Encode(entitiesToDTO(sessions))
 	if err != nil {
 		log.Println(err)
 		http.Error(w, ErrInternalError.Error(), http.StatusInternalServerError)
@@ -192,17 +198,15 @@ func date(r *http.Request) (string, error) {
 	return date, nil
 }
 
-func convert(sessions []repository.CinemaSession) []session {
-	var jsonSessions []session
+func entitiesToDTO(sessions []entity.CinemaSession) []session {
+	DTOSessions := make([]session, len(sessions))
 	for _, s := range sessions {
-		jsonSession := session{
-			Id:        s.ID,
+		DTOSessions = append(DTOSessions, session{
+			Id:        s.Id,
 			MovieId:   s.MovieId,
 			StartTime: s.StartTime,
 			Status:    s.Status,
-		}
-
-		jsonSessions = append(jsonSessions, jsonSession)
+		})
 	}
-	return jsonSessions
+	return DTOSessions
 }
