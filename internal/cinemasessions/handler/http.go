@@ -177,11 +177,6 @@ func (h HttpHandler) createSessionHandler(w http.ResponseWriter, r *http.Request
 	}
 }
 
-func (h HttpHandler) getSessionHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: return cinema session by id
-	w.WriteHeader(http.StatusOK)
-}
-
 func (h HttpHandler) updateSessionHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO: update cinema session by id (only for admins)
 	w.WriteHeader(http.StatusOK)
@@ -210,6 +205,8 @@ func (h HttpHandler) deleteSessionHandler(w http.ResponseWriter, r *http.Request
 
 	_, err = w.Write([]byte("session was deleted successfully"))
 	if err != nil {
+		log.Println(err)
+		http.Error(w, ErrInternalError.Error(), http.StatusInternalServerError)
 		return
 	}
 }
