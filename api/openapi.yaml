@@ -93,10 +93,6 @@ components:
           example: 1
           description: Unique identifier of the cinema session. Generated on the server side.
           readOnly: true
-        hall_id:
-          type: integer
-          example: 1
-          description: ID of the hall in which the cinema session takes place.
         movie_id:
           type: integer
           example: 1
@@ -111,10 +107,39 @@ components:
           format: timestamp
           description: Start time of the cinema session.
           example: 2024-05-18 22:00:00
+        price:
+          type: number
+          format: float
+          example: 10.5
+          description: Price for the cinema session in GEL
         status:
           type: string
           description: Current status of the movie
           example: scheduled
+          readOnly: true
+
+    CinemaSessionResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+          description: Unique identifier of the cinema session. Generated on the server side.
+          readOnly: true
+        movie_id:
+          type: integer
+          example: 1
+          description: ID of the movie being shown in the cinema session.
+        start_time:
+          type: string
+          format: timestamp
+          description: Start time of the cinema session
+          example: 2024-05-18 20:00:00
+        status:
+          type: string
+          description: Current status of the movie
+          example: scheduled
+          readOnly: true
 
     Ticket:
       type: object
@@ -508,40 +533,11 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/CinemaSession'
+                  $ref: '#/components/schemas/CinemaSessionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-      security:
-        - bearerAuth: []
-
-    post:
-      tags:
-        - cinema sessions
-      summary: Creates a new cinema session
-      operationId: createCinemaSession
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CinemaSession'
-      responses:
-        '201':
-          description: The newly created cinema session
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CinemaSession'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
@@ -575,11 +571,55 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CinemaSession'
+                type: array
+                items:
+                  $ref: '#/components/schemas/CinemaSessionResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - bearerAuth: []
+
+    post:
+      tags:
+        - cinema sessions
+      summary: Creates a new cinema session
+      operationId: createCinemaSession
+      parameters:
+        - in: path
+          name: hallId
+          required: true
+          schema:
+            type: integer
+          description: ID of the hall to create cinema session in
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CinemaSession'
+      responses:
+        '201':
+          description: The newly created cinema session
+          content:
+            application/json:
+              schema:
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                    description: Unique identifier of the cinema session. Generated on the server side.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
@@ -588,38 +628,8 @@ paths:
         - bearerAuth: []
 
   /cinema-sessions/{sessionId}:
-    get:
-      tags:
-        - cinema sessions
-      summary: Returns a specific cinema session by ID
-      operationId: getCinemaSessionById
-      parameters:
-        - in: path
-          name: sessionId
-          required: true
-          schema:
-            type: integer
-          description: ID of the cinema session to retrieve
-      responses:
-        '200':
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CinemaSession'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-      security:
-        - bearerAuth: []
-
     put:
-      summary: Updates a specific cinema session by ID
+      summary: Updates a specific cinema session
       operationId: updateCinemaSession
       tags:
         - cinema sessions
@@ -657,7 +667,7 @@ paths:
         - bearerAuth: []
 
     delete:
-      summary: Deletes a specific cinema session by ID
+      summary: Deletes a specific cinema session
       operationId: deleteCinemaSession
       tags:
         - cinema sessions
@@ -670,13 +680,15 @@ paths:
           description: ID of the cinema session to delete
       responses:
         '204':
-          description: The cinema session was updated successfully
+          description: The cinema session was deleted successfully
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /tickets:
     post:

@@ -1,38 +1,18 @@
 package repository
 
 import (
+	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasessions/entity"
 	"database/sql"
-	"errors"
 	"fmt"
 	"log"
 	"strconv"
 	"time"
 )
 
-var (
-	ErrCinemaSessionsNotFound = errors.New("no cinema sessions were found")
-	ErrHallNotFound           = errors.New("hall does not exist")
-	ErrHallIsBusy             = errors.New("hall is busy")
-	ErrMovieNotFound          = errors.New("movie was not found")
-)
-
-const (
-	StatusPassed    = "passed"
-	StatusOnAir     = "on_air"
-	StatusScheduled = "scheduled"
-)
-
 var timeZone = time.FixedZone("UTC+4", 4*60*60)
 
 type SessionsRepository struct {
 	db *sql.DB
-}
-
-type Repository interface {
-	SessionsForHall(hallId int, date string) ([]CinemaSession, error)
-	AllSessions(date string, offset, limit int) ([]CinemaSession, error)
-	CreateSession(movieId, hallId int, startTime string, price float32) (sessionId int, err error)
-	DeleteSession(id int) error
 }
 
 func New(db *sql.DB) *SessionsRepository {
@@ -42,12 +22,13 @@ func New(db *sql.DB) *SessionsRepository {
 type CinemaSession struct {
 	ID        int
 	MovieId   int
+	HallId    int
 	StartTime time.Time
 	EndTime   time.Time
-	Status    string
+	Price     float32
 }
 
-func (s *SessionsRepository) SessionsForHall(hallId int, date string) ([]CinemaSession, error) {
+func (s *SessionsRepository) SessionsForHall(hallId int, date string) ([]entity.CinemaSession, error) {
 	rows, err := s.db.Query("SELECT session_id, movie_id, start_time, end_time "+
 		"FROM cinema_sessions "+
 		"WHERE hall_id = $1 AND date_trunc('day', start_time) = $2 "+
@@ -65,7 +46,7 @@ func (s *SessionsRepository) SessionsForHall(hallId int, date string) ([]CinemaS
 	return cinemaSessions, nil
 }
 
-func (s *SessionsRepository) AllSessions(date string, offset, limit int) ([]CinemaSession, error) {
+func (s *SessionsRepository) AllSessions(date string, offset, limit int) ([]entity.CinemaSession, error) {
 	rows, err := s.db.Query("SELECT session_id, movie_id, start_time, end_time "+
 		"FROM cinema_sessions "+
 		"WHERE start_time >= $1 "+
@@ -92,7 +73,7 @@ func (s *SessionsRepository) CreateSession(movieId, hallId int, startTime string
 		return 0, fmt.Errorf("failed to check if hall with id %d exists: %w", hallId, err)
 	}
 	if !exists {
-		return 0, fmt.Errorf("%w: id %d", ErrHallNotFound, hallId)
+		return 0, fmt.Errorf("%w: id %d", entity.ErrHallNotFound, hallId)
 	}
 
 	endTime, err := s.sessionEndTime(movieId, startTime)
@@ -107,7 +88,7 @@ func (s *SessionsRepository) CreateSession(movieId, hallId int, startTime string
 		return 0, fmt.Errorf("failed to check if cinema session can be created: %w", err)
 	}
 	if hallBusy {
-		return 0, fmt.Errorf("%w at the time %s", ErrHallIsBusy, startTime)
+		return 0, fmt.Errorf("%w at the time %s", entity.ErrHallIsBusy, startTime)
 	}
 
 	log.Println(startTime)
@@ -150,7 +131,7 @@ func (s *SessionsRepository) sessionEndTime(id int, startTime string) (string, e
 	)
 	row := s.db.QueryRow("SELECT duration FROM movies WHERE movie_id = $1", id)
 	if err := row.Scan(&duration); err == sql.ErrNoRows {
-		return endTime, fmt.Errorf("%w with id %d", ErrMovieNotFound, id)
+		return endTime, fmt.Errorf("%w with id %d", entity.ErrMovieNotFound, id)
 	} else if err != nil {
 		return endTime, err
 	}
@@ -176,7 +157,7 @@ func (s *SessionsRepository) DeleteSession(id int) error {
 	}
 
 	if !exists {
-		return fmt.Errorf("%w with id %d", ErrCinemaSessionsNotFound, id)
+		return fmt.Errorf("%w with id %d", entity.ErrCinemaSessionsNotFound, id)
 	}
 
 	_, err = s.db.Exec("DELETE FROM cinema_sessions WHERE session_id = $1", id)
@@ -209,19 +190,17 @@ func (s *SessionsRepository) hallExists(id int) (bool, error) {
 	return count > 0, nil
 }
 
-func readCinemaSessions(rows *sql.Rows) ([]CinemaSession, error) {
-	var cinemaSessions []CinemaSession
+func readCinemaSessions(rows *sql.Rows) ([]entity.CinemaSession, error) {
+	var cinemaSessions []entity.CinemaSession
 	for rows.Next() {
 		var session CinemaSession
 		if err := rows.Scan(&session.ID, &session.MovieId, &session.StartTime, &session.EndTime); err != nil {
 			return nil, fmt.Errorf("failed to get cinema session: %w", err)
 		}
-		if err := session.setStatus(); err != nil {
-			return nil, fmt.Errorf("failed to set cinema session status: %w", err)
-		}
 		session.StartTime = session.StartTime.In(timeZone)
 		session.EndTime = session.EndTime.In(timeZone)
-		cinemaSessions = append(cinemaSessions, session)
+		cinemaSessions = append(cinemaSessions,
+			entity.New(session.ID, session.MovieId, session.StartTime, session.EndTime))
 	}
 
 	if err := rows.Err(); err != nil {
@@ -229,21 +208,8 @@ func readCinemaSessions(rows *sql.Rows) ([]CinemaSession, error) {
 	}
 
 	if len(cinemaSessions) == 0 {
-		return nil, ErrCinemaSessionsNotFound
+		return nil, entity.ErrCinemaSessionsNotFound
 	}
 
 	return cinemaSessions, nil
-}
-
-func (c *CinemaSession) setStatus() error {
-	current := time.Now().UTC()
-
-	if c.StartTime.Before(current) && c.EndTime.After(current) {
-		c.Status = StatusOnAir
-	} else if c.EndTime.Before(current) {
-		c.Status = StatusPassed
-	} else {
-		c.Status = StatusScheduled
-	}
-	return nil
 }
