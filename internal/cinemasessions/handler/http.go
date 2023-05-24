@@ -73,7 +73,7 @@ func (h HttpHandler) getAllSessionsHandler(w http.ResponseWriter, r *http.Reques
 
 	if errors.Is(err, entity.ErrCinemaSessionsNotFound) {
 		log.Println(err)
-		http.Error(w, fmt.Sprintf("%v for all halls", err), http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("%v for all halls", err), http.StatusNotFound)
 		return
 	}
 
@@ -113,7 +113,7 @@ func (h HttpHandler) getSessionsHandler(w http.ResponseWriter, r *http.Request) 
 
 	if errors.Is(err, entity.ErrCinemaSessionsNotFound) {
 		log.Println(err)
-		http.Error(w, fmt.Sprintf("%v for hall %s", err, hallIdStr), http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("%v for hall %s", err, hallIdStr), http.StatusNotFound)
 		return
 	}
 
