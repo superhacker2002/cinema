@@ -47,6 +47,7 @@ func New(router *mux.Router, repository repository.Repository) HttpHandler {
 func (h HttpHandler) setRoutes(router *mux.Router) {
 	s := router.PathPrefix("/cinema-sessions").Subrouter()
 	s.HandleFunc("/", h.getAllSessionsHandler).Methods("GET")
+	s.HandleFunc("/{sessionId}", h.updateSessionHandler).Methods("PUT")
 	s.HandleFunc("/{sessionId}", h.deleteSessionHandler).Methods("DELETE")
 	s.HandleFunc("/{hallId}", h.getSessionsHandler).Methods("GET")
 	s.HandleFunc("/{hallId}", h.createSessionHandler).Methods("POST")
@@ -178,7 +179,13 @@ func (h HttpHandler) createSessionHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (h HttpHandler) updateSessionHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: update cinema session by id (only for admins)
+	sessionId, err := pathVariable(r, "sessionId")
+	if err != nil {
+		log.Println(err)
+		http.Error(w, ErrInvalidSessionId.Error(), http.StatusBadRequest)
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
 }
 
