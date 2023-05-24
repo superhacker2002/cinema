@@ -22,15 +22,6 @@ func GetIntParam(r *http.Request, paramName string) (int, error) {
 	return paramInt, nil
 }
 
-func GetHallID(r *http.Request) (int, error) {
-	hallID, err := GetIntParam(r, "hallID")
-	if err != nil {
-		return 0, err
-	}
-
-	return hallID, nil
-}
-
 // Helper function to write a JSON response with the specified status code
 func WriteResponse(w http.ResponseWriter, data interface{}, statusCode int) {
 	w.Header().Set("Content-Type", "application/json")

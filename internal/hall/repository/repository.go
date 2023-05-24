@@ -3,6 +3,8 @@ package repository
 import (
 	"database/sql"
 	"errors"
+
+	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/hall/handler"
 )
 
 var (
@@ -17,32 +19,16 @@ func New(db *sql.DB) *HallRepository {
 	return &HallRepository{db: db}
 }
 
-type CinemaHall struct {
-	ID        int    `json:"id"`
-	Name      string `json:"name"`
-	Capacity  int    `json:"capacity"`
-	Available bool   `json:"available"`
-}
-
-type Repository interface {
-	GetCinemaHalls() ([]CinemaHall, error)
-	GetCinemaHallByID(id int) (*CinemaHall, error)
-	CreateCinemaHall(hall *CinemaHall) error
-	UpdateCinemaHall(hall *CinemaHall) error
-	DeleteCinemaHall(id int) error
-	UpdateHallAvailability(id int, available bool) error
-}
-
-func (r *HallRepository) GetCinemaHalls() ([]CinemaHall, error) {
+func (r *HallRepository) GetCinemaHalls() ([]handler.CinemaHall, error) {
 	rows, err := r.db.Query("SELECT hall_id, hall_name, capacity FROM halls")
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var cinemaHalls []CinemaHall
+	var cinemaHalls []handler.CinemaHall
 	for rows.Next() {
-		var hall CinemaHall
+		var hall handler.CinemaHall
 		err := rows.Scan(&hall.ID, &hall.Name, &hall.Capacity)
 		if err != nil {
 			return nil, err
@@ -53,9 +39,9 @@ func (r *HallRepository) GetCinemaHalls() ([]CinemaHall, error) {
 	return cinemaHalls, nil
 }
 
-func (r *HallRepository) GetCinemaHallByID(id int) (*CinemaHall, error) {
+func (r *HallRepository) GetCinemaHallByID(id int) (*handler.CinemaHall, error) {
 	row := r.db.QueryRow("SELECT hall_id, hall_name, capacity, available FROM halls WHERE hall_id = $1", id)
-	var hall CinemaHall
+	var hall handler.CinemaHall
 	err := row.Scan(&hall.ID, &hall.Name, &hall.Capacity, &hall.Available)
 	if err != nil {
 		return nil, err
@@ -64,23 +50,18 @@ func (r *HallRepository) GetCinemaHallByID(id int) (*CinemaHall, error) {
 	return &hall, nil
 }
 
-func (r *HallRepository) CreateCinemaHall(hall *CinemaHall) error {
-	result, err := r.db.Exec("INSERT INTO halls (hall_name, capacity, available) VALUES ($1, $2, $3)",
-		hall.Name, hall.Capacity, hall.Available)
+func (r *HallRepository) CreateCinemaHall(hall *handler.CinemaHall) error {
+	query := "INSERT INTO halls (hall_name, capacity, available) VALUES ($1, $2, $3) RETURNING id"
+
+	err := r.db.QueryRow(query, hall.Name, hall.Capacity, hall.Available).Scan(&hall.ID)
 	if err != nil {
 		return err
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	hall.ID = int(rowsAffected)
 	return nil
 }
 
-func (r *HallRepository) UpdateCinemaHall(hall *CinemaHall) error {
+func (r *HallRepository) UpdateCinemaHall(hall *handler.CinemaHall) error {
 	_, err := r.db.Exec("UPDATE halls SET hall_name = $1, capacity = $2 WHERE hall_id = $3",
 		hall.Name, hall.Capacity, hall.ID)
 	return err

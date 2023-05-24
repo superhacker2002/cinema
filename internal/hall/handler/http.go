@@ -7,15 +7,29 @@ import (
 	"net/http"
 
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/api"
-	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/hall/repository"
 	"github.com/gorilla/mux"
 )
 
-type HTTPHandler struct {
-	repository repository.Repository
+type CinemaHall struct {
+	ID        int    `json:"id"`
+	Name      string `json:"name"`
+	Capacity  int    `json:"capacity"`
+	Available bool   `json:"available"`
 }
 
-func New(router *mux.Router, repository repository.Repository) HTTPHandler {
+type Repository interface {
+	GetCinemaHalls() ([]CinemaHall, error)
+	GetCinemaHallByID(id int) (*CinemaHall, error)
+	CreateCinemaHall(hall *CinemaHall) error
+	UpdateCinemaHall(hall *CinemaHall) error
+	DeleteCinemaHall(id int) error
+	UpdateHallAvailability(id int, available bool) error
+}
+type HTTPHandler struct {
+	repository Repository
+}
+
+func New(router *mux.Router, repository Repository) HTTPHandler {
 	handler := HTTPHandler{repository: repository}
 	handler.setRoutes(router)
 
@@ -43,7 +57,7 @@ func (h HTTPHandler) getHallsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h HTTPHandler) createHallHandler(w http.ResponseWriter, r *http.Request) {
-	var newCinemaHall repository.CinemaHall
+	var newCinemaHall CinemaHall
 	err := json.NewDecoder(r.Body).Decode(&newCinemaHall)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -60,19 +74,15 @@ func (h HTTPHandler) createHallHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h HTTPHandler) getHallHandler(w http.ResponseWriter, r *http.Request) {
-	hallID, err := api.GetHallID(r)
+	hallID, err := api.GetIntParam(r, "hallID")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	hall, err := h.repository.GetCinemaHallByID(hallID)
 	if err != nil {
-		if err == repository.ErrHallNotFound {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		} else {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
@@ -80,7 +90,7 @@ func (h HTTPHandler) getHallHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h HTTPHandler) updateHallHandler(w http.ResponseWriter, r *http.Request) {
-	var updatedCinemaHall repository.CinemaHall
+	var updatedCinemaHall CinemaHall
 	err := json.NewDecoder(r.Body).Decode(&updatedCinemaHall)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -97,7 +107,7 @@ func (h HTTPHandler) updateHallHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h HTTPHandler) deleteHallHandler(w http.ResponseWriter, r *http.Request) {
-	hallID, err := api.GetHallID(r)
+	hallID, err := api.GetIntParam(r, "hallID")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
