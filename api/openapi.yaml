@@ -627,6 +627,7 @@ paths:
       security:
         - bearerAuth: []
 
+  /cinema-sessions/{sessionId}:
     put:
       summary: Updates a specific cinema session
       operationId: updateCinemaSession
@@ -665,7 +666,6 @@ paths:
       security:
         - bearerAuth: []
 
-  /cinema-sessions/{sessionId}:
     delete:
       summary: Deletes a specific cinema session
       operationId: deleteCinemaSession
