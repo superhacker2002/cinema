@@ -3,6 +3,7 @@ package main
 import (
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/auth/service"
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/config"
+	"os"
 
 	userHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/handler"
 	userRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/repository"
@@ -19,6 +20,7 @@ import (
 
 func main() {
 	log.SetFlags(log.Lshortfile)
+	log.SetOutput(os.Stdout)
 	configs, err := config.New()
 	if err != nil {
 		log.Fatalf("config loading failed: %v", err)
