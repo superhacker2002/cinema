@@ -24,9 +24,25 @@ func New(r repository) service {
 }
 
 func (s service) AllSessions(date string, offset, limit int) ([]entity.CinemaSession, error) {
-	return s.r.AllSessions(date, offset, limit)
+	sessions, err := s.r.AllSessions(date, offset, limit)
+	if errors.Is(err, ErrCinemaSessionsNotFound) {
+		return nil, err
+	}
+
+	if err != nil {
+		return nil, ErrInternalError
+	}
+	return sessions, nil
 }
 
 func (s service) SessionsForHall(hallId int, date string) ([]entity.CinemaSession, error) {
-	return s.r.SessionsForHall(hallId, date)
+	sessions, err := s.r.SessionsForHall(hallId, date)
+	if errors.Is(err, ErrCinemaSessionsNotFound) {
+		return nil, err
+	}
+
+	if err != nil {
+		return nil, ErrInternalError
+	}
+	return sessions, nil
 }
