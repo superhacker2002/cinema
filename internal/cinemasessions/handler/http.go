@@ -77,6 +77,7 @@ func (h HttpHandler) getAllSessionsHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	sessions, err := h.s.AllSessions(d, p.offset, p.limit)
+	log.Println(len(sessions))
 
 	if errors.Is(err, service.ErrCinemaSessionsNotFound) {
 		http.Error(w, fmt.Sprintf("%v for all halls", err), http.StatusNotFound)
@@ -266,7 +267,7 @@ func date(r *http.Request) (string, error) {
 }
 
 func entitiesToDTO(sessions []entity.CinemaSession) []session {
-	DTOSessions := make([]session, len(sessions))
+	var DTOSessions []session
 	for _, s := range sessions {
 		DTOSessions = append(DTOSessions, session{
 			Id:        s.Id,
