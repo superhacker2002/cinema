@@ -1,11 +1,8 @@
 package entity
 
 import (
-	"errors"
 	"time"
 )
-
-var ErrCinemaSessionsNotFound = errors.New("no cinema sessions were found")
 
 const (
 	StatusPassed    = "passed"

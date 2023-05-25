@@ -2,6 +2,7 @@ package handler
 
 import (
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasessions/entity"
+	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasessions/service"
 	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
@@ -27,7 +28,7 @@ func (m *mockRepo) AllSessions(date string, offset, limit int) ([]entity.CinemaS
 
 func (m *mockRepo) SessionsForHall(hallId int, date string) ([]entity.CinemaSession, error) {
 	if hallId != m.hallId {
-		return nil, entity.ErrCinemaSessionsNotFound
+		return nil, service.ErrCinemaSessionsNotFound
 	}
 	return m.sessions, m.err
 }
@@ -55,7 +56,8 @@ func TestGetSessionsHandler(t *testing.T) {
 		require.NoError(t, err, "failed to create test request")
 
 		response := httptest.NewRecorder()
-		handler := HttpHandler{r: &repo}.getSessionsHandler
+		s := service.New(&repo)
+		handler := HttpHandler{s: s}.getSessionsHandler
 		handler(response, req)
 
 		assert.NotEmpty(t, response.Body.String())
@@ -68,28 +70,30 @@ func TestGetSessionsHandler(t *testing.T) {
 		require.NoError(t, err, "failed to create test request")
 
 		response := httptest.NewRecorder()
-		handler := HttpHandler{r: &repo}.getSessionsHandler
+		s := service.New(&repo)
+		handler := HttpHandler{s: s}.getSessionsHandler
 		handler(response, req)
 
-		assert.Equal(t, fmt.Sprintf("%v: 0\n", ErrInvalidHallId), response.Body.String())
+		assert.Equal(t, fmt.Sprintf("%v\n", ErrInvalidHallId), response.Body.String())
 		assert.Equal(t, http.StatusBadRequest, response.Code)
 	})
 
 	t.Run("no cinema sessions", func(t *testing.T) {
 		repo.sessions = []entity.CinemaSession{{}}
-		repo.hallId = 1
-		repo.err = entity.ErrCinemaSessionsNotFound
+		repo.hallId = 2
+		repo.err = service.ErrCinemaSessionsNotFound
 
 		req, err := http.NewRequest(http.MethodGet, "cinema-sessions/2", nil)
 		req = mux.SetURLVars(req, map[string]string{"hallId": "2"})
 		require.NoError(t, err, "failed to create test request")
 
 		response := httptest.NewRecorder()
-		handler := HttpHandler{r: &repo}.getSessionsHandler
+		s := service.New(&repo)
+		handler := HttpHandler{s: s}.getSessionsHandler
 		handler(response, req)
 
-		assert.Equal(t, fmt.Sprintf("%v for hall 2\n", entity.ErrCinemaSessionsNotFound), response.Body.String())
-		assert.Equal(t, http.StatusBadRequest, response.Code)
+		assert.Equal(t, fmt.Sprintf("%v for hall 2\n", service.ErrCinemaSessionsNotFound), response.Body.String())
+		assert.Equal(t, http.StatusNotFound, response.Code)
 	})
 
 	t.Run("repository error", func(t *testing.T) {
@@ -102,10 +106,11 @@ func TestGetSessionsHandler(t *testing.T) {
 		require.NoError(t, err, "failed to create test request")
 
 		response := httptest.NewRecorder()
-		handler := HttpHandler{r: &repo}.getSessionsHandler
+		s := service.New(&repo)
+		handler := HttpHandler{s: s}.getSessionsHandler
 		handler(response, req)
 
-		assert.Equal(t, fmt.Sprintf("%v\n", ErrInternalError), response.Body.String())
+		assert.Equal(t, fmt.Sprintf("%v\n", service.ErrInternalError), response.Body.String())
 		assert.Equal(t, http.StatusInternalServerError, response.Code)
 	})
 }
@@ -131,7 +136,8 @@ func TestGetAllSessionsHandler(t *testing.T) {
 		require.NoError(t, err, "failed to create test request")
 
 		response := httptest.NewRecorder()
-		handler := HttpHandler{r: &repo}.getAllSessionsHandler
+		s := service.New(&repo)
+		handler := HttpHandler{s: s}.getAllSessionsHandler
 		handler(response, req)
 
 		assert.NotEmpty(t, response.Body.String())
@@ -141,17 +147,18 @@ func TestGetAllSessionsHandler(t *testing.T) {
 	t.Run("no cinema sessions", func(t *testing.T) {
 		sessions := []entity.CinemaSession{{}}
 		repo.sessions = sessions
-		repo.err = entity.ErrCinemaSessionsNotFound
+		repo.err = service.ErrCinemaSessionsNotFound
 
 		req, err := http.NewRequest(http.MethodGet, "cinema-sessions/", nil)
 		require.NoError(t, err, "failed to create test request")
 
 		response := httptest.NewRecorder()
-		handler := HttpHandler{r: &repo}.getAllSessionsHandler
+		s := service.New(&repo)
+		handler := HttpHandler{s: s}.getAllSessionsHandler
 		handler(response, req)
 
-		assert.Equal(t, fmt.Sprintf("%v for all halls\n", entity.ErrCinemaSessionsNotFound), response.Body.String())
-		assert.Equal(t, http.StatusBadRequest, response.Code)
+		assert.Equal(t, fmt.Sprintf("%v for all halls\n", service.ErrCinemaSessionsNotFound), response.Body.String())
+		assert.Equal(t, http.StatusNotFound, response.Code)
 	})
 
 	t.Run("repository error", func(t *testing.T) {
@@ -163,10 +170,11 @@ func TestGetAllSessionsHandler(t *testing.T) {
 		require.NoError(t, err, "failed to create test request")
 
 		response := httptest.NewRecorder()
-		handler := HttpHandler{r: &repo}.getAllSessionsHandler
+		s := service.New(&repo)
+		handler := HttpHandler{s: s}.getAllSessionsHandler
 		handler(response, req)
 
-		assert.Equal(t, fmt.Sprintf("%v\n", ErrInternalError), response.Body.String())
+		assert.Equal(t, fmt.Sprintf("%v\n", service.ErrInternalError), response.Body.String())
 		assert.Equal(t, http.StatusInternalServerError, response.Code)
 	})
 }
@@ -177,8 +185,8 @@ func TestPage(t *testing.T) {
 		require.NoError(t, err, "failed to create test request")
 		page, err := page(req)
 		assert.NoError(t, err)
-		assert.Equal(t, 10, page.Offset)
-		assert.Equal(t, 20, page.Limit)
+		assert.Equal(t, 10, page.offset)
+		assert.Equal(t, 20, page.limit)
 	})
 
 	t.Run("invalid request", func(t *testing.T) {
@@ -186,7 +194,7 @@ func TestPage(t *testing.T) {
 		require.NoError(t, err, "failed to create test request")
 		page, err := page(req)
 		assert.Error(t, err)
-		assert.Equal(t, 20, page.Limit)
+		assert.Equal(t, 20, page.limit)
 	})
 
 	t.Run("not a number offset", func(t *testing.T) {
@@ -202,8 +210,8 @@ func TestPage(t *testing.T) {
 		require.NoError(t, err, "failed to create test request")
 		page, err := page(req)
 		assert.NoError(t, err)
-		assert.Equal(t, 0, page.Offset)
-		assert.Equal(t, 10, page.Limit)
+		assert.Equal(t, 0, page.offset)
+		assert.Equal(t, 10, page.limit)
 	})
 }
 
@@ -221,7 +229,7 @@ func TestDate(t *testing.T) {
 		require.NoError(t, err, "failed to create test request")
 		date, err := date(req)
 		assert.Error(t, err)
-		assert.Equal(t, date, "")
+		assert.Equal(t, date, "2023/01/05")
 	})
 
 	t.Run("missing date", func(t *testing.T) {

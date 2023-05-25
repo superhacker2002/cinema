@@ -2,8 +2,10 @@ package repository
 
 import (
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasessions/entity"
+	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasessions/service"
 	"database/sql"
 	"fmt"
+	"log"
 	"time"
 )
 
@@ -33,11 +35,13 @@ func (s *SessionsRepository) SessionsForHall(hallId int, date string) ([]entity.
 		"ORDER BY start_time ", hallId, date)
 
 	if err != nil {
+		log.Println(err)
 		return nil, fmt.Errorf("failed to get cinema sessions: %w", err)
 	}
 
 	cinemaSessions, err := readCinemaSessions(rows)
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
 
@@ -53,11 +57,13 @@ func (s *SessionsRepository) AllSessions(date string, offset, limit int) ([]enti
 		"LIMIT $3", date, offset, limit)
 
 	if err != nil {
+		log.Println(err)
 		return nil, fmt.Errorf("failed to get cinema sessions: %w", err)
 	}
 
 	cinemaSessions, err := readCinemaSessions(rows)
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
 
@@ -69,6 +75,7 @@ func readCinemaSessions(rows *sql.Rows) ([]entity.CinemaSession, error) {
 	for rows.Next() {
 		var session CinemaSession
 		if err := rows.Scan(&session.ID, &session.MovieId, &session.StartTime, &session.EndTime); err != nil {
+			log.Println(err)
 			return nil, fmt.Errorf("failed to get cinema session: %w", err)
 		}
 		session.StartTime = session.StartTime.In(timeZone)
@@ -78,11 +85,13 @@ func readCinemaSessions(rows *sql.Rows) ([]entity.CinemaSession, error) {
 	}
 
 	if err := rows.Err(); err != nil {
+		log.Println(err)
 		return nil, fmt.Errorf("error while iterating over cinema sessions: %w", err)
 	}
 
 	if len(cinemaSessions) == 0 {
-		return nil, entity.ErrCinemaSessionsNotFound
+		log.Println(service.ErrCinemaSessionsNotFound)
+		return nil, service.ErrCinemaSessionsNotFound
 	}
 
 	return cinemaSessions, nil
