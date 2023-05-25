@@ -13,15 +13,17 @@ const (
 type CinemaSession struct {
 	Id        int
 	MovieId   int
+	HallId    int
 	StartTime time.Time
 	EndTime   time.Time
 	Status    string
 }
 
-func New(id, movieId int, startTime, endTime time.Time) CinemaSession {
+func New(id, movieId, hallId int, startTime, endTime time.Time) CinemaSession {
 	session := CinemaSession{
 		Id:        id,
 		MovieId:   movieId,
+		HallId:    hallId,
 		StartTime: startTime,
 		EndTime:   endTime,
 	}
