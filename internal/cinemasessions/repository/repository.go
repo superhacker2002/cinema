@@ -81,7 +81,7 @@ func readCinemaSessions(rows *sql.Rows) ([]entity.CinemaSession, error) {
 		session.StartTime = session.StartTime.In(timeZone)
 		session.EndTime = session.EndTime.In(timeZone)
 		cinemaSessions = append(cinemaSessions,
-			entity.New(session.ID, session.MovieId, session.StartTime, session.EndTime))
+			entity.New(session.ID, session.MovieId, session.HallId, session.StartTime, session.EndTime))
 	}
 
 	if err := rows.Err(); err != nil {
