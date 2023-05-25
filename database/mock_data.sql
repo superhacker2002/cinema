@@ -20,13 +20,13 @@ INSERT INTO movies (title, genre, release_date, duration)
 VALUES ('The Shawshank Redemption', 'Drama', '1994-09-23', 142);
 
 INSERT INTO cinema_sessions (movie_id, hall_id, start_time, end_time, price)
-VALUES (3, 2, '2023-05-22 08:00:00+4', '2023-05-22 10:00:00+4', 10.00);
+VALUES (3, 2, '2023-05-22 08:00:00 +04', '2023-05-22 10:00:00 +04', 10.00);
 
-INSERT INTO cinema_sessions (movie_id, hall_id, start_time, end_time, price)
-VALUES (3, 2, '2023-05-22 10:30:00+4', '2023-05-22 13:00:00+4', 10.00);
-
-INSERT INTO cinema_sessions (movie_id, hall_id, start_time, end_time, price)
-VALUES (3, 2, '2023-05-22 14:00:00+4', '2023-05-22 19:00:00+4', 10.00);
+-- INSERT INTO cinema_sessions (movie_id, hall_id, start_time, end_time, price)
+-- VALUES (3, 2, '2023-05-22 10:30:00+4', '2023-05-22 13:00:00+4', 10.00);
+--
+-- INSERT INTO cinema_sessions (movie_id, hall_id, start_time, end_time, price)
+-- VALUES (3, 2, '2023-05-22 14:00:00+4', '2023-05-22 19:00:00+4', 10.00);
 
 
 INSERT INTO tickets (session_id, user_id, seat_number) VALUES (1, 2, 1);

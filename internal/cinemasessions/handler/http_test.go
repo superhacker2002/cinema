@@ -47,8 +47,8 @@ func (m *mockRepo) CreateSession(movieId, hallId int, startTime string, price fl
 func TestGetSessionsHandler(t *testing.T) {
 	repo := mockRepo{}
 	t.Run("successful sessions get", func(t *testing.T) {
-		start, _ := time.Parse(layout, "2024-05-18 20:00:00+4")
-		end, _ := time.Parse(layout, "2024-05-18 22:00:00+4")
+		start, _ := time.Parse(layout, "2024-05-18 20:00:00 +04")
+		end, _ := time.Parse(layout, "2024-05-18 22:00:00 +04")
 		session := []entity.CinemaSession{
 			{
 				Id:        1,
@@ -129,8 +129,8 @@ func TestGetSessionsHandler(t *testing.T) {
 func TestGetAllSessionsHandler(t *testing.T) {
 	repo := mockRepo{}
 	t.Run("successful sessions get", func(t *testing.T) {
-		start, _ := time.Parse(layout, "2024-05-18 20:00:00+4")
-		end, _ := time.Parse(layout, "2024-05-18 22:00:00+4")
+		start, _ := time.Parse(layout, "2024-05-18 20:00:00 +04")
+		end, _ := time.Parse(layout, "2024-05-18 22:00:00 +04")
 		sessions := []entity.CinemaSession{
 			{
 				Id:        1,
@@ -152,6 +152,7 @@ func TestGetAllSessionsHandler(t *testing.T) {
 		handler(response, req)
 
 		assert.NotEmpty(t, response.Body.String())
+		t.Fatal(response.Body)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
 
