@@ -18,10 +18,16 @@ import (
 )
 
 type mockRepo struct {
-	sessions  []entity.CinemaSession
-	sessionId int
-	hallId    int
-	err       error
+	sessions      []entity.CinemaSession
+	sessionId     int
+	hallId        int
+	err           error
+	serviceErr    error
+	sessionExists bool
+}
+
+func (m *mockRepo) SessionExists(id int) (bool, error) {
+	return m.sessionExists, m.serviceErr
 }
 
 const layout = "2006-01-02 15:04:05 MST"
@@ -152,7 +158,6 @@ func TestGetAllSessionsHandler(t *testing.T) {
 		handler(response, req)
 
 		assert.NotEmpty(t, response.Body.String())
-		t.Fatal(response.Body)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
 
@@ -373,6 +378,8 @@ func TestDeleteSessionHandler(t *testing.T) {
 		sessionID := 1
 		repo.sessionId = sessionID
 		repo.err = nil
+		repo.sessionExists = true
+		repo.serviceErr = nil
 
 		req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("/cinema-sessions/%d", sessionID), nil)
 		req = mux.SetURLVars(req, map[string]string{"sessionId": strconv.Itoa(sessionID)})
@@ -405,7 +412,7 @@ func TestDeleteSessionHandler(t *testing.T) {
 	t.Run("session not found", func(t *testing.T) {
 		sessionID := 2
 		repo.sessionId = sessionID
-		repo.err = service.ErrCinemaSessionsNotFound
+		repo.sessionExists = false
 
 		req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("/cinema-sessions/%d", sessionID), nil)
 		req = mux.SetURLVars(req, map[string]string{"sessionId": strconv.Itoa(sessionID)})
@@ -424,6 +431,8 @@ func TestDeleteSessionHandler(t *testing.T) {
 		sessionID := 3
 		repo.sessionId = sessionID
 		repo.err = errors.New("something went wrong")
+		repo.sessionExists = true
+		repo.serviceErr = nil
 
 		req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("/cinema-sessions/%d", sessionID), nil)
 		req = mux.SetURLVars(req, map[string]string{"sessionId": strconv.Itoa(sessionID)})

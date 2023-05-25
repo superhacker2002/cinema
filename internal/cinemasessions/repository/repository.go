@@ -156,16 +156,7 @@ func (s *SessionsRepository) sessionEndTime(id int, startTime string) (string, e
 }
 
 func (s *SessionsRepository) DeleteSession(id int) error {
-	exists, err := s.sessionExists(id)
-	if err != nil {
-		return fmt.Errorf("failed to check if cinema session with id %d exists: %w", id, err)
-	}
-
-	if !exists {
-		return fmt.Errorf("%w with id %d", service.ErrCinemaSessionsNotFound, id)
-	}
-
-	_, err = s.db.Exec("DELETE FROM cinema_sessions WHERE session_id = $1", id)
+	_, err := s.db.Exec("DELETE FROM cinema_sessions WHERE session_id = $1", id)
 	if err != nil {
 		return fmt.Errorf("failed to delete cinema session: %w", err)
 	}
@@ -173,12 +164,11 @@ func (s *SessionsRepository) DeleteSession(id int) error {
 	return nil
 }
 
-func (s *SessionsRepository) sessionExists(id int) (bool, error) {
+func (s *SessionsRepository) SessionExists(id int) (bool, error) {
 	var count int
 	err := s.db.QueryRow("SELECT COUNT(*) FROM cinema_sessions WHERE session_id = $1", id).Scan(&count)
 	if err != nil {
-		log.Println(err)
-		return false, err
+		return false, fmt.Errorf("failed to check if session exists %w", err)
 	}
 
 	return count > 0, nil

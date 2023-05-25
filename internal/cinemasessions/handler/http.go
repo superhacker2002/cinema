@@ -190,6 +190,28 @@ func (h HttpHandler) updateSessionHandler(w http.ResponseWriter, r *http.Request
 	//	return
 	//}
 
+	type sessionInfo struct {
+		MovieId   int       `json:"movieId"`
+		HallId    int       `json:"hallId"`
+		StartTime time.Time `json:"startTime"`
+		Price     float32   `json:"price"`
+	}
+
+	var session sessionInfo
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, ErrReadRequestFail.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err = json.Unmarshal(body, &session); err != nil {
+		log.Println(err)
+		http.Error(w, ErrReadRequestFail.Error(), http.StatusBadRequest)
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
 }
 

@@ -3,6 +3,7 @@ package service
 import (
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasessions/entity"
 	"errors"
+	"log"
 )
 
 type repository interface {
@@ -10,6 +11,7 @@ type repository interface {
 	AllSessions(date string, offset, limit int) ([]entity.CinemaSession, error)
 	CreateSession(movieId, hallId int, startTime string, price float32) (int, error)
 	DeleteSession(id int) error
+	SessionExists(id int) (bool, error)
 }
 
 var (
@@ -41,5 +43,15 @@ func (s service) CreateSession(movieId, hallId int, startTime string, price floa
 }
 
 func (s service) DeleteSession(id int) error {
+	exists, err := s.r.SessionExists(id)
+	if err != nil {
+		log.Println(err)
+		return ErrInternalError
+	}
+
+	if !exists {
+		return ErrCinemaSessionsNotFound
+	}
+
 	return s.r.DeleteSession(id)
 }
