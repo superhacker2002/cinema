@@ -1,15 +1,7 @@
 package entity
 
 import (
-	"errors"
 	"time"
-)
-
-var (
-	ErrCinemaSessionsNotFound = errors.New("no cinema sessions were found")
-	ErrHallNotFound           = errors.New("hall does not exist")
-	ErrHallIsBusy             = errors.New("hall is busy")
-	ErrMovieNotFound          = errors.New("movie was not found")
 )
 
 const (

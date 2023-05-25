@@ -2,6 +2,7 @@ package repository
 
 import (
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasessions/entity"
+	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasessions/service"
 	"database/sql"
 	"fmt"
 	"log"
@@ -35,11 +36,13 @@ func (s *SessionsRepository) SessionsForHall(hallId int, date string) ([]entity.
 		"ORDER BY start_time ", hallId, date)
 
 	if err != nil {
+		log.Println(err)
 		return nil, fmt.Errorf("failed to get cinema sessions: %w", err)
 	}
 
 	cinemaSessions, err := readCinemaSessions(rows)
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
 
@@ -55,11 +58,13 @@ func (s *SessionsRepository) AllSessions(date string, offset, limit int) ([]enti
 		"LIMIT $3", date, offset, limit)
 
 	if err != nil {
+		log.Println(err)
 		return nil, fmt.Errorf("failed to get cinema sessions: %w", err)
 	}
 
 	cinemaSessions, err := readCinemaSessions(rows)
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
 
@@ -73,7 +78,7 @@ func (s *SessionsRepository) CreateSession(movieId, hallId int, startTime string
 		return 0, fmt.Errorf("failed to check if hall with id %d exists: %w", hallId, err)
 	}
 	if !exists {
-		return 0, fmt.Errorf("%w: id %d", entity.ErrHallNotFound, hallId)
+		return 0, fmt.Errorf("%w: id %d", service.ErrHallNotFound, hallId)
 	}
 
 	endTime, err := s.sessionEndTime(movieId, startTime)
@@ -88,7 +93,7 @@ func (s *SessionsRepository) CreateSession(movieId, hallId int, startTime string
 		return 0, fmt.Errorf("failed to check if cinema session can be created: %w", err)
 	}
 	if hallBusy {
-		return 0, fmt.Errorf("%w at the time %s", entity.ErrHallIsBusy, startTime)
+		return 0, fmt.Errorf("%w at the time %s", service.ErrHallIsBusy, startTime)
 	}
 
 	log.Println(startTime)
@@ -131,7 +136,7 @@ func (s *SessionsRepository) sessionEndTime(id int, startTime string) (string, e
 	)
 	row := s.db.QueryRow("SELECT duration FROM movies WHERE movie_id = $1", id)
 	if err := row.Scan(&duration); err == sql.ErrNoRows {
-		return endTime, fmt.Errorf("%w with id %d", entity.ErrMovieNotFound, id)
+		return endTime, fmt.Errorf("%w with id %d", service.ErrMovieNotFound, id)
 	} else if err != nil {
 		return endTime, err
 	}
@@ -157,7 +162,7 @@ func (s *SessionsRepository) DeleteSession(id int) error {
 	}
 
 	if !exists {
-		return fmt.Errorf("%w with id %d", entity.ErrCinemaSessionsNotFound, id)
+		return fmt.Errorf("%w with id %d", service.ErrCinemaSessionsNotFound, id)
 	}
 
 	_, err = s.db.Exec("DELETE FROM cinema_sessions WHERE session_id = $1", id)
@@ -195,6 +200,7 @@ func readCinemaSessions(rows *sql.Rows) ([]entity.CinemaSession, error) {
 	for rows.Next() {
 		var session CinemaSession
 		if err := rows.Scan(&session.ID, &session.MovieId, &session.StartTime, &session.EndTime); err != nil {
+			log.Println(err)
 			return nil, fmt.Errorf("failed to get cinema session: %w", err)
 		}
 		session.StartTime = session.StartTime.In(timeZone)
@@ -204,11 +210,13 @@ func readCinemaSessions(rows *sql.Rows) ([]entity.CinemaSession, error) {
 	}
 
 	if err := rows.Err(); err != nil {
+		log.Println(err)
 		return nil, fmt.Errorf("error while iterating over cinema sessions: %w", err)
 	}
 
 	if len(cinemaSessions) == 0 {
-		return nil, entity.ErrCinemaSessionsNotFound
+		log.Println(service.ErrCinemaSessionsNotFound)
+		return nil, service.ErrCinemaSessionsNotFound
 	}
 
 	return cinemaSessions, nil

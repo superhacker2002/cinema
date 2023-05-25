@@ -2,6 +2,7 @@ package handler
 
 import (
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasessions/entity"
+	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasessions/service"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -13,28 +14,27 @@ import (
 	"time"
 )
 
-type repository interface {
-	SessionsForHall(hallId int, date string) ([]entity.CinemaSession, error)
-	AllSessions(date string, offset, limit int) ([]entity.CinemaSession, error)
-	CreateSession(movieId, hallId int, startTime string, price float32) (int, error)
-	DeleteSession(id int) error
-}
-
 var (
 	ErrInvalidHallId    = errors.New("invalid hall id")
-	ErrInternalError    = errors.New("internal server error")
 	ErrInvalidDate      = errors.New("invalid date format")
 	ErrInvalidSessionId = errors.New("invalid session id")
 	ErrReadRequestFail  = errors.New("failed to read request body")
 )
 
+type Service interface {
+	AllSessions(date string, offset, limit int) ([]entity.CinemaSession, error)
+	SessionsForHall(hallId int, date string) ([]entity.CinemaSession, error)
+	CreateSession(movieId, hallId int, startTime string, price float32) (int, error)
+	DeleteSession(id int) error
+}
+
 type HttpHandler struct {
-	r repository
+	s Service
 }
 
 type Page struct {
-	Offset int
-	Limit  int
+	offset int
+	limit  int
 }
 
 type session struct {
@@ -45,8 +45,8 @@ type session struct {
 	Status    string    `json:"status"`
 }
 
-func New(router *mux.Router, repository repository) HttpHandler {
-	handler := HttpHandler{r: repository}
+func New(router *mux.Router, s Service) HttpHandler {
+	handler := HttpHandler{s: s}
 	handler.setRoutes(router)
 
 	return handler
@@ -76,17 +76,15 @@ func (h HttpHandler) getAllSessionsHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	sessions, err := h.r.AllSessions(d, p.Offset, p.Limit)
+	sessions, err := h.s.AllSessions(d, p.offset, p.limit)
 
-	if errors.Is(err, entity.ErrCinemaSessionsNotFound) {
-		log.Println(err)
+	if errors.Is(err, service.ErrCinemaSessionsNotFound) {
 		http.Error(w, fmt.Sprintf("%v for all halls", err), http.StatusNotFound)
 		return
 	}
 
 	if err != nil {
-		log.Println(err)
-		http.Error(w, ErrInternalError.Error(), http.StatusInternalServerError)
+		http.Error(w, service.ErrInternalError.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -94,7 +92,7 @@ func (h HttpHandler) getAllSessionsHandler(w http.ResponseWriter, r *http.Reques
 	err = json.NewEncoder(w).Encode(entitiesToDTO(sessions))
 	if err != nil {
 		log.Println(err)
-		http.Error(w, ErrInternalError.Error(), http.StatusInternalServerError)
+		http.Error(w, service.ErrInternalError.Error(), http.StatusInternalServerError)
 		return
 	}
 }
@@ -114,17 +112,15 @@ func (h HttpHandler) getSessionsHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	sessions, err := h.r.SessionsForHall(hallId, d)
+	sessions, err := h.s.SessionsForHall(hallId, d)
 
-	if errors.Is(err, entity.ErrCinemaSessionsNotFound) {
-		log.Println(err)
+	if errors.Is(err, service.ErrCinemaSessionsNotFound) {
 		http.Error(w, fmt.Sprintf("%v for hall %d", err, hallId), http.StatusNotFound)
 		return
 	}
 
 	if err != nil {
-		log.Println(err)
-		http.Error(w, ErrInternalError.Error(), http.StatusInternalServerError)
+		http.Error(w, service.ErrInternalError.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -132,7 +128,7 @@ func (h HttpHandler) getSessionsHandler(w http.ResponseWriter, r *http.Request) 
 	err = json.NewEncoder(w).Encode(entitiesToDTO(sessions))
 	if err != nil {
 		log.Println(err)
-		http.Error(w, ErrInternalError.Error(), http.StatusInternalServerError)
+		http.Error(w, service.ErrInternalError.Error(), http.StatusInternalServerError)
 		return
 	}
 }
@@ -164,16 +160,15 @@ func (h HttpHandler) createSessionHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	id, err := h.r.CreateSession(hallId, session.MovieId, session.StarTime, session.Price)
-	if errors.Is(err, entity.ErrHallIsBusy) {
-		log.Println(err)
+	id, err := h.s.CreateSession(session.MovieId, hallId, session.StarTime, session.Price)
+
+	if errors.Is(err, service.ErrHallIsBusy) {
 		http.Error(w, err.Error(), http.StatusConflict)
 		return
 	}
 
 	if err != nil {
-		log.Println(err)
-		http.Error(w, ErrInternalError.Error(), http.StatusInternalServerError)
+		http.Error(w, service.ErrInternalError.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -181,7 +176,7 @@ func (h HttpHandler) createSessionHandler(w http.ResponseWriter, r *http.Request
 	json.NewEncoder(w).Encode(map[string]int{"session_id": id})
 	if err != nil {
 		log.Println(err)
-		http.Error(w, ErrInternalError.Error(), http.StatusInternalServerError)
+		http.Error(w, service.ErrInternalError.Error(), http.StatusInternalServerError)
 		return
 	}
 }
@@ -205,38 +200,23 @@ func (h HttpHandler) deleteSessionHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	err = h.r.DeleteSession(sessionId)
-	if errors.Is(entity.ErrCinemaSessionsNotFound, err) {
-		log.Println(err)
+	err = h.s.DeleteSession(sessionId)
+	if errors.Is(service.ErrCinemaSessionsNotFound, err) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
 	if err != nil {
-		log.Println(err)
-		http.Error(w, ErrInternalError.Error(), http.StatusInternalServerError)
+		http.Error(w, service.ErrInternalError.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	_, err = w.Write([]byte("session was deleted successfully"))
 	if err != nil {
 		log.Println(err)
-		http.Error(w, ErrInternalError.Error(), http.StatusInternalServerError)
+		http.Error(w, service.ErrInternalError.Error(), http.StatusInternalServerError)
 		return
 	}
-}
-
-func pathVariable(r *http.Request, varName string) (int, error) {
-	vars := mux.Vars(r)
-	varStr := vars[varName]
-	varInt, err := strconv.Atoi(varStr)
-	if err != nil {
-		return 0, err
-	}
-	if varInt <= 0 {
-		return 0, errors.New("parameter is less than zero")
-	}
-	return varInt, nil
 }
 
 func page(r *http.Request) (Page, error) {
@@ -248,25 +228,25 @@ func page(r *http.Request) (Page, error) {
 	limitStr := r.URL.Query().Get("limit")
 	var p Page
 	if offsetStr == "" || limitStr == "" {
-		p.Offset = defaultOffset
-		p.Limit = defaultLimit
+		p.offset = defaultOffset
+		p.limit = defaultLimit
 		log.Println("missing offset or limit, default values are used")
 		return p, nil
 	}
 
 	var err error
-	if p.Offset, err = strconv.Atoi(offsetStr); err != nil {
+	if p.offset, err = strconv.Atoi(offsetStr); err != nil {
 		return p, err
 	}
-	if p.Limit, err = strconv.Atoi(limitStr); err != nil {
+	if p.limit, err = strconv.Atoi(limitStr); err != nil {
 		return p, err
 	}
 
-	if p.Offset < 0 {
-		return p, errors.New(fmt.Sprintf("invalid offset parameter: %d", p.Offset))
+	if p.offset < 0 {
+		return p, errors.New(fmt.Sprintf("invalid offset parameter: %d", p.offset))
 	}
-	if p.Limit < 0 {
-		return p, errors.New(fmt.Sprintf("invalid limit parameter: %d", p.Offset))
+	if p.limit < 0 {
+		return p, errors.New(fmt.Sprintf("invalid limit parameter: %d", p.offset))
 	}
 
 	return p, nil
@@ -296,4 +276,17 @@ func entitiesToDTO(sessions []entity.CinemaSession) []session {
 		})
 	}
 	return DTOSessions
+}
+
+func pathVariable(r *http.Request, varName string) (int, error) {
+	vars := mux.Vars(r)
+	varStr := vars[varName]
+	varInt, err := strconv.Atoi(varStr)
+	if err != nil {
+		return 0, err
+	}
+	if varInt <= 0 {
+		return 0, errors.New("parameter is less than zero")
+	}
+	return varInt, nil
 }
