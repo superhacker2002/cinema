@@ -3,7 +3,6 @@ package service
 import (
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasessions/entity"
 	"errors"
-	"log"
 )
 
 type repository interface {
@@ -30,9 +29,7 @@ func New(r repository) service {
 }
 
 func (s service) AllSessions(date string, offset, limit int) ([]entity.CinemaSession, error) {
-	sessions, err := s.r.AllSessions(date, offset, limit)
-	log.Println(len(sessions))
-	return sessions, err
+	return s.r.AllSessions(date, offset, limit)
 }
 
 func (s service) SessionsForHall(hallId int, date string) ([]entity.CinemaSession, error) {
