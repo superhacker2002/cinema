@@ -110,7 +110,7 @@ func TestGetSessionsHandler(t *testing.T) {
 }
 
 func TestGetAllSessionsHandler(t *testing.T) {
-	repo := mockService{}
+	s := mockService{}
 	t.Run("successful sessions get", func(t *testing.T) {
 		start, _ := time.Parse(layout, "2024-05-18 20:00:00 +04")
 		end, _ := time.Parse(layout, "2024-05-18 22:00:00 +04")
@@ -123,15 +123,14 @@ func TestGetAllSessionsHandler(t *testing.T) {
 				Status:    "scheduled",
 			},
 		}
-		repo.sessions = sessions
-		repo.err = nil
+		s.sessions = sessions
+		s.err = nil
 
 		req, err := http.NewRequest(http.MethodGet, "cinema-sessions/", nil)
 		require.NoError(t, err, "failed to create test request")
 
 		response := httptest.NewRecorder()
-		s := service.New(&repo)
-		handler := HttpHandler{s: s}.getAllSessionsHandler
+		handler := HttpHandler{s: &s}.getAllSessionsHandler
 		handler(response, req)
 
 		assert.NotEmpty(t, response.Body.String())
@@ -140,15 +139,14 @@ func TestGetAllSessionsHandler(t *testing.T) {
 
 	t.Run("no cinema sessions", func(t *testing.T) {
 		sessions := []entity.CinemaSession{{}}
-		repo.sessions = sessions
-		repo.err = service.ErrCinemaSessionsNotFound
+		s.sessions = sessions
+		s.err = service.ErrCinemaSessionsNotFound
 
 		req, err := http.NewRequest(http.MethodGet, "cinema-sessions/", nil)
 		require.NoError(t, err, "failed to create test request")
 
 		response := httptest.NewRecorder()
-		s := service.New(&repo)
-		handler := HttpHandler{s: s}.getAllSessionsHandler
+		handler := HttpHandler{s: &s}.getAllSessionsHandler
 		handler(response, req)
 
 		assert.Equal(t, fmt.Sprintf("%v for all halls\n", service.ErrCinemaSessionsNotFound), response.Body.String())
@@ -157,15 +155,14 @@ func TestGetAllSessionsHandler(t *testing.T) {
 
 	t.Run("service error", func(t *testing.T) {
 		sessions := []entity.CinemaSession{{}}
-		repo.sessions = sessions
-		repo.err = errors.New("something went wrong")
+		s.sessions = sessions
+		s.err = errors.New("something went wrong")
 
 		req, err := http.NewRequest(http.MethodGet, "cinema-sessions/", nil)
 		require.NoError(t, err, "failed to create test request")
 
 		response := httptest.NewRecorder()
-		s := service.New(&repo)
-		handler := HttpHandler{s: s}.getAllSessionsHandler
+		handler := HttpHandler{s: &s}.getAllSessionsHandler
 		handler(response, req)
 
 		assert.Equal(t, fmt.Sprintf("%v\n", service.ErrInternalError), response.Body.String())
