@@ -12,6 +12,34 @@ type mockRepo struct {
 	err      error
 }
 
+func (m *mockRepo) SessionEndTime(id int, startTime string) (string, error) {
+	return "", nil
+}
+
+func (m *mockRepo) HallIsBusy(movieId, hallId int, startTime, endTime string) (bool, error) {
+	return false, nil
+}
+
+func (m *mockRepo) CreateSession(movieId, hallId int, startTime, endTime string, price float32) (int, error) {
+	return 0, nil
+}
+
+func (m *mockRepo) DeleteSession(id int) error {
+	return nil
+}
+
+func (m *mockRepo) SessionExists(id int) (bool, error) {
+	return true, nil
+}
+
+func (m *mockRepo) HallExists(id int) (bool, error) {
+	return true, nil
+}
+
+func (m *mockRepo) MovieExists(id int) (bool, error) {
+	return true, nil
+}
+
 const layout = "2006-01-02 15:04:05 MST"
 
 func (m *mockRepo) AllSessions(date string, offset, limit int) ([]entity.CinemaSession, error) {
