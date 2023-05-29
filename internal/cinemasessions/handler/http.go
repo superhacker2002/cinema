@@ -168,6 +168,11 @@ func (h HttpHandler) createSessionHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	if errors.Is(err, service.ErrHallNotFound) || errors.Is(err, service.ErrMovieNotFound) {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
 	if err != nil {
 		http.Error(w, service.ErrInternalError.Error(), http.StatusInternalServerError)
 		return
