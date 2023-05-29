@@ -10,8 +10,6 @@ type CinemaRepository struct {
 	db *sql.DB
 }
 
-type Repository interface{}
-
 func New(db *sql.DB) *CinemaRepository {
 	return &CinemaRepository{db: db}
 }
