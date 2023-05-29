@@ -2,7 +2,9 @@ package repository
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
+	"net/http"
 
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/hall/handler"
 )
@@ -75,4 +77,27 @@ func (r *HallRepository) DeleteCinemaHall(id int) error {
 func (r *HallRepository) UpdateHallAvailability(id int, available bool) error {
 	_, err := r.db.Exec("UPDATE halls SET available = $1 WHERE hall_id = $2", available, id)
 	return err
+}
+
+func AssignMovie(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	var assignment struct {
+		HallID int    `json:"hallId"`
+		Movie  string `json:"movie"`
+		Seats  int    `json:"seats"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&assignment)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	_, err = db.Exec("UPDATE halls SET assigned_movie = $1, seats_available = $2 WHERE hall_id = $3",
+		assignment.Movie, assignment.Seats, assignment.HallID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }

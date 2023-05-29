@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -25,6 +24,7 @@ type Repository interface {
 	DeleteCinemaHall(id int) error
 	UpdateHallAvailability(id int, available bool) error
 }
+
 type HTTPHandler struct {
 	repository Repository
 }
@@ -60,7 +60,7 @@ func (h HTTPHandler) createHallHandler(w http.ResponseWriter, r *http.Request) {
 	var newCinemaHall CinemaHall
 	err := json.NewDecoder(r.Body).Decode(&newCinemaHall)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -109,7 +109,7 @@ func (h HTTPHandler) updateHallHandler(w http.ResponseWriter, r *http.Request) {
 func (h HTTPHandler) deleteHallHandler(w http.ResponseWriter, r *http.Request) {
 	hallID, err := api.GetIntParam(r, "hallID")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -125,46 +125,29 @@ func (h HTTPHandler) deleteHallHandler(w http.ResponseWriter, r *http.Request) {
 
 func (h HTTPHandler) updateAvailabilityHandler(w http.ResponseWriter, r *http.Request) {
 	var update struct {
-		HallID    int  `json:"hallId"`
-		Available bool `json:"available"`
+		Data struct {
+			HallID    int  `json:"hallId"`
+			Available bool `json:"available"`
+		} `json:"data"`
 	}
 
 	err := json.NewDecoder(r.Body).Decode(&update)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	err = h.repository.UpdateHallAvailability(update.HallID, update.Available)
+	if update.Data.HallID <= 0 {
+		http.Error(w, "Invalid HallID", http.StatusBadRequest)
+		return
+	}
+
+	err = h.repository.UpdateHallAvailability(update.Data.HallID, update.Data.Available)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	message := fmt.Sprintf("Updated availability for cinema hall with ID %d", update.HallID)
-	api.WriteResponse(w, message, http.StatusOK)
-}
-
-func AssignMovie(w http.ResponseWriter, r *http.Request, db *sql.DB) {
-	var assignment struct {
-		HallID int    `json:"hallId"`
-		Movie  string `json:"movie"`
-		Seats  int    `json:"seats"`
-	}
-
-	err := json.NewDecoder(r.Body).Decode(&assignment)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	_, err = db.Exec("UPDATE halls SET assigned_movie = $1, seats_available = $2 WHERE hall_id = $3",
-		assignment.Movie, assignment.Seats, assignment.HallID)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	message := fmt.Sprintf("Assigned movie '%s' to hall with ID %d", assignment.Movie, assignment.HallID)
+	message := fmt.Sprintf("Updated availability for cinema hall with ID %d", update.Data.HallID)
 	api.WriteResponse(w, message, http.StatusOK)
 }
