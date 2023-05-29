@@ -12,11 +12,15 @@ type mockRepo struct {
 	err      error
 }
 
+func (m *mockRepo) UpdateSession(id, movieId, hallId int, startTime, endTime string, price float32) error {
+	return nil
+}
+
 func (m *mockRepo) SessionEndTime(id int, startTime string) (string, error) {
 	return "", nil
 }
 
-func (m *mockRepo) HallIsBusy(movieId, hallId int, startTime, endTime string) (bool, error) {
+func (m *mockRepo) HallIsBusy(movieId, hallId int, startTime, endTime string, sessionId int) (bool, error) {
 	return false, nil
 }
 
