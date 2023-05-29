@@ -23,8 +23,6 @@ type mockService struct {
 	err       error
 }
 
-const layout = "2006-01-02 15:04:05 MST"
-
 func (m *mockService) AllSessions(date string, offset, limit int) ([]entity.CinemaSession, error) {
 	return m.sessions, m.err
 }
@@ -47,8 +45,8 @@ func (m *mockService) CreateSession(movieId, hallId int, startTime string, price
 func TestGetSessionsHandler(t *testing.T) {
 	s := mockService{}
 	t.Run("successful sessions get", func(t *testing.T) {
-		start, _ := time.Parse(layout, "2024-05-18 20:00:00 +04")
-		end, _ := time.Parse(layout, "2024-05-18 22:00:00 +04")
+		start, _ := time.Parse(timestampLayout, "2024-05-18 20:00:00 +04")
+		end, _ := time.Parse(timestampLayout, "2024-05-18 22:00:00 +04")
 		session := []entity.CinemaSession{
 			{
 				Id:        1,
@@ -123,8 +121,8 @@ func TestGetSessionsHandler(t *testing.T) {
 func TestGetAllSessionsHandler(t *testing.T) {
 	s := mockService{}
 	t.Run("successful sessions get", func(t *testing.T) {
-		start, _ := time.Parse(layout, "2024-05-18 20:00:00 +04")
-		end, _ := time.Parse(layout, "2024-05-18 22:00:00 +04")
+		start, _ := time.Parse(timestampLayout, "2024-05-18 20:00:00 +04")
+		end, _ := time.Parse(timestampLayout, "2024-05-18 22:00:00 +04")
 		sessions := []entity.CinemaSession{
 			{
 				Id:        1,

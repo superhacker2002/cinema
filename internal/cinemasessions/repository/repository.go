@@ -10,14 +10,13 @@ import (
 	"time"
 )
 
-var timeZone = time.FixedZone("UTC+4", 4*60*60)
-
 type SessionsRepository struct {
 	db *sql.DB
+	tz *time.Location
 }
 
-func New(db *sql.DB) *SessionsRepository {
-	return &SessionsRepository{db: db}
+func New(db *sql.DB, timeZone *time.Location) *SessionsRepository {
+	return &SessionsRepository{db: db, tz: timeZone}
 }
 
 type CinemaSession struct {
@@ -30,7 +29,7 @@ type CinemaSession struct {
 }
 
 func (s *SessionsRepository) SessionsForHall(hallId int, date string) ([]entity.CinemaSession, error) {
-	rows, err := s.db.Query("SELECT session_id, movie_id, start_time, end_time "+
+	rows, err := s.db.Query("SELECT session_id, movie_id, start_time, end_time, price "+
 		"FROM cinema_sessions "+
 		"WHERE hall_id = $1 AND date_trunc('day', start_time) = $2 "+
 		"ORDER BY start_time ", hallId, date)
@@ -40,7 +39,7 @@ func (s *SessionsRepository) SessionsForHall(hallId int, date string) ([]entity.
 		return nil, fmt.Errorf("failed to get cinema sessions: %w", err)
 	}
 
-	cinemaSessions, err := readCinemaSessions(rows)
+	cinemaSessions, err := s.readCinemaSessions(rows)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -50,7 +49,7 @@ func (s *SessionsRepository) SessionsForHall(hallId int, date string) ([]entity.
 }
 
 func (s *SessionsRepository) AllSessions(date string, offset, limit int) ([]entity.CinemaSession, error) {
-	rows, err := s.db.Query("SELECT session_id, movie_id, start_time, end_time "+
+	rows, err := s.db.Query("SELECT session_id, movie_id, start_time, end_time, price "+
 		"FROM cinema_sessions "+
 		"WHERE start_time >= $1 "+
 		"ORDER BY hall_id, start_time "+
@@ -62,7 +61,7 @@ func (s *SessionsRepository) AllSessions(date string, offset, limit int) ([]enti
 		return nil, fmt.Errorf("failed to get cinema sessions: %w", err)
 	}
 
-	cinemaSessions, err := readCinemaSessions(rows)
+	cinemaSessions, err := s.readCinemaSessions(rows)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -83,16 +82,16 @@ func (s *SessionsRepository) CreateSession(movieId, hallId int, startTime, endTi
 	return sessionId, nil
 }
 
-func (s *SessionsRepository) HallIsBusy(movieId, hallId int, startTime, endTime string) (bool, error) {
+func (s *SessionsRepository) HallIsBusy(movieId, hallId int, startTime, endTime string, sessionId int) (bool, error) {
 	row := s.db.QueryRow("SELECT session_id "+
 		"FROM cinema_sessions "+
 		"WHERE hall_id = $1 AND $2 < start_time AND start_time < $3 "+
 		"OR (start_time <= $2 AND end_time > $2)",
 		hallId, startTime, endTime)
 
-	var sessionId int
-	if err := row.Scan(&sessionId); err == nil {
-		return true, nil
+	var id int
+	if err := row.Scan(&id); err == nil {
+		return sessionId != id, nil
 	} else if err != sql.ErrNoRows {
 		return true, fmt.Errorf("failed to check if cinema session can be created: %w", err)
 	}
@@ -134,6 +133,18 @@ func (s *SessionsRepository) DeleteSession(id int) error {
 	return nil
 }
 
+func (s *SessionsRepository) UpdateSession(id, movieId, hallId int, startTime, endTime string, price float32) error {
+	_, err := s.db.Exec("UPDATE cinema_sessions "+
+		"SET movie_id = $1, hall_id = $2, start_time = $3, end_time = $4, price = $5 "+
+		"WHERE session_id = $6", movieId, hallId, startTime, endTime, price, id)
+
+	if err != nil {
+		return fmt.Errorf("failed to update cinema session: %w", err)
+	}
+
+	return nil
+}
+
 func (s *SessionsRepository) SessionExists(id int) (bool, error) {
 	var count int
 	err := s.db.QueryRow("SELECT COUNT(*) FROM cinema_sessions WHERE session_id = $1", id).Scan(&count)
@@ -166,18 +177,18 @@ func (s *SessionsRepository) MovieExists(id int) (bool, error) {
 	return count > 0, nil
 }
 
-func readCinemaSessions(rows *sql.Rows) ([]entity.CinemaSession, error) {
+func (s *SessionsRepository) readCinemaSessions(rows *sql.Rows) ([]entity.CinemaSession, error) {
 	var cinemaSessions []entity.CinemaSession
 	for rows.Next() {
 		var session CinemaSession
-		if err := rows.Scan(&session.ID, &session.MovieId, &session.StartTime, &session.EndTime); err != nil {
+		if err := rows.Scan(&session.ID, &session.MovieId, &session.StartTime, &session.EndTime, &session.Price); err != nil {
 			log.Println(err)
 			return nil, fmt.Errorf("failed to get cinema session: %w", err)
 		}
-		session.StartTime = session.StartTime.In(timeZone)
-		session.EndTime = session.EndTime.In(timeZone)
+		session.StartTime = session.StartTime.In(s.tz)
+		session.EndTime = session.EndTime.In(s.tz)
 		cinemaSessions = append(cinemaSessions,
-			entity.New(session.ID, session.MovieId, session.HallId, session.StartTime, session.EndTime))
+			entity.New(session.ID, session.MovieId, session.HallId, session.StartTime, session.EndTime, session.Price))
 	}
 
 	if err := rows.Err(); err != nil {

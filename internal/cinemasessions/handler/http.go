@@ -14,6 +14,8 @@ import (
 	"time"
 )
 
+const timestampLayout = "2006-01-02 15:04:05 MST"
+
 var (
 	ErrInvalidHallId    = errors.New("invalid hall id")
 	ErrInvalidDate      = errors.New("invalid date format")
@@ -26,6 +28,7 @@ type Service interface {
 	SessionsForHall(hallId int, date string) ([]entity.CinemaSession, error)
 	CreateSession(movieId, hallId int, startTime string, price float32) (int, error)
 	DeleteSession(id int) error
+	UpdateSession(id, movieId, hallId int, startTime string, price float32) error
 }
 
 type HttpHandler struct {
@@ -38,11 +41,13 @@ type Page struct {
 }
 
 type session struct {
-	Id        int       `json:"id"`
-	MovieId   int       `json:"movieId"`
-	HallId    string    `json:"hallId,omitempty"`
-	StartTime time.Time `json:"startTime"`
-	Status    string    `json:"status"`
+	Id        int     `json:"id"`
+	MovieId   int     `json:"movieId"`
+	HallId    string  `json:"hallId,omitempty"`
+	StartTime string  `json:"startTime"`
+	EndTime   string  `json:"endTime"`
+	Price     float32 `json:"price"`
+	Status    string  `json:"status"`
 }
 
 func New(router *mux.Router, s Service) HttpHandler {
@@ -77,7 +82,6 @@ func (h HttpHandler) getAllSessionsHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	sessions, err := h.s.AllSessions(d, p.offset, p.limit)
-	log.Println(len(sessions))
 
 	if errors.Is(err, service.ErrCinemaSessionsNotFound) {
 		http.Error(w, fmt.Sprintf("%v for all halls", err), http.StatusNotFound)
@@ -142,9 +146,9 @@ func (h HttpHandler) createSessionHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 	type sessionInfo struct {
-		MovieId  int     `json:"movieId"`
-		StarTime string  `json:"starTime"`
-		Price    float32 `json:"price"`
+		MovieId   int     `json:"movieId"`
+		StartTime string  `json:"startTime"`
+		Price     float32 `json:"price"`
 	}
 	var session sessionInfo
 
@@ -161,7 +165,7 @@ func (h HttpHandler) createSessionHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	id, err := h.s.CreateSession(session.MovieId, hallId, session.StarTime, session.Price)
+	id, err := h.s.CreateSession(session.MovieId, hallId, session.StartTime, session.Price)
 
 	if errors.Is(err, service.ErrHallIsBusy) {
 		http.Error(w, err.Error(), http.StatusConflict)
@@ -188,18 +192,18 @@ func (h HttpHandler) createSessionHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (h HttpHandler) updateSessionHandler(w http.ResponseWriter, r *http.Request) {
-	//sessionId, err := pathVariable(r, "sessionId")
-	//if err != nil {
-	//	log.Println(err)
-	//	http.Error(w, ErrInvalidSessionId.Error(), http.StatusBadRequest)
-	//	return
-	//}
+	sessionId, err := pathVariable(r, "sessionId")
+	if err != nil {
+		log.Println(err)
+		http.Error(w, ErrInvalidSessionId.Error(), http.StatusBadRequest)
+		return
+	}
 
 	type sessionInfo struct {
-		MovieId   int       `json:"movieId"`
-		HallId    int       `json:"hallId"`
-		StartTime time.Time `json:"startTime"`
-		Price     float32   `json:"price"`
+		MovieId   int     `json:"movieId"`
+		HallId    int     `json:"hallId"`
+		StartTime string  `json:"startTime"`
+		Price     float32 `json:"price"`
 	}
 
 	var session sessionInfo
@@ -214,6 +218,32 @@ func (h HttpHandler) updateSessionHandler(w http.ResponseWriter, r *http.Request
 	if err = json.Unmarshal(body, &session); err != nil {
 		log.Println(err)
 		http.Error(w, ErrReadRequestFail.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = h.s.UpdateSession(sessionId, session.MovieId, session.MovieId, session.StartTime, session.Price)
+
+	if errors.Is(err, service.ErrHallIsBusy) {
+		http.Error(w, err.Error(), http.StatusConflict)
+		return
+	}
+
+	if errors.Is(err, service.ErrHallNotFound) || errors.Is(err, service.ErrMovieNotFound) {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	if err != nil {
+		log.Println(err)
+		http.Error(w, service.ErrInternalError.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]int{"session_id": sessionId})
+	if err != nil {
+		log.Println(err)
+		http.Error(w, service.ErrInternalError.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -282,11 +312,11 @@ func page(r *http.Request) (Page, error) {
 
 func date(r *http.Request) (string, error) {
 	date := r.URL.Query().Get("date")
-	layout := "2006-01-02"
+	const dateLayout = "2006-01-02"
 	if date == "" {
-		return time.Now().Format(layout), nil
+		return time.Now().Format(dateLayout), nil
 	}
-	_, err := time.Parse(layout, date)
+	_, err := time.Parse(dateLayout, date)
 	if err != nil {
 		return date, err
 	}
@@ -299,7 +329,9 @@ func entitiesToDTO(sessions []entity.CinemaSession) []session {
 		DTOSessions = append(DTOSessions, session{
 			Id:        s.Id,
 			MovieId:   s.MovieId,
-			StartTime: s.StartTime,
+			StartTime: s.StartTime.Format(timestampLayout),
+			EndTime:   s.EndTime.Format(timestampLayout),
+			Price:     s.Price,
 			Status:    s.Status,
 		})
 	}
