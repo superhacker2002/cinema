@@ -18,7 +18,7 @@ type mockRepo struct {
 }
 
 func (m *mockRepo) UpdateSession(id, movieId, hallId int, startTime, endTime string, price float32) error {
-	return nil
+	return m.err
 }
 
 func (m *mockRepo) SessionEndTime(id int, startTime string) (string, error) {
@@ -34,7 +34,7 @@ func (m *mockRepo) CreateSession(movieId, hallId int, startTime, endTime string,
 }
 
 func (m *mockRepo) DeleteSession(id int) error {
-	return nil
+	return m.err
 }
 
 func (m *mockRepo) SessionExists(id int) (bool, error) {
@@ -184,5 +184,99 @@ func TestCreateSession(t *testing.T) {
 		id, err := s.CreateSession(1, 1, "2023-05-30 20:00:00 +04", 10.0)
 		assert.ErrorIs(t, err, ErrInternalError)
 		assert.Zero(t, id)
+	})
+}
+
+func TestDeleteSession(t *testing.T) {
+	repo := mockRepo{}
+	t.Run("successful session deletion", func(t *testing.T) {
+		repo.sessionExists = true
+
+		s := New(&repo)
+		err := s.DeleteSession(1)
+		assert.NoError(t, err)
+	})
+
+	t.Run("session does not exist", func(t *testing.T) {
+		repo.sessionExists = false
+
+		s := New(&repo)
+		err := s.DeleteSession(1)
+		assert.ErrorIs(t, err, ErrCinemaSessionsNotFound)
+	})
+
+	t.Run("repository error", func(t *testing.T) {
+		repo.sessionExists = true
+		repo.err = errors.New("something went wrong")
+
+		s := New(&repo)
+		err := s.DeleteSession(1)
+		assert.ErrorIs(t, err, ErrInternalError)
+	})
+}
+
+func TestUpdateSession(t *testing.T) {
+	repo := mockRepo{}
+	t.Run("successful session creation", func(t *testing.T) {
+		repo.sessionExists = true
+		repo.hallExists = true
+		repo.movieExists = true
+		repo.hallBusy = false
+		repo.err = nil
+		repo.id = 1
+
+		s := New(&repo)
+		err := s.UpdateSession(1, 1, 1, "2023-05-30 20:00:00 +04", 10.0)
+		assert.NoError(t, err)
+	})
+
+	t.Run("session does not exist", func(t *testing.T) {
+		repo.sessionExists = false
+
+		s := New(&repo)
+		err := s.UpdateSession(1, 1, 1, "2023-05-30 20:00:00 +04", 10.0)
+		assert.ErrorIs(t, err, ErrCinemaSessionsNotFound)
+	})
+
+	t.Run("hall does not exist", func(t *testing.T) {
+		repo.sessionExists = true
+		repo.hallExists = false
+
+		s := New(&repo)
+		err := s.UpdateSession(1, 1, 1, "2023-05-30 20:00:00 +04", 10.0)
+		assert.ErrorIs(t, err, ErrHallNotFound)
+	})
+
+	t.Run("movie does not exist", func(t *testing.T) {
+		repo.sessionExists = true
+		repo.hallExists = true
+		repo.movieExists = false
+
+		s := New(&repo)
+		err := s.UpdateSession(1, 1, 1, "2023-05-30 20:00:00 +04", 10.0)
+		assert.ErrorIs(t, err, ErrMovieNotFound)
+	})
+
+	t.Run("hall is busy", func(t *testing.T) {
+		repo.sessionExists = true
+		repo.hallExists = true
+		repo.movieExists = true
+		repo.hallBusy = true
+
+		s := New(&repo)
+		err := s.UpdateSession(1, 1, 1, "2023-05-30 20:00:00 +04", 10.0)
+		assert.ErrorIs(t, err, ErrHallIsBusy)
+	})
+
+	t.Run("repository error", func(t *testing.T) {
+		repo.sessionExists = true
+		repo.hallExists = true
+		repo.movieExists = true
+		repo.hallBusy = false
+		repo.err = errors.New("something went wrong")
+
+		s := New(&repo)
+		err := s.UpdateSession(1, 1, 1, "2023-05-30 20:00:00 +04", 10.0)
+		assert.ErrorIs(t, err, ErrInternalError)
 	})
 }
