@@ -45,7 +45,6 @@ type session struct {
 	MovieId   int     `json:"movieId"`
 	HallId    int     `json:"hallId"`
 	StartTime string  `json:"startTime"`
-	EndTime   string  `json:"endTime"`
 	Price     float32 `json:"price"`
 	Status    string  `json:"status"`
 }
@@ -335,7 +334,6 @@ func entitiesToDTO(sessions []entity.CinemaSession) []session {
 			MovieId:   s.MovieId,
 			HallId:    s.HallId,
 			StartTime: s.StartTime.Format(timestampLayout),
-			EndTime:   s.EndTime.Format(timestampLayout),
 			Price:     s.Price,
 			Status:    s.Status,
 		})

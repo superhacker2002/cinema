@@ -369,7 +369,7 @@ func TestDeleteSessionHandler(t *testing.T) {
 		handler := HttpHandler{s: &s}.deleteSessionHandler
 		handler(response, req)
 
-		assert.Equal(t, "session was deleted successfully", response.Body.String())
+		assert.Equal(t, "session was deleted successfully\n", response.Body.String())
 		assert.Equal(t, http.StatusNoContent, response.Code)
 	})
 
