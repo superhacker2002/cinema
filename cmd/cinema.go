@@ -4,6 +4,7 @@ import (
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/auth/service"
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/config"
 	"os"
+	"time"
 
 	userHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/handler"
 	userRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/repository"
@@ -17,6 +18,8 @@ import (
 	"log"
 	"net/http"
 )
+
+var timeZone = time.FixedZone("UTC+4", 4*60*60)
 
 func main() {
 	log.SetFlags(log.Lshortfile)
@@ -38,7 +41,7 @@ func main() {
 	authentication := service.New(configs.JWTSecret, configs.TokenExp, userRepo)
 	userHandler.New(router, authentication, userRepo)
 
-	sessionsRepo := sessionsRepository.New(db)
+	sessionsRepo := sessionsRepository.New(db, timeZone)
 	sessionsServ := sessionsService.New(sessionsRepo)
 	sessionsHandler.New(router, sessionsServ)
 

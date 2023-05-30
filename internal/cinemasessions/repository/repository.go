@@ -9,14 +9,13 @@ import (
 	"time"
 )
 
-var timeZone = time.FixedZone("UTC+4", 4*60*60)
-
 type SessionsRepository struct {
 	db *sql.DB
+	tz *time.Location
 }
 
-func New(db *sql.DB) *SessionsRepository {
-	return &SessionsRepository{db: db}
+func New(db *sql.DB, timeZone *time.Location) *SessionsRepository {
+	return &SessionsRepository{db: db, tz: timeZone}
 }
 
 type CinemaSession struct {
@@ -39,7 +38,7 @@ func (s *SessionsRepository) SessionsForHall(hallId int, date string) ([]entity.
 		return nil, fmt.Errorf("failed to get cinema sessions: %w", err)
 	}
 
-	cinemaSessions, err := readCinemaSessions(rows)
+	cinemaSessions, err := s.readCinemaSessions(rows)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -61,7 +60,7 @@ func (s *SessionsRepository) AllSessions(date string, offset, limit int) ([]enti
 		return nil, fmt.Errorf("failed to get cinema sessions: %w", err)
 	}
 
-	cinemaSessions, err := readCinemaSessions(rows)
+	cinemaSessions, err := s.readCinemaSessions(rows)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -70,7 +69,7 @@ func (s *SessionsRepository) AllSessions(date string, offset, limit int) ([]enti
 	return cinemaSessions, nil
 }
 
-func readCinemaSessions(rows *sql.Rows) ([]entity.CinemaSession, error) {
+func (s *SessionsRepository) readCinemaSessions(rows *sql.Rows) ([]entity.CinemaSession, error) {
 	var cinemaSessions []entity.CinemaSession
 	for rows.Next() {
 		var session CinemaSession
@@ -78,10 +77,8 @@ func readCinemaSessions(rows *sql.Rows) ([]entity.CinemaSession, error) {
 			log.Println(err)
 			return nil, fmt.Errorf("failed to get cinema session: %w", err)
 		}
-		session.StartTime = session.StartTime.In(timeZone)
-		session.EndTime = session.EndTime.In(timeZone)
 		cinemaSessions = append(cinemaSessions,
-			entity.New(session.ID, session.MovieId, session.HallId, session.StartTime, session.EndTime))
+			entity.New(session.ID, session.MovieId, session.HallId, session.StartTime, session.EndTime, s.tz))
 	}
 
 	if err := rows.Err(); err != nil {
