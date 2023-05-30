@@ -2,14 +2,12 @@ package main
 
 import (
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/auth/service"
-	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/config"
-	userHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/handler"
-	userRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/repository"
-	"os"
-
 	sessionsHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasessions/handler"
 	sessionsRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasessions/repository"
 	sessionsService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasessions/service"
+	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/config"
+	userHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/handler"
+	userRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/repository"
 
 	"database/sql"
 	"github.com/gorilla/mux"
@@ -19,7 +17,6 @@ import (
 
 func main() {
 	log.SetFlags(log.Lshortfile)
-	log.SetOutput(os.Stdout)
 	configs, err := config.New()
 	if err != nil {
 		log.Fatalf("config loading failed: %v", err)
