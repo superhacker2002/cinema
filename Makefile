@@ -42,13 +42,13 @@ test-get-sessions:
 test-get-all-sessions:
 	curl -X 'GET' \
         'localhost:8080/cinema-sessions/' \
-        -H 'accept: application/json'
+        -H 'accept: application/json' | jq .
 
 
 .PHONY: test-delete-session
 test-delete-session:
 	curl -X 'DELETE' \
-        'localhost:8080/cinema-sessions/4'
+        'localhost:8080/cinema-sessions/5'
 
 .PHONY: test-create-session
 test-create-session:
@@ -58,8 +58,20 @@ test-create-session:
 		-H 'Content-Type: application/json' \
 		-d '{ \
 		"movieId": 1, \
-		"starTime": "2023-05-23 17:30:00 +04", \
+		"startTime": "2023-05-30 17:30:00 +04", \
 		"price": 10.0 \
+		}'
+
+.PHONY: test-update-session
+test-update-session:
+	curl -i -X 'PUT' \
+        'localhost:8080/cinema-sessions/2' \
+		-H 'accept: application/json' \
+		-H 'Content-Type: application/json' \
+		-d '{ \
+		"movieId": 1, \
+		"startTime": "2023-05-30 17:30:00 +04", \
+		"price": 20.0 \
 		}'
 
 .PHONY: docker-db
