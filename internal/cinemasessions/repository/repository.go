@@ -29,7 +29,7 @@ type CinemaSession struct {
 }
 
 func (s *SessionsRepository) SessionsForHall(hallId int, date string) ([]entity.CinemaSession, error) {
-	rows, err := s.db.Query("SELECT session_id, movie_id, start_time, end_time, price "+
+	rows, err := s.db.Query("SELECT session_id, movie_id, hall_id, start_time, end_time, price "+
 		"FROM cinema_sessions "+
 		"WHERE hall_id = $1 AND date_trunc('day', start_time) = $2 "+
 		"ORDER BY start_time ", hallId, date)
@@ -49,7 +49,7 @@ func (s *SessionsRepository) SessionsForHall(hallId int, date string) ([]entity.
 }
 
 func (s *SessionsRepository) AllSessions(date string, offset, limit int) ([]entity.CinemaSession, error) {
-	rows, err := s.db.Query("SELECT session_id, movie_id, start_time, end_time, price "+
+	rows, err := s.db.Query("SELECT session_id, movie_id, hall_id, start_time, end_time, price "+
 		"FROM cinema_sessions "+
 		"WHERE start_time >= $1 "+
 		"ORDER BY hall_id, start_time "+
@@ -134,13 +134,21 @@ func (s *SessionsRepository) DeleteSession(id int) error {
 }
 
 func (s *SessionsRepository) UpdateSession(id, movieId, hallId int, startTime, endTime string, price float32) error {
-	_, err := s.db.Exec("UPDATE cinema_sessions "+
+	var hall int
+	err := s.db.QueryRow("SELECT hall_id FROM cinema_sessions WHERE session_id = $1", id).Scan(&hall)
+	log.Println("current hall", hall)
+	log.Println("new hall value", hallId)
+
+	_, err = s.db.Exec("UPDATE cinema_sessions "+
 		"SET movie_id = $1, hall_id = $2, start_time = $3, end_time = $4, price = $5 "+
 		"WHERE session_id = $6", movieId, hallId, startTime, endTime, price, id)
 
 	if err != nil {
 		return fmt.Errorf("failed to update cinema session: %w", err)
 	}
+
+	err = s.db.QueryRow("SELECT hall_id FROM cinema_sessions WHERE session_id = $1", id).Scan(&hall)
+	log.Println("updated hall:", hall)
 
 	return nil
 }
@@ -181,7 +189,8 @@ func (s *SessionsRepository) readCinemaSessions(rows *sql.Rows) ([]entity.Cinema
 	var cinemaSessions []entity.CinemaSession
 	for rows.Next() {
 		var session CinemaSession
-		if err := rows.Scan(&session.ID, &session.MovieId, &session.StartTime, &session.EndTime, &session.Price); err != nil {
+		if err := rows.Scan(&session.ID, &session.MovieId, &session.HallId,
+			&session.StartTime, &session.EndTime, &session.Price); err != nil {
 			log.Println(err)
 			return nil, fmt.Errorf("failed to get cinema session: %w", err)
 		}

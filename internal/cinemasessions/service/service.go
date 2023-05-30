@@ -85,7 +85,7 @@ func (s Service) CreateSession(movieId, hallId int, startTime string, price floa
 		return 0, ErrInternalError
 	}
 
-	hallBusy, err := s.r.HallIsBusy(movieId, hallId, startTime, endTime)
+	hallBusy, err := s.r.HallIsBusy(0, hallId, startTime, endTime)
 	if err != nil {
 		log.Println(err)
 		return 0, ErrInternalError
@@ -156,7 +156,7 @@ func (s Service) UpdateSession(id, movieId, hallId int, startTime string, price 
 		return ErrInternalError
 	}
 
-	hallBusy, err := s.r.HallIsBusy(movieId, hallId, startTime, endTime)
+	hallBusy, err := s.r.HallIsBusy(id, hallId, startTime, endTime)
 	if err != nil {
 		log.Println(err)
 		return ErrInternalError

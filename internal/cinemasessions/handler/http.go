@@ -43,7 +43,7 @@ type Page struct {
 type session struct {
 	Id        int     `json:"id"`
 	MovieId   int     `json:"movieId"`
-	HallId    string  `json:"hallId,omitempty"`
+	HallId    int     `json:"hallId"`
 	StartTime string  `json:"startTime"`
 	EndTime   string  `json:"endTime"`
 	Price     float32 `json:"price"`
@@ -116,6 +116,8 @@ func (h HttpHandler) getSessionsHandler(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, fmt.Sprintf("%v: %s", ErrInvalidDate, d), http.StatusBadRequest)
 		return
 	}
+
+	fmt.Println(hallId)
 
 	sessions, err := h.s.SessionsForHall(hallId, d)
 
@@ -222,7 +224,9 @@ func (h HttpHandler) updateSessionHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	err = h.s.UpdateSession(sessionId, session.MovieId, session.MovieId, session.StartTime, session.Price)
+	log.Println(session)
+
+	err = h.s.UpdateSession(sessionId, session.MovieId, session.HallId, session.StartTime, session.Price)
 
 	if errors.Is(err, service.ErrHallIsBusy) {
 		http.Error(w, err.Error(), http.StatusConflict)
@@ -241,14 +245,12 @@ func (h HttpHandler) updateSessionHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(map[string]int{"session_id": sessionId})
+	_, err = w.Write([]byte("session was updated successfully\n"))
 	if err != nil {
 		log.Println(err)
 		http.Error(w, service.ErrInternalError.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	w.WriteHeader(http.StatusOK)
 }
 
 func (h HttpHandler) deleteSessionHandler(w http.ResponseWriter, r *http.Request) {
@@ -271,7 +273,7 @@ func (h HttpHandler) deleteSessionHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	w.WriteHeader(http.StatusNoContent)
-	_, err = w.Write([]byte("session was deleted successfully"))
+	_, err = w.Write([]byte("session was deleted successfully\n"))
 	if err != nil {
 		log.Println(err)
 		http.Error(w, service.ErrInternalError.Error(), http.StatusInternalServerError)
@@ -331,6 +333,7 @@ func entitiesToDTO(sessions []entity.CinemaSession) []session {
 		DTOSessions = append(DTOSessions, session{
 			Id:        s.Id,
 			MovieId:   s.MovieId,
+			HallId:    s.HallId,
 			StartTime: s.StartTime.Format(timestampLayout),
 			EndTime:   s.EndTime.Format(timestampLayout),
 			Price:     s.Price,
