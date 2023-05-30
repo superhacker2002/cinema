@@ -1,4 +1,4 @@
-package auth
+package service
 
 import (
 	userRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/repository"

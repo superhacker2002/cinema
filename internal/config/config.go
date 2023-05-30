@@ -4,13 +4,17 @@ import (
 	"context"
 	"github.com/joho/godotenv"
 	"github.com/sethvargo/go-envconfig"
+	"time"
 )
+
+var timeZone = time.FixedZone("UTC+4", 4*60*60)
 
 type Config struct {
 	Port      string `env:"PORT,default=8080"`
 	JWTSecret string `env:"JWT_SECRET,default=secret-key"`
 	Db        string `env:"DATABASE_URL,default=localhost:5432/cinema"`
 	TokenExp  int    `env:"TOKEN_EXP_IN_HOURS,default=24"`
+	TimeZone  *time.Location
 }
 
 func New() (Config, error) {
@@ -23,6 +27,8 @@ func New() (Config, error) {
 	if err := envconfig.Process(ctx, &c); err != nil {
 		return c, err
 	}
+
+	c.TimeZone = timeZone
 
 	return c, nil
 }
