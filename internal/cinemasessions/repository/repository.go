@@ -134,21 +134,13 @@ func (s *SessionsRepository) DeleteSession(id int) error {
 }
 
 func (s *SessionsRepository) UpdateSession(id, movieId, hallId int, startTime, endTime string, price float32) error {
-	var hall int
-	err := s.db.QueryRow("SELECT hall_id FROM cinema_sessions WHERE session_id = $1", id).Scan(&hall)
-	log.Println("current hall", hall)
-	log.Println("new hall value", hallId)
-
-	_, err = s.db.Exec("UPDATE cinema_sessions "+
+	_, err := s.db.Exec("UPDATE cinema_sessions "+
 		"SET movie_id = $1, hall_id = $2, start_time = $3, end_time = $4, price = $5 "+
 		"WHERE session_id = $6", movieId, hallId, startTime, endTime, price, id)
 
 	if err != nil {
 		return fmt.Errorf("failed to update cinema session: %w", err)
 	}
-
-	err = s.db.QueryRow("SELECT hall_id FROM cinema_sessions WHERE session_id = $1", id).Scan(&hall)
-	log.Println("updated hall:", hall)
 
 	return nil
 }
