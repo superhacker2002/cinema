@@ -82,7 +82,7 @@ func (s *SessionsRepository) CreateSession(movieId, hallId int, startTime, endTi
 	return sessionId, nil
 }
 
-func (s *SessionsRepository) HallIsBusy(movieId, hallId int, startTime, endTime string, sessionId int) (bool, error) {
+func (s *SessionsRepository) HallIsBusy(sessionId, hallId int, startTime, endTime string) (bool, error) {
 	row := s.db.QueryRow("SELECT session_id "+
 		"FROM cinema_sessions "+
 		"WHERE hall_id = $1 AND $2 < start_time AND start_time < $3 "+
@@ -185,10 +185,8 @@ func (s *SessionsRepository) readCinemaSessions(rows *sql.Rows) ([]entity.Cinema
 			log.Println(err)
 			return nil, fmt.Errorf("failed to get cinema session: %w", err)
 		}
-		session.StartTime = session.StartTime.In(s.tz)
-		session.EndTime = session.EndTime.In(s.tz)
 		cinemaSessions = append(cinemaSessions,
-			entity.New(session.ID, session.MovieId, session.HallId, session.StartTime, session.EndTime, session.Price))
+			entity.New(session.ID, session.MovieId, session.HallId, session.StartTime, session.EndTime, session.Price, s.tz))
 	}
 
 	if err := rows.Err(); err != nil {
