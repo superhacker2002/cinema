@@ -116,8 +116,6 @@ func (h HttpHandler) getSessionsHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	fmt.Println(hallId)
-
 	sessions, err := h.s.SessionsForHall(hallId, d)
 
 	if errors.Is(err, service.ErrCinemaSessionsNotFound) {
