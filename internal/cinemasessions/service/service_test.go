@@ -8,8 +8,13 @@ import (
 )
 
 type mockRepo struct {
-	sessions []entity.CinemaSession
-	err      error
+	sessions      []entity.CinemaSession
+	sessionExists bool
+	movieExists   bool
+	hallExists    bool
+	hallBusy      bool
+	id            int
+	err           error
 }
 
 func (m *mockRepo) UpdateSession(id, movieId, hallId int, startTime, endTime string, price float32) error {
@@ -20,12 +25,12 @@ func (m *mockRepo) SessionEndTime(id int, startTime string) (string, error) {
 	return "", nil
 }
 
-func (m *mockRepo) HallIsBusy(movieId, hallId int, startTime, endTime string, sessionId int) (bool, error) {
-	return false, nil
+func (m *mockRepo) HallIsBusy(sessionId, hallId int, startTime, endTime string) (bool, error) {
+	return m.hallBusy, nil
 }
 
 func (m *mockRepo) CreateSession(movieId, hallId int, startTime, endTime string, price float32) (int, error) {
-	return 0, nil
+	return m.id, m.err
 }
 
 func (m *mockRepo) DeleteSession(id int) error {
@@ -33,18 +38,16 @@ func (m *mockRepo) DeleteSession(id int) error {
 }
 
 func (m *mockRepo) SessionExists(id int) (bool, error) {
-	return true, nil
+	return m.sessionExists, nil
 }
 
 func (m *mockRepo) HallExists(id int) (bool, error) {
-	return true, nil
+	return m.hallExists, nil
 }
 
 func (m *mockRepo) MovieExists(id int) (bool, error) {
-	return true, nil
+	return m.movieExists, nil
 }
-
-const layout = "2006-01-02 15:04:05 MST"
 
 func (m *mockRepo) AllSessions(date string, offset, limit int) ([]entity.CinemaSession, error) {
 	return m.sessions, m.err
@@ -123,5 +126,63 @@ func TestSessionsForHall(t *testing.T) {
 		serviceSessions, err := s.AllSessions("2024-05-18", 0, 10)
 		assert.Equal(t, ErrInternalError, err)
 		assert.Len(t, serviceSessions, 0)
+	})
+}
+
+func TestCreateSession(t *testing.T) {
+	repo := mockRepo{}
+	t.Run("successful session creation", func(t *testing.T) {
+		repo.hallExists = true
+		repo.movieExists = true
+		repo.hallBusy = false
+		repo.err = nil
+		repo.id = 1
+
+		s := New(&repo)
+		id, err := s.CreateSession(1, 1, "2023-05-30 20:00:00 +04", 10.0)
+		assert.NoError(t, err)
+		assert.NotZero(t, id)
+	})
+
+	t.Run("hall does not exist", func(t *testing.T) {
+		repo.hallExists = false
+
+		s := New(&repo)
+		id, err := s.CreateSession(1, 1, "2023-05-30 20:00:00 +04", 10.0)
+		assert.ErrorIs(t, err, ErrHallNotFound)
+		assert.Zero(t, id)
+	})
+
+	t.Run("movie does not exist", func(t *testing.T) {
+		repo.hallExists = true
+		repo.movieExists = false
+
+		s := New(&repo)
+		id, err := s.CreateSession(1, 1, "2023-05-30 20:00:00 +04", 10.0)
+		assert.ErrorIs(t, err, ErrMovieNotFound)
+		assert.Zero(t, id)
+	})
+
+	t.Run("hall is busy", func(t *testing.T) {
+		repo.hallExists = true
+		repo.movieExists = true
+		repo.hallBusy = true
+
+		s := New(&repo)
+		id, err := s.CreateSession(1, 1, "2023-05-30 20:00:00 +04", 10.0)
+		assert.ErrorIs(t, err, ErrHallIsBusy)
+		assert.Zero(t, id)
+	})
+
+	t.Run("repository error", func(t *testing.T) {
+		repo.hallExists = true
+		repo.movieExists = true
+		repo.hallBusy = false
+		repo.err = errors.New("something went wrong")
+
+		s := New(&repo)
+		id, err := s.CreateSession(1, 1, "2023-05-30 20:00:00 +04", 10.0)
+		assert.ErrorIs(t, err, ErrInternalError)
+		assert.Zero(t, id)
 	})
 }

@@ -183,6 +183,7 @@ func (h HttpHandler) createSessionHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]int{"session_id": id})
 	if err != nil {
 		log.Println(err)
@@ -269,6 +270,7 @@ func (h HttpHandler) deleteSessionHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	w.WriteHeader(http.StatusNoContent)
 	_, err = w.Write([]byte("session was deleted successfully"))
 	if err != nil {
 		log.Println(err)

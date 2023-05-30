@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -270,7 +271,7 @@ func TestCreateSessionHandler(t *testing.T) {
 		handler := HttpHandler{s: &s}.createSessionHandler
 		handler(response, req)
 
-		assert.Equal(t, http.StatusOK, response.Code)
+		assert.Equal(t, http.StatusCreated, response.Code)
 
 		var responseBody map[string]int
 		err = json.Unmarshal(response.Body.Bytes(), &responseBody)
@@ -352,79 +353,71 @@ func TestCreateSessionHandler(t *testing.T) {
 	})
 }
 
-//func TestDeleteSessionHandler(t *testing.T) {
-//	s := mockRepo{}
-//
-//	t.Run("successful session deletion", func(t *testing.T) {
-//		sessionID := 1
-//		s.sessionId = sessionID
-//		s.err = nil
-//		s.sessionExists = true
-//		s.serviceErr = nil
-//
-//		req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("/cinema-sessions/%d", sessionID), nil)
-//		req = mux.SetURLVars(req, map[string]string{"sessionId": strconv.Itoa(sessionID)})
-//		require.NoError(t, err, "failed to create test request")
-//
-//		response := httptest.NewRecorder()
-//		s := service.New(&s)
-//		handler := HttpHandler{s: s}.deleteSessionHandler
-//		handler(response, req)
-//
-//		assert.Equal(t, "session was deleted successfully", response.Body.String())
-//		assert.Equal(t, http.StatusOK, response.Code)
-//	})
-//
-//	t.Run("invalid session ID", func(t *testing.T) {
-//		sessionID := "invalid"
-//		req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("/cinema-sessions/%s", sessionID), nil)
-//		req = mux.SetURLVars(req, map[string]string{"sessionId": sessionID})
-//		require.NoError(t, err, "failed to create test request")
-//
-//		response := httptest.NewRecorder()
-//		s := service.New(&s)
-//		handler := HttpHandler{s: s}.deleteSessionHandler
-//		handler(response, req)
-//
-//		assert.Equal(t, fmt.Sprintf("%v\n", ErrInvalidSessionId), response.Body.String())
-//		assert.Equal(t, http.StatusBadRequest, response.Code)
-//	})
-//
-//	t.Run("session not found", func(t *testing.T) {
-//		sessionID := 2
-//		s.sessionId = sessionID
-//		s.sessionExists = false
-//
-//		req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("/cinema-sessions/%d", sessionID), nil)
-//		req = mux.SetURLVars(req, map[string]string{"sessionId": strconv.Itoa(sessionID)})
-//		require.NoError(t, err, "failed to create test request")
-//
-//		response := httptest.NewRecorder()
-//		s := service.New(&s)
-//		handler := HttpHandler{s: s}.deleteSessionHandler
-//		handler(response, req)
-//
-//		assert.Equal(t, fmt.Sprintf("%v\n", service.ErrCinemaSessionsNotFound), response.Body.String())
-//		assert.Equal(t, http.StatusNotFound, response.Code)
-//	})
-//
-//	t.Run("ssitory error", func(t *testing.T) {
-//		sessionID := 3
-//		s.sessionId = sessionID
-//		s.err = errors.New("something went wrong")
-//		s.sessionExists = true
-//		s.serviceErr = nil
-//
-//		req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("/cinema-sessions/%d", sessionID), nil)
-//		req = mux.SetURLVars(req, map[string]string{"sessionId": strconv.Itoa(sessionID)})
-//		require.NoError(t, err, "failed to create test request")
-//
-//		response := httptest.NewRecorder()
-//		s := service.New(&s)
-//		handler := HttpHandler{s: s}.deleteSessionHandler
-//		handler(response, req)
-//
-//		assert.Equal(t, fmt.Sprintf("%v\n", service.ErrInternalError), response.Body.String())
-//		assert.Equal(t, http.StatusInternalServerError, response.Code)
-//	})
-//}
+func TestDeleteSessionHandler(t *testing.T) {
+	s := mockService{}
+
+	t.Run("successful session deletion", func(t *testing.T) {
+		sessionID := 1
+		s.sessionId = sessionID
+		s.err = nil
+
+		req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("/cinema-sessions/%d", sessionID), nil)
+		req = mux.SetURLVars(req, map[string]string{"sessionId": strconv.Itoa(sessionID)})
+		require.NoError(t, err, "failed to create test request")
+
+		response := httptest.NewRecorder()
+		handler := HttpHandler{s: &s}.deleteSessionHandler
+		handler(response, req)
+
+		assert.Equal(t, "session was deleted successfully", response.Body.String())
+		assert.Equal(t, http.StatusNoContent, response.Code)
+	})
+
+	t.Run("invalid session ID", func(t *testing.T) {
+		sessionID := "invalid"
+		req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("/cinema-sessions/%s", sessionID), nil)
+		req = mux.SetURLVars(req, map[string]string{"sessionId": sessionID})
+		require.NoError(t, err, "failed to create test request")
+
+		response := httptest.NewRecorder()
+		handler := HttpHandler{s: &s}.deleteSessionHandler
+		handler(response, req)
+
+		assert.Equal(t, fmt.Sprintf("%v\n", ErrInvalidSessionId), response.Body.String())
+		assert.Equal(t, http.StatusBadRequest, response.Code)
+	})
+
+	t.Run("session not found", func(t *testing.T) {
+		sessionID := 2
+		s.sessionId = sessionID
+		s.err = service.ErrCinemaSessionsNotFound
+
+		req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("/cinema-sessions/%d", sessionID), nil)
+		req = mux.SetURLVars(req, map[string]string{"sessionId": strconv.Itoa(sessionID)})
+		require.NoError(t, err, "failed to create test request")
+
+		response := httptest.NewRecorder()
+		handler := HttpHandler{s: &s}.deleteSessionHandler
+		handler(response, req)
+
+		assert.Equal(t, fmt.Sprintf("%v\n", service.ErrCinemaSessionsNotFound), response.Body.String())
+		assert.Equal(t, http.StatusNotFound, response.Code)
+	})
+
+	t.Run("repository error", func(t *testing.T) {
+		sessionID := 3
+		s.sessionId = sessionID
+		s.err = errors.New("something went wrong")
+
+		req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("/cinema-sessions/%d", sessionID), nil)
+		req = mux.SetURLVars(req, map[string]string{"sessionId": strconv.Itoa(sessionID)})
+		require.NoError(t, err, "failed to create test request")
+
+		response := httptest.NewRecorder()
+		handler := HttpHandler{s: &s}.deleteSessionHandler
+		handler(response, req)
+
+		assert.Equal(t, fmt.Sprintf("%v\n", service.ErrInternalError), response.Body.String())
+		assert.Equal(t, http.StatusInternalServerError, response.Code)
+	})
+}

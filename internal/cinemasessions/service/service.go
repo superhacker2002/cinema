@@ -16,7 +16,7 @@ type repository interface {
 	HallExists(id int) (bool, error)
 	MovieExists(id int) (bool, error)
 	SessionEndTime(id int, startTime string) (string, error)
-	HallIsBusy(movieId, hallId int, startTime, endTime string, sessionId int) (bool, error)
+	HallIsBusy(sessionId, hallId int, startTime, endTime string) (bool, error)
 	UpdateSession(id, movieId, hallId int, startTime, endTime string, price float32) error
 }
 
@@ -85,7 +85,7 @@ func (s Service) CreateSession(movieId, hallId int, startTime string, price floa
 		return 0, ErrInternalError
 	}
 
-	hallBusy, err := s.r.HallIsBusy(movieId, hallId, startTime, endTime, 0)
+	hallBusy, err := s.r.HallIsBusy(movieId, hallId, startTime, endTime)
 	if err != nil {
 		log.Println(err)
 		return 0, ErrInternalError
@@ -94,7 +94,12 @@ func (s Service) CreateSession(movieId, hallId int, startTime string, price floa
 		return 0, fmt.Errorf("%w at the time %s", ErrHallIsBusy, startTime)
 	}
 
-	return s.r.CreateSession(movieId, hallId, startTime, endTime, price)
+	id, err := s.r.CreateSession(movieId, hallId, startTime, endTime, price)
+	if err != nil {
+		return 0, ErrInternalError
+	}
+
+	return id, nil
 }
 
 func (s Service) DeleteSession(id int) error {
@@ -108,7 +113,12 @@ func (s Service) DeleteSession(id int) error {
 		return ErrCinemaSessionsNotFound
 	}
 
-	return s.r.DeleteSession(id)
+	err = s.r.DeleteSession(id)
+	if err != nil {
+		return ErrInternalError
+	}
+
+	return nil
 }
 
 func (s Service) UpdateSession(id, movieId, hallId int, startTime string, price float32) error {
@@ -146,7 +156,7 @@ func (s Service) UpdateSession(id, movieId, hallId int, startTime string, price 
 		return ErrInternalError
 	}
 
-	hallBusy, err := s.r.HallIsBusy(movieId, hallId, startTime, endTime, id)
+	hallBusy, err := s.r.HallIsBusy(movieId, hallId, startTime, endTime)
 	if err != nil {
 		log.Println(err)
 		return ErrInternalError
@@ -155,5 +165,10 @@ func (s Service) UpdateSession(id, movieId, hallId int, startTime string, price 
 		return fmt.Errorf("%w at the time %s", ErrHallIsBusy, startTime)
 	}
 
-	return s.r.UpdateSession(id, movieId, hallId, startTime, endTime, price)
+	err = s.r.UpdateSession(id, movieId, hallId, startTime, endTime, price)
+	if err != nil {
+		return ErrInternalError
+	}
+
+	return nil
 }
