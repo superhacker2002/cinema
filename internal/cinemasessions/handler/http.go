@@ -89,7 +89,7 @@ func (h HttpHandler) getAllSessionsHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	if err != nil {
-		http.Error(w, service.ErrInternalError.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -125,7 +125,7 @@ func (h HttpHandler) getSessionsHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if err != nil {
-		http.Error(w, service.ErrInternalError.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -178,7 +178,7 @@ func (h HttpHandler) createSessionHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	if err != nil {
-		http.Error(w, service.ErrInternalError.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -236,12 +236,12 @@ func (h HttpHandler) updateSessionHandler(w http.ResponseWriter, r *http.Request
 
 	if err != nil {
 		log.Println(err)
-		http.Error(w, service.ErrInternalError.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]int{"session_id": sessionId})
+	err = json.NewEncoder(w).Encode(map[string]int{"session_id": sessionId})
 	if err != nil {
 		log.Println(err)
 		http.Error(w, service.ErrInternalError.Error(), http.StatusInternalServerError)
@@ -266,7 +266,7 @@ func (h HttpHandler) deleteSessionHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	if err != nil {
-		http.Error(w, service.ErrInternalError.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 

@@ -170,7 +170,7 @@ func TestGetAllSessionsHandler(t *testing.T) {
 	t.Run("service error", func(t *testing.T) {
 		sessions := []entity.CinemaSession{{}}
 		s.sessions = sessions
-		s.err = errors.New("something went wrong")
+		s.err = service.ErrInternalError
 
 		req, err := http.NewRequest(http.MethodGet, "cinema-sessions/", nil)
 		require.NoError(t, err, "failed to create test request")
@@ -337,7 +337,7 @@ func TestCreateSessionHandler(t *testing.T) {
 			1, "2024-05-18 20:00:00+4", 10.5)
 		body := strings.NewReader(request)
 
-		s.err = errors.New("something went wrong")
+		s.err = service.ErrInternalError
 
 		req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("/cinema-sessions/%s", hallId), body)
 		req = mux.SetURLVars(req, map[string]string{"hallId": hallId})
@@ -407,7 +407,7 @@ func TestDeleteSessionHandler(t *testing.T) {
 	t.Run("repository error", func(t *testing.T) {
 		sessionID := 3
 		s.sessionId = sessionID
-		s.err = errors.New("something went wrong")
+		s.err = service.ErrInternalError
 
 		req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("/cinema-sessions/%d", sessionID), nil)
 		req = mux.SetURLVars(req, map[string]string{"sessionId": strconv.Itoa(sessionID)})
