@@ -149,6 +149,7 @@ func (s *SessionsRepository) SessionExists(id int) (bool, error) {
 	var count int
 	err := s.db.QueryRow("SELECT COUNT(*) FROM cinema_sessions WHERE session_id = $1", id).Scan(&count)
 	if err != nil {
+		log.Println(err)
 		return false, fmt.Errorf("failed to check if session exists %w", err)
 	}
 
