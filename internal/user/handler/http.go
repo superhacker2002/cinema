@@ -27,19 +27,19 @@ type auth interface {
 	VerifyToken(token string) (userID int, err error)
 }
 
-type httpHandler struct {
+type HttpHandler struct {
 	a auth
 	r userRepository.Repository
 }
 
-func New(router *mux.Router, auth auth, repo userRepository.Repository) httpHandler {
-	handler := httpHandler{a: auth, r: repo}
+func New(router *mux.Router, auth auth, repo userRepository.Repository) HttpHandler {
+	handler := HttpHandler{a: auth, r: repo}
 	handler.setRoutes(router)
 
 	return handler
 }
 
-func (h httpHandler) setRoutes(router *mux.Router) {
+func (h HttpHandler) setRoutes(router *mux.Router) {
 	router.HandleFunc("/auth/", h.loginHandler).Methods("POST")
 	s := router.PathPrefix("/users").Subrouter()
 	s.HandleFunc("/", h.createUserHandler).Methods("POST")
@@ -49,7 +49,7 @@ func (h httpHandler) setRoutes(router *mux.Router) {
 	s.HandleFunc("/{userId}/", h.updateUserHandler).Methods("PUT")
 }
 
-func (h httpHandler) loginHandler(w http.ResponseWriter, r *http.Request) {
+func (h HttpHandler) loginHandler(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		log.Println(err)
@@ -91,7 +91,7 @@ func (c credentials) validate() error {
 	return nil
 }
 
-func (h httpHandler) createUserHandler(w http.ResponseWriter, r *http.Request) {
+func (h HttpHandler) createUserHandler(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		log.Println(err)
@@ -129,22 +129,22 @@ func (h httpHandler) createUserHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]int{"user_id": id})
 }
 
-func (h httpHandler) getUsersHandler(w http.ResponseWriter, r *http.Request) {
+func (h HttpHandler) getUsersHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO: return all users
 	w.WriteHeader(http.StatusOK)
 }
 
-func (h httpHandler) getUserHandler(w http.ResponseWriter, r *http.Request) {
+func (h HttpHandler) getUserHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO: return user by ID
 	w.WriteHeader(http.StatusOK)
 }
 
-func (h httpHandler) deleteUserHandler(w http.ResponseWriter, r *http.Request) {
+func (h HttpHandler) deleteUserHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO: delete user by ID
 	w.WriteHeader(http.StatusOK)
 }
 
-func (h httpHandler) updateUserHandler(w http.ResponseWriter, r *http.Request) {
+func (h HttpHandler) updateUserHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO: update user by ID
 	w.WriteHeader(http.StatusOK)
 }
