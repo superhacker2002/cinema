@@ -1,4 +1,4 @@
-OPENAPI_FILE=openapi.html
+OPENAPI_FILE := openapi.html
 
 .PHONY: run
 run:
