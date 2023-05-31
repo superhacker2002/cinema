@@ -4,7 +4,6 @@ import (
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/hall/service"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/apiutils"
@@ -49,7 +48,7 @@ func (h HTTPHandler) setRoutes(router *mux.Router) {
 	s.HandleFunc("/{hallId}/", h.getHallHandler).Methods(http.MethodGet)
 	s.HandleFunc("/{hallId}/", h.updateHallHandler).Methods(http.MethodPut)
 	s.HandleFunc("/{hallId}/", h.deleteHallHandler).Methods(http.MethodDelete)
-	s.HandleFunc("/update-availability", h.updateAvailabilityHandler).Methods(http.MethodPut)
+	//s.HandleFunc("/update-availability", h.updateAvailabilityHandler).Methods(http.MethodPut)
 }
 
 func (h HTTPHandler) getHallsHandler(w http.ResponseWriter, _ *http.Request) {
@@ -137,26 +136,31 @@ func (h HTTPHandler) updateHallHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	apiutils.WriteResponse(w, entityToDTO(hall), http.StatusOK)
+	apiutils.WriteResponse(w, "cinema hall was updated successfully\n", http.StatusOK)
 }
 
 func (h HTTPHandler) deleteHallHandler(w http.ResponseWriter, r *http.Request) {
 	hallID, err := apiutils.IntPathParam(r, "hallID")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, ErrInvalidHallId.Error(), http.StatusBadRequest)
 		return
 	}
 
-	err = h.repository.DeleteCinemaHall(hallID)
+	err = h.repository.DeleteHall(hallID)
+	if errors.Is(err, service.ErrHallNotFound) {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	message := fmt.Sprintf("Cinema hall with ID %d deleted", hallID)
-	apiutils.WriteResponse(w, message, http.StatusOK)
+	apiutils.WriteResponse(w, "cinema hall with deleted successfully\n", http.StatusOK)
 }
 
+/*
 func (h HTTPHandler) updateAvailabilityHandler(w http.ResponseWriter, r *http.Request) {
 	var update struct {
 		Data struct {
@@ -185,6 +189,7 @@ func (h HTTPHandler) updateAvailabilityHandler(w http.ResponseWriter, r *http.Re
 	message := fmt.Sprintf("Updated availability for cinema hall with ID %d", update.Data.HallID)
 	apiutils.WriteResponse(w, message, http.StatusOK)
 }
+*/
 
 func entitiesToDTO(halls []service.Hall) []cinemaHall {
 	var DTOHalls []cinemaHall

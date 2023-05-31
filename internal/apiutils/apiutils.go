@@ -4,6 +4,7 @@ import (
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasession/service"
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -26,6 +27,7 @@ func IntPathParam(r *http.Request, varName string) (int, error) {
 func WriteResponse(w http.ResponseWriter, data interface{}, statusCode int) {
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(data); err != nil {
+		log.Println(err)
 		http.Error(w, service.ErrInternalError.Error(), http.StatusInternalServerError)
 	}
 	w.WriteHeader(statusCode)
