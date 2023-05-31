@@ -1,7 +1,9 @@
 package handler
 
 import (
+	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/hall/service"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -9,20 +11,24 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type CinemaHall struct {
-	ID        int    `json:"id"`
-	Name      string `json:"name"`
-	Capacity  int    `json:"capacity"`
-	Available bool   `json:"available"`
+var (
+	ErrReadRequestFail = errors.New("failed to read request")
+	ErrInvalidHallId   = errors.New("invalid hall id")
+)
+
+type cinemaHall struct {
+	ID       int    `json:"id"`
+	Name     string `json:"name"`
+	Capacity int    `json:"capacity"`
 }
 
 type Repository interface {
-	GetCinemaHalls() ([]CinemaHall, error)
-	GetCinemaHallByID(id int) (*CinemaHall, error)
-	CreateCinemaHall(hall *CinemaHall) error
-	UpdateCinemaHall(hall *CinemaHall) error
-	DeleteCinemaHall(id int) error
-	UpdateHallAvailability(id int, available bool) error
+	Halls() ([]service.Hall, error)
+	HallById(id int) (service.Hall, error)
+	CreateHall(name string, capacity int) (hallId int, err error)
+	UpdateHall(id int, name string, capacity int) error
+	DeleteHall(id int) error
+	//UpdateHallAvailability(id int, available bool) error
 }
 
 type HTTPHandler struct {
@@ -40,70 +46,98 @@ func (h HTTPHandler) setRoutes(router *mux.Router) {
 	s := router.PathPrefix("/halls").Subrouter()
 	s.HandleFunc("/", h.getHallsHandler).Methods(http.MethodGet)
 	s.HandleFunc("/", h.createHallHandler).Methods(http.MethodPost)
-	s.HandleFunc("/{hallID}/", h.getHallHandler).Methods(http.MethodGet)
-	s.HandleFunc("/{hallID}/", h.updateHallHandler).Methods(http.MethodPut)
-	s.HandleFunc("/{hallID}/", h.deleteHallHandler).Methods(http.MethodDelete)
+	s.HandleFunc("/{hallId}/", h.getHallHandler).Methods(http.MethodGet)
+	s.HandleFunc("/{hallId}/", h.updateHallHandler).Methods(http.MethodPut)
+	s.HandleFunc("/{hallId}/", h.deleteHallHandler).Methods(http.MethodDelete)
 	s.HandleFunc("/update-availability", h.updateAvailabilityHandler).Methods(http.MethodPut)
 }
 
 func (h HTTPHandler) getHallsHandler(w http.ResponseWriter, _ *http.Request) {
-	cinemaHalls, err := h.repository.GetCinemaHalls()
+	cinemaHalls, err := h.repository.Halls()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	apiutils.WriteResponse(w, cinemaHalls, http.StatusOK)
+	apiutils.WriteResponse(w, entitiesToDTO(cinemaHalls), http.StatusOK)
 }
 
 func (h HTTPHandler) createHallHandler(w http.ResponseWriter, r *http.Request) {
-	var newCinemaHall CinemaHall
-	err := json.NewDecoder(r.Body).Decode(&newCinemaHall)
+	type hallInfo struct {
+		Name     string `json:"name"`
+		Capacity int    `json:"capacity"`
+	}
+
+	var hall hallInfo
+
+	err := json.NewDecoder(r.Body).Decode(&hall)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, ErrReadRequestFail.Error(), http.StatusBadRequest)
 		return
 	}
 
-	err = h.repository.CreateCinemaHall(&newCinemaHall)
+	id, err := h.repository.CreateHall(hall.Name, hall.Capacity)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	apiutils.WriteResponse(w, newCinemaHall, http.StatusOK)
+	apiutils.WriteResponse(w, map[string]int{"user_id": id}, http.StatusCreated)
 }
 
 func (h HTTPHandler) getHallHandler(w http.ResponseWriter, r *http.Request) {
-	hallID, err := apiutils.GetIntParam(r, "hallID")
+	hallID, err := apiutils.IntPathParam(r, "hallId")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, ErrInvalidHallId.Error(), http.StatusBadRequest)
 		return
 	}
 
-	hall, err := h.repository.GetCinemaHallByID(hallID)
-	if err != nil {
+	hall, err := h.repository.HallById(hallID)
+	if errors.Is(err, service.ErrHallNotFound) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
-	apiutils.WriteResponse(w, hall, http.StatusOK)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	apiutils.WriteResponse(w, entityToDTO(hall), http.StatusOK)
 }
 
 func (h HTTPHandler) updateHallHandler(w http.ResponseWriter, r *http.Request) {
-	var updatedCinemaHall CinemaHall
-	err := json.NewDecoder(r.Body).Decode(&updatedCinemaHall)
+	hallID, err := apiutils.IntPathParam(r, "hallId")
+	if err != nil {
+		http.Error(w, ErrInvalidHallId.Error(), http.StatusBadRequest)
+		return
+	}
+
+	type hallInfo struct {
+		Name     string `json:"name"`
+		Capacity int    `json:"capacity"`
+	}
+
+	var hall hallInfo
+
+	err = json.NewDecoder(r.Body).Decode(&hall)
+	if err != nil {
+		http.Error(w, ErrReadRequestFail.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = h.repository.UpdateHall(hallID, hall.Name, hall.Capacity)
+	if errors.Is(err, service.ErrHallNotFound) {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	err = h.repository.UpdateCinemaHall(&updatedCinemaHall)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	apiutils.WriteResponse(w, updatedCinemaHall, http.StatusOK)
+	apiutils.WriteResponse(w, entityToDTO(hall), http.StatusOK)
 }
 
 func (h HTTPHandler) deleteHallHandler(w http.ResponseWriter, r *http.Request) {
@@ -150,4 +184,20 @@ func (h HTTPHandler) updateAvailabilityHandler(w http.ResponseWriter, r *http.Re
 
 	message := fmt.Sprintf("Updated availability for cinema hall with ID %d", update.Data.HallID)
 	apiutils.WriteResponse(w, message, http.StatusOK)
+}
+
+func entitiesToDTO(halls []service.Hall) []cinemaHall {
+	var DTOHalls []cinemaHall
+	for _, hall := range halls {
+		DTOHalls = append(DTOHalls, entityToDTO(hall))
+	}
+	return DTOHalls
+}
+
+func entityToDTO(hall service.Hall) cinemaHall {
+	return cinemaHall{
+		ID:       hall.Id,
+		Name:     hall.Name,
+		Capacity: hall.Capacity,
+	}
 }
