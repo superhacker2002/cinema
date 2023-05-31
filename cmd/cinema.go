@@ -7,9 +7,9 @@ import (
 	userRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/repository"
 	"os"
 
-	sessionsHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasessions/handler"
-	sessionsRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasessions/repository"
-	sessionsService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasessions/service"
+	sessionsHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasession/handler"
+	sessionsRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasession/repository"
+	sessionsService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasession/service"
 
 	"database/sql"
 	"github.com/gorilla/mux"
