@@ -39,7 +39,7 @@ func (s *SessionsRepository) SessionsForHall(hallId int, date string) ([]entity.
 	}
 
 	defer func() {
-		err := rows.Close()
+		err = rows.Close()
 		if err != nil {
 			log.Println(err)
 		}
@@ -68,7 +68,7 @@ func (s *SessionsRepository) AllSessions(date string, offset, limit int) ([]enti
 	}
 
 	defer func() {
-		err := rows.Close()
+		err = rows.Close()
 		if err != nil {
 			log.Println(err)
 		}
