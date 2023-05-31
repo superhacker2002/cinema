@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/api"
+	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/apiutils"
 	"github.com/gorilla/mux"
 )
 
@@ -46,14 +46,14 @@ func (h HTTPHandler) setRoutes(router *mux.Router) {
 	s.HandleFunc("/update-availability", h.updateAvailabilityHandler).Methods(http.MethodPut)
 }
 
-func (h HTTPHandler) getHallsHandler(w http.ResponseWriter, r *http.Request) {
+func (h HTTPHandler) getHallsHandler(w http.ResponseWriter, _ *http.Request) {
 	cinemaHalls, err := h.repository.GetCinemaHalls()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	api.WriteResponse(w, cinemaHalls, http.StatusOK)
+	apiutils.WriteResponse(w, cinemaHalls, http.StatusOK)
 }
 
 func (h HTTPHandler) createHallHandler(w http.ResponseWriter, r *http.Request) {
@@ -70,11 +70,11 @@ func (h HTTPHandler) createHallHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	api.WriteResponse(w, newCinemaHall, http.StatusOK)
+	apiutils.WriteResponse(w, newCinemaHall, http.StatusOK)
 }
 
 func (h HTTPHandler) getHallHandler(w http.ResponseWriter, r *http.Request) {
-	hallID, err := api.GetIntParam(r, "hallID")
+	hallID, err := apiutils.GetIntParam(r, "hallID")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -86,7 +86,7 @@ func (h HTTPHandler) getHallHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	api.WriteResponse(w, hall, http.StatusOK)
+	apiutils.WriteResponse(w, hall, http.StatusOK)
 }
 
 func (h HTTPHandler) updateHallHandler(w http.ResponseWriter, r *http.Request) {
@@ -103,11 +103,11 @@ func (h HTTPHandler) updateHallHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	api.WriteResponse(w, updatedCinemaHall, http.StatusOK)
+	apiutils.WriteResponse(w, updatedCinemaHall, http.StatusOK)
 }
 
 func (h HTTPHandler) deleteHallHandler(w http.ResponseWriter, r *http.Request) {
-	hallID, err := api.GetIntParam(r, "hallID")
+	hallID, err := apiutils.IntPathParam(r, "hallID")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -120,7 +120,7 @@ func (h HTTPHandler) deleteHallHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	message := fmt.Sprintf("Cinema hall with ID %d deleted", hallID)
-	api.WriteResponse(w, message, http.StatusOK)
+	apiutils.WriteResponse(w, message, http.StatusOK)
 }
 
 func (h HTTPHandler) updateAvailabilityHandler(w http.ResponseWriter, r *http.Request) {
@@ -149,5 +149,5 @@ func (h HTTPHandler) updateAvailabilityHandler(w http.ResponseWriter, r *http.Re
 	}
 
 	message := fmt.Sprintf("Updated availability for cinema hall with ID %d", update.Data.HallID)
-	api.WriteResponse(w, message, http.StatusOK)
+	apiutils.WriteResponse(w, message, http.StatusOK)
 }

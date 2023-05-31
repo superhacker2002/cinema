@@ -1,9 +1,9 @@
 package handler
 
 import (
-	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasessions/entity"
-	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasessions/service"
-	"encoding/json"
+	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/apiutils"
+	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasession/entity"
+	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasession/service"
 	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
@@ -82,17 +82,11 @@ func (h HttpHandler) getAllSessionsHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(entitiesToDTO(sessions))
-	if err != nil {
-		log.Println(err)
-		http.Error(w, service.ErrInternalError.Error(), http.StatusInternalServerError)
-		return
-	}
+	apiutils.WriteResponse(w, entitiesToDTO(sessions), http.StatusOK)
 }
 
 func (h HttpHandler) getSessionsHandler(w http.ResponseWriter, r *http.Request) {
-	hallId, err := pathVariable(r, "hallId")
+	hallId, err := apiutils.IntPathParam(r, "hallId")
 	if err != nil {
 		log.Println(err)
 		http.Error(w, fmt.Sprintf("%v", ErrInvalidHallId), http.StatusBadRequest)
@@ -118,13 +112,7 @@ func (h HttpHandler) getSessionsHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(entitiesToDTO(sessions))
-	if err != nil {
-		log.Println(err)
-		http.Error(w, service.ErrInternalError.Error(), http.StatusInternalServerError)
-		return
-	}
+	apiutils.WriteResponse(w, entitiesToDTO(sessions), http.StatusOK)
 }
 
 func (h HttpHandler) createSessionHandler(w http.ResponseWriter, r *http.Request) {
@@ -204,17 +192,4 @@ func entitiesToDTO(sessions []entity.CinemaSession) []session {
 		})
 	}
 	return DTOSessions
-}
-
-func pathVariable(r *http.Request, varName string) (int, error) {
-	vars := mux.Vars(r)
-	varStr := vars[varName]
-	varInt, err := strconv.Atoi(varStr)
-	if err != nil {
-		return 0, err
-	}
-	if varInt <= 0 {
-		return 0, errors.New("parameter is less than zero")
-	}
-	return varInt, nil
 }

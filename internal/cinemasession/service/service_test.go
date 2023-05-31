@@ -1,7 +1,7 @@
 package service
 
 import (
-	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasessions/entity"
+	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasession/entity"
 	"errors"
 	"github.com/stretchr/testify/assert"
 	"testing"
