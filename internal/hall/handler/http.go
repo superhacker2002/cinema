@@ -81,7 +81,7 @@ func (h HTTPHandler) createHallHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	apiutils.WriteResponse(w, map[string]int{"user_id": id}, http.StatusCreated)
+	apiutils.WriteResponse(w, map[string]int{"hallId": id}, http.StatusCreated)
 }
 
 func (h HTTPHandler) getHallHandler(w http.ResponseWriter, r *http.Request) {
@@ -136,11 +136,11 @@ func (h HTTPHandler) updateHallHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	apiutils.WriteResponse(w, "cinema hall was updated successfully\n", http.StatusOK)
+	apiutils.WriteResponse(w, "cinema hall was updated successfully", http.StatusOK)
 }
 
 func (h HTTPHandler) deleteHallHandler(w http.ResponseWriter, r *http.Request) {
-	hallID, err := apiutils.IntPathParam(r, "hallID")
+	hallID, err := apiutils.IntPathParam(r, "hallId")
 	if err != nil {
 		http.Error(w, ErrInvalidHallId.Error(), http.StatusBadRequest)
 		return
@@ -157,7 +157,7 @@ func (h HTTPHandler) deleteHallHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	apiutils.WriteResponse(w, "cinema hall with deleted successfully\n", http.StatusOK)
+	apiutils.WriteResponse(w, "cinema hall with deleted successfully", http.StatusOK)
 }
 
 /*
