@@ -76,7 +76,7 @@ func (h *HallRepository) CreateHall(name string, capacity int) (hallId int, err 
 	return id, nil
 }
 
-func (h *HallRepository) UpdateCinemaHall(id int, name string, capacity int) error {
+func (h *HallRepository) UpdateHall(id int, name string, capacity int) error {
 	_, err := h.db.Exec(`UPDATE halls
 								SET hall_name = $1, capacity = $2
 								WHERE hall_id = $3`, name, capacity, id)
@@ -87,7 +87,7 @@ func (h *HallRepository) UpdateCinemaHall(id int, name string, capacity int) err
 	return nil
 }
 
-func (h *HallRepository) DeleteCinemaHall(id int) error {
+func (h *HallRepository) DeleteHall(id int) error {
 	_, err := h.db.Exec(`DELETE FROM halls WHERE hall_id = $1`, id)
 	if err != nil {
 		return fmt.Errorf("failed to delete hall: %w", err)
