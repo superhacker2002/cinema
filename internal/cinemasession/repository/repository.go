@@ -33,11 +33,17 @@ func (s *SessionsRepository) SessionsForHall(hallId int, date string) ([]entity.
 		"FROM cinema_sessions "+
 		"WHERE hall_id = $1 AND date_trunc('day', start_time) = $2 "+
 		"ORDER BY start_time ", hallId, date)
-
 	if err != nil {
 		log.Println(err)
 		return nil, fmt.Errorf("failed to get cinema sessions: %w", err)
 	}
+
+	defer func() {
+		err := rows.Close()
+		if err != nil {
+			log.Println(err)
+		}
+	}()
 
 	cinemaSessions, err := s.readCinemaSessions(rows)
 	if err != nil {
@@ -60,6 +66,13 @@ func (s *SessionsRepository) AllSessions(date string, offset, limit int) ([]enti
 		log.Println(err)
 		return nil, fmt.Errorf("failed to get cinema sessions: %w", err)
 	}
+
+	defer func() {
+		err := rows.Close()
+		if err != nil {
+			log.Println(err)
+		}
+	}()
 
 	cinemaSessions, err := s.readCinemaSessions(rows)
 	if err != nil {
