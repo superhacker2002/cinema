@@ -3,15 +3,10 @@ package repository
 import (
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/hall/service"
 	"database/sql"
-	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
-	"net/http"
-
-	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/hall/handler"
 )
-
-const selectQuery = "SELECT %s FROM %s"
 
 type hall struct {
 	Id       int
@@ -27,8 +22,8 @@ func New(db *sql.DB) *HallRepository {
 	return &HallRepository{db: db}
 }
 
-func (r *HallRepository) Halls() ([]service.Hall, error) {
-	rows, err := r.db.Query(fmt.Sprintf(selectQuery, "hall_id, hall_name, capacity", "halls"))
+func (h *HallRepository) Halls() ([]service.Hall, error) {
+	rows, err := h.db.Query(`SELECT hall_id, hall_name, capacity FROM halls`)
 	if err != nil {
 		return nil, err
 	}
@@ -52,41 +47,69 @@ func (r *HallRepository) Halls() ([]service.Hall, error) {
 	return cinemaHalls, nil
 }
 
-func (r *HallRepository) GetCinemaHallByID(id int) (*handler.CinemaHall, error) {
-	row := r.db.QueryRow("SELECT hall_id, hall_name, capacity, available FROM halls WHERE hall_id = $1", id)
-	var hall handler.CinemaHall
-	err := row.Scan(&hall.ID, &hall.Name, &hall.Capacity, &hall.Available)
+func (h *HallRepository) HallById(id int) (service.Hall, error) {
+	row := h.db.QueryRow(`SELECT hall_id, hall_name, capacity 
+								FROM halls 
+								WHERE hall_id = $1`, id)
+	var hall hall
+	err := row.Scan(&hall.Id, &hall.Name, &hall.Capacity)
 	if err != nil {
-		return nil, err
+		if errors.Is(err, sql.ErrNoRows) {
+			return service.Hall{}, service.ErrHallNotFound
+		}
+		return service.Hall{}, fmt.Errorf("could not get user credentials: %w", err)
 	}
 
-	return &hall, nil
+	return service.NewHallEntity(hall.Id, hall.Name, hall.Capacity), nil
 }
 
-func (r *HallRepository) CreateCinemaHall(hall *handler.CinemaHall) error {
-	query := "INSERT INTO halls (hall_name, capacity, available) VALUES ($1, $2, $3) RETURNING id"
-
-	err := r.db.QueryRow(query, hall.Name, hall.Capacity, hall.Available).Scan(&hall.ID)
+func (h *HallRepository) CreateHall(name string, capacity int) (hallId int, err error) {
+	var id int
+	err = h.db.QueryRow(`INSERT INTO halls (hall_name, capacity)
+								VALUES ($1, $2)
+								RETURNING hall_id`, name, capacity).Scan(&id)
 	if err != nil {
-		return err
+		log.Println(err)
+		return 0, err
+	}
+
+	return id, nil
+}
+
+func (h *HallRepository) UpdateCinemaHall(id int, name string, capacity int) error {
+	_, err := h.db.Exec(`UPDATE halls
+								SET hall_name = $1, capacity = $2
+								WHERE hall_id = $3`, name, capacity, id)
+	if err != nil {
+		return fmt.Errorf("failed to update hall: %w", err)
 	}
 
 	return nil
 }
 
-func (r *HallRepository) UpdateCinemaHall(hall *handler.CinemaHall) error {
-	_, err := r.db.Exec("UPDATE halls SET hall_name = $1, capacity = $2 WHERE hall_id = $3",
-		hall.Name, hall.Capacity, hall.ID)
-	return err
+func (h *HallRepository) DeleteCinemaHall(id int) error {
+	_, err := h.db.Exec(`DELETE FROM halls WHERE hall_id = $1`, id)
+	if err != nil {
+		return fmt.Errorf("failed to delete hall: %w", err)
+	}
+
+	return nil
 }
 
-func (r *HallRepository) DeleteCinemaHall(id int) error {
-	_, err := r.db.Exec("DELETE FROM halls WHERE hall_id = $1", id)
-	return err
+func (h *HallRepository) HallExists(id int) (bool, error) {
+	var count int
+	err := h.db.QueryRow(`SELECT COUNT(*) FROM halls WHERE hall_id = $1`, id).Scan(&count)
+	if err != nil {
+		log.Println(err)
+		return false, fmt.Errorf("failed to check if hall exists %w", err)
+	}
+
+	return count > 0, nil
 }
 
-func (r *HallRepository) UpdateHallAvailability(id int, available bool) error {
-	_, err := r.db.Exec("UPDATE halls SET available = $1 WHERE hall_id = $2", available, id)
+/*
+func (h *HallRepository) UpdateHallAvailability(id int, available bool) error {
+	_, err := h.db.Exec("UPDATE halls SET available = $1 WHERE hall_id = $2", available, id)
 	return err
 }
 
@@ -112,3 +135,4 @@ func AssignMovie(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 
 	w.WriteHeader(http.StatusOK)
 }
+*/
