@@ -4,6 +4,8 @@ import (
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/hall/service"
 	"encoding/json"
 	"errors"
+	"io"
+	"log"
 	"net/http"
 
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/apiutils"
@@ -45,9 +47,9 @@ func (h HTTPHandler) setRoutes(router *mux.Router) {
 	s := router.PathPrefix("/halls").Subrouter()
 	s.HandleFunc("/", h.getHallsHandler).Methods(http.MethodGet)
 	s.HandleFunc("/", h.createHallHandler).Methods(http.MethodPost)
-	s.HandleFunc("/{hallId}/", h.getHallHandler).Methods(http.MethodGet)
-	s.HandleFunc("/{hallId}/", h.updateHallHandler).Methods(http.MethodPut)
-	s.HandleFunc("/{hallId}/", h.deleteHallHandler).Methods(http.MethodDelete)
+	s.HandleFunc("/{hallId}", h.getHallHandler).Methods(http.MethodGet)
+	s.HandleFunc("/{hallId}", h.updateHallHandler).Methods(http.MethodPut)
+	s.HandleFunc("/{hallId}", h.deleteHallHandler).Methods(http.MethodDelete)
 	//s.HandleFunc("/update-availability", h.updateAvailabilityHandler).Methods(http.MethodPut)
 }
 
@@ -69,8 +71,15 @@ func (h HTTPHandler) createHallHandler(w http.ResponseWriter, r *http.Request) {
 
 	var hall hallInfo
 
-	err := json.NewDecoder(r.Body).Decode(&hall)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		log.Println(err)
+		http.Error(w, ErrReadRequestFail.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err = json.Unmarshal(body, &hall); err != nil {
+		log.Println(err)
 		http.Error(w, ErrReadRequestFail.Error(), http.StatusBadRequest)
 		return
 	}
@@ -81,7 +90,7 @@ func (h HTTPHandler) createHallHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	apiutils.WriteResponse(w, map[string]int{"user_id": id}, http.StatusCreated)
+	apiutils.WriteResponse(w, map[string]int{"hall_id": id}, http.StatusCreated)
 }
 
 func (h HTTPHandler) getHallHandler(w http.ResponseWriter, r *http.Request) {
@@ -136,11 +145,11 @@ func (h HTTPHandler) updateHallHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	apiutils.WriteResponse(w, "cinema hall was updated successfully\n", http.StatusOK)
+	apiutils.WriteResponse(w, "cinema hall was updated successfully", http.StatusOK)
 }
 
 func (h HTTPHandler) deleteHallHandler(w http.ResponseWriter, r *http.Request) {
-	hallID, err := apiutils.IntPathParam(r, "hallID")
+	hallID, err := apiutils.IntPathParam(r, "hallId")
 	if err != nil {
 		http.Error(w, ErrInvalidHallId.Error(), http.StatusBadRequest)
 		return
@@ -157,7 +166,7 @@ func (h HTTPHandler) deleteHallHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	apiutils.WriteResponse(w, "cinema hall with deleted successfully\n", http.StatusOK)
+	apiutils.WriteResponse(w, "cinema hall with deleted successfully", http.StatusOK)
 }
 
 /*

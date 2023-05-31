@@ -4,6 +4,7 @@ import (
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/apiutils"
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasession/entity"
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasession/service"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
@@ -129,7 +130,7 @@ func (h HttpHandler) getSessionsHandler(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h HttpHandler) createSessionHandler(w http.ResponseWriter, r *http.Request) {
-	hallId, err := pathVariable(r, "hallId")
+	hallId, err := apiutils.IntPathParam(r, "hallId")
 	if err != nil {
 		log.Println(err)
 		http.Error(w, ErrInvalidHallId.Error(), http.StatusBadRequest)
@@ -183,7 +184,7 @@ func (h HttpHandler) createSessionHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (h HttpHandler) updateSessionHandler(w http.ResponseWriter, r *http.Request) {
-	sessionId, err := pathVariable(r, "sessionId")
+	sessionId, err := apiutils.IntPathParam(r, "sessionId")
 	if err != nil {
 		log.Println(err)
 		http.Error(w, ErrInvalidSessionId.Error(), http.StatusBadRequest)
@@ -242,7 +243,7 @@ func (h HttpHandler) updateSessionHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (h HttpHandler) deleteSessionHandler(w http.ResponseWriter, r *http.Request) {
-	sessionId, err := pathVariable(r, "sessionId")
+	sessionId, err := apiutils.IntPathParam(r, "sessionId")
 	if err != nil {
 		log.Println(err)
 		http.Error(w, ErrInvalidSessionId.Error(), http.StatusBadRequest)
