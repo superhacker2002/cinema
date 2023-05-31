@@ -183,7 +183,7 @@ func (h HttpHandler) createSessionHandler(w http.ResponseWriter, r *http.Request
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]int{"session_id": id})
+	err = json.NewEncoder(w).Encode(map[string]int{"session_id": id})
 	if err != nil {
 		log.Println(err)
 		http.Error(w, service.ErrInternalError.Error(), http.StatusInternalServerError)
@@ -241,7 +241,6 @@ func (h HttpHandler) updateSessionHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	_, err = w.Write([]byte("session was updated successfully\n"))
 	if err != nil {
 		log.Println(err)
@@ -269,13 +268,13 @@ func (h HttpHandler) deleteSessionHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
 	_, err = w.Write([]byte("session was deleted successfully\n"))
 	if err != nil {
 		log.Println(err)
 		http.Error(w, service.ErrInternalError.Error(), http.StatusInternalServerError)
 		return
 	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func page(r *http.Request) (Page, error) {
