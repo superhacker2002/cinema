@@ -3,6 +3,7 @@ package handler
 import (
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasession/entity"
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasession/service"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
@@ -10,17 +11,22 @@ import (
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
+	"strings"
 	"testing"
 	"time"
 )
 
 type mockService struct {
-	sessions []entity.CinemaSession
-	hallId   int
-	err      error
+	sessions  []entity.CinemaSession
+	hallId    int
+	sessionId int
+	err       error
 }
 
-const layout = "2006-01-02 15:04:05 MST"
+func (m *mockService) UpdateSession(id, movieId, hallId int, startTime string, price float32) error {
+	return nil
+}
 
 func (m *mockService) AllSessions(date string, offset, limit int) ([]entity.CinemaSession, error) {
 	return m.sessions, m.err
@@ -33,11 +39,19 @@ func (m *mockService) SessionsForHall(hallId int, date string) ([]entity.CinemaS
 	return m.sessions, m.err
 }
 
+func (m *mockService) DeleteSession(id int) error {
+	return m.err
+}
+
+func (m *mockService) CreateSession(movieId, hallId int, startTime string, price float32) (int, error) {
+	return m.sessionId, m.err
+}
+
 func TestGetSessionsHandler(t *testing.T) {
 	s := mockService{}
 	t.Run("successful sessions get", func(t *testing.T) {
-		start, _ := time.Parse(layout, "2024-05-18 20:00:00 +04")
-		end, _ := time.Parse(layout, "2024-05-18 22:00:00 +04")
+		start, _ := time.Parse(timestampLayout, "2024-05-18 20:00:00 +04")
+		end, _ := time.Parse(timestampLayout, "2024-05-18 22:00:00 +04")
 		session := []entity.CinemaSession{
 			{
 				Id:        1,
@@ -112,8 +126,8 @@ func TestGetSessionsHandler(t *testing.T) {
 func TestGetAllSessionsHandler(t *testing.T) {
 	s := mockService{}
 	t.Run("successful sessions get", func(t *testing.T) {
-		start, _ := time.Parse(layout, "2024-05-18 20:00:00 +04")
-		end, _ := time.Parse(layout, "2024-05-18 22:00:00 +04")
+		start, _ := time.Parse(timestampLayout, "2024-05-18 20:00:00 +04")
+		end, _ := time.Parse(timestampLayout, "2024-05-18 22:00:00 +04")
 		sessions := []entity.CinemaSession{
 			{
 				Id:        1,
@@ -156,7 +170,7 @@ func TestGetAllSessionsHandler(t *testing.T) {
 	t.Run("service error", func(t *testing.T) {
 		sessions := []entity.CinemaSession{{}}
 		s.sessions = sessions
-		s.err = errors.New("something went wrong")
+		s.err = service.ErrInternalError
 
 		req, err := http.NewRequest(http.MethodGet, "cinema-sessions/", nil)
 		require.NoError(t, err, "failed to create test request")
@@ -229,5 +243,181 @@ func TestDate(t *testing.T) {
 		date, err := date(req)
 		assert.NoError(t, err)
 		assert.NotEmpty(t, date)
+	})
+}
+
+type errorReader struct{}
+
+func (e errorReader) Read(p []byte) (n int, err error) {
+	return 0, errors.New("read error")
+}
+
+func TestCreateSessionHandler(t *testing.T) {
+	s := mockService{}
+	t.Run("successful session creation", func(t *testing.T) {
+		s.sessionId = 1
+		s.err = nil
+		hallId := "1"
+
+		request := fmt.Sprintf(`{"movieId": %d, "startTime": "%s", "price": %f}`, 1,
+			"2024-05-18 20:00:00 +04", 10.5)
+		body := strings.NewReader(request)
+
+		req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("cinema-sessions/%s", hallId), body)
+		req = mux.SetURLVars(req, map[string]string{"hallId": hallId})
+		require.NoError(t, err, "failed to create test request")
+
+		response := httptest.NewRecorder()
+		handler := HttpHandler{s: &s}.createSessionHandler
+		handler(response, req)
+
+		assert.Equal(t, http.StatusCreated, response.Code)
+
+		var responseBody map[string]int
+		err = json.Unmarshal(response.Body.Bytes(), &responseBody)
+		require.NoError(t, err, "failed to parse response body")
+
+		assert.Contains(t, responseBody, "session_id")
+		assert.NotZero(t, responseBody["session_id"])
+	})
+
+	t.Run("invalid hall id", func(t *testing.T) {
+		hallId := "0"
+
+		req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("cinema-sessions/%s", hallId), nil)
+		req = mux.SetURLVars(req, map[string]string{"hallId": hallId})
+		require.NoError(t, err, "failed to create test request")
+
+		response := httptest.NewRecorder()
+		handler := HttpHandler{s: &s}.createSessionHandler
+		handler(response, req)
+
+		assert.Equal(t, http.StatusBadRequest, response.Code)
+		assert.Equal(t, fmt.Sprintf("%s\n", ErrInvalidHallId), response.Body.String())
+	})
+
+	t.Run("failed to read request body", func(t *testing.T) {
+		hallId := "1"
+
+		req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("cinema-sessions/%s", hallId), errorReader{})
+		req = mux.SetURLVars(req, map[string]string{"hallId": hallId})
+		require.NoError(t, err, "failed to create test request")
+
+		response := httptest.NewRecorder()
+		handler := HttpHandler{s: &s}.createSessionHandler
+		handler(response, req)
+
+		assert.Equal(t, http.StatusBadRequest, response.Code)
+		assert.Equal(t, ErrReadRequestFail.Error()+"\n", response.Body.String())
+	})
+
+	t.Run("hall is busy", func(t *testing.T) {
+		hallId := "1"
+		s.err = service.ErrHallIsBusy
+
+		request := fmt.Sprintf(`{"movieId": %d, "startTime": "%s", "price": %f}`,
+			1, "2024-05-18 20:00:00+4", 10.5)
+		body := strings.NewReader(request)
+		req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("cinema-sessions/%s", hallId), body)
+		req = mux.SetURLVars(req, map[string]string{"hallId": hallId})
+		require.NoError(t, err, "failed to create test request")
+
+		response := httptest.NewRecorder()
+		handler := HttpHandler{s: &s}.createSessionHandler
+		handler(response, req)
+
+		assert.Equal(t, http.StatusConflict, response.Code)
+		assert.Equal(t, fmt.Sprintf("%s\n", service.ErrHallIsBusy), response.Body.String())
+	})
+
+	t.Run("internal server error", func(t *testing.T) {
+		hallId := "1"
+
+		request := fmt.Sprintf(`{"movieId": %d, "startTime": "%s", "price": %f}`,
+			1, "2024-05-18 20:00:00+4", 10.5)
+		body := strings.NewReader(request)
+
+		s.err = service.ErrInternalError
+
+		req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("/cinema-sessions/%s", hallId), body)
+		req = mux.SetURLVars(req, map[string]string{"hallId": hallId})
+		require.NoError(t, err, "failed to create test request")
+
+		response := httptest.NewRecorder()
+
+		handler := HttpHandler{s: &s}.createSessionHandler
+		handler(response, req)
+
+		assert.Equal(t, http.StatusInternalServerError, response.Code)
+		assert.Equal(t, service.ErrInternalError.Error()+"\n", response.Body.String())
+	})
+}
+
+func TestDeleteSessionHandler(t *testing.T) {
+	s := mockService{}
+
+	t.Run("successful session deletion", func(t *testing.T) {
+		sessionID := 1
+		s.sessionId = sessionID
+		s.err = nil
+
+		req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("/cinema-sessions/%d", sessionID), nil)
+		req = mux.SetURLVars(req, map[string]string{"sessionId": strconv.Itoa(sessionID)})
+		require.NoError(t, err, "failed to create test request")
+
+		response := httptest.NewRecorder()
+		handler := HttpHandler{s: &s}.deleteSessionHandler
+		handler(response, req)
+
+		assert.Equal(t, "session was deleted successfully", response.Body.String())
+		assert.Equal(t, http.StatusNoContent, response.Code)
+	})
+
+	t.Run("invalid session ID", func(t *testing.T) {
+		sessionID := "invalid"
+		req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("/cinema-sessions/%s", sessionID), nil)
+		req = mux.SetURLVars(req, map[string]string{"sessionId": sessionID})
+		require.NoError(t, err, "failed to create test request")
+
+		response := httptest.NewRecorder()
+		handler := HttpHandler{s: &s}.deleteSessionHandler
+		handler(response, req)
+
+		assert.Equal(t, fmt.Sprintf("%v\n", ErrInvalidSessionId), response.Body.String())
+		assert.Equal(t, http.StatusBadRequest, response.Code)
+	})
+
+	t.Run("session not found", func(t *testing.T) {
+		sessionID := 2
+		s.sessionId = sessionID
+		s.err = service.ErrCinemaSessionsNotFound
+
+		req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("/cinema-sessions/%d", sessionID), nil)
+		req = mux.SetURLVars(req, map[string]string{"sessionId": strconv.Itoa(sessionID)})
+		require.NoError(t, err, "failed to create test request")
+
+		response := httptest.NewRecorder()
+		handler := HttpHandler{s: &s}.deleteSessionHandler
+		handler(response, req)
+
+		assert.Equal(t, fmt.Sprintf("%v\n", service.ErrCinemaSessionsNotFound), response.Body.String())
+		assert.Equal(t, http.StatusNotFound, response.Code)
+	})
+
+	t.Run("repository error", func(t *testing.T) {
+		sessionID := 3
+		s.sessionId = sessionID
+		s.err = service.ErrInternalError
+
+		req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("/cinema-sessions/%d", sessionID), nil)
+		req = mux.SetURLVars(req, map[string]string{"sessionId": strconv.Itoa(sessionID)})
+		require.NoError(t, err, "failed to create test request")
+
+		response := httptest.NewRecorder()
+		handler := HttpHandler{s: &s}.deleteSessionHandler
+		handler(response, req)
+
+		assert.Equal(t, fmt.Sprintf("%v\n", service.ErrInternalError), response.Body.String())
+		assert.Equal(t, http.StatusInternalServerError, response.Code)
 	})
 }
