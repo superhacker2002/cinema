@@ -1,17 +1,23 @@
 package repository
 
 import (
+	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/hall/service"
 	"database/sql"
 	"encoding/json"
-	"errors"
+	"fmt"
+	"log"
 	"net/http"
 
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/hall/handler"
 )
 
-var (
-	ErrHallNotFound = errors.New("Cinema hall not found")
-)
+const selectQuery = "SELECT %s FROM %s"
+
+type hall struct {
+	Id       int
+	Name     string
+	Capacity int
+}
 
 type HallRepository struct {
 	db *sql.DB
@@ -21,21 +27,26 @@ func New(db *sql.DB) *HallRepository {
 	return &HallRepository{db: db}
 }
 
-func (r *HallRepository) GetCinemaHalls() ([]handler.CinemaHall, error) {
-	rows, err := r.db.Query("SELECT hall_id, hall_name, capacity FROM halls")
+func (r *HallRepository) Halls() ([]service.Hall, error) {
+	rows, err := r.db.Query(fmt.Sprintf(selectQuery, "hall_id, hall_name, capacity", "halls"))
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
-	var cinemaHalls []handler.CinemaHall
-	for rows.Next() {
-		var hall handler.CinemaHall
-		err := rows.Scan(&hall.ID, &hall.Name, &hall.Capacity)
-		if err != nil {
-			return nil, err
+	defer func() {
+		if err = rows.Close(); err != nil {
+			log.Println(err)
 		}
-		cinemaHalls = append(cinemaHalls, hall)
+	}()
+
+	var cinemaHalls []service.Hall
+	for rows.Next() {
+		var hall hall
+		if err = rows.Scan(&hall.Id, &hall.Name, &hall.Capacity); err != nil {
+			log.Println(err)
+			return nil, fmt.Errorf("failed to get hall: %w", err)
+		}
+		cinemaHalls = append(cinemaHalls, service.NewHallEntity(hall.Id, hall.Name, hall.Capacity))
 	}
 
 	return cinemaHalls, nil
