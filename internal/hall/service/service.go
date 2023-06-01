@@ -34,8 +34,16 @@ type Service struct {
 	R repository
 }
 
+func New(r repository) Service {
+	return Service{R: r}
+}
+
 func (s Service) Halls() ([]Hall, error) {
-	return s.R.Halls()
+	halls, err := s.R.Halls()
+	if err != nil {
+		return []Hall{}, ErrInternalError
+	}
+	return halls, nil
 }
 
 func (s Service) HallById(id int) (Hall, error) {
@@ -50,7 +58,11 @@ func (s Service) HallById(id int) (Hall, error) {
 }
 
 func (s Service) CreateHall(name string, capacity int) (hallId int, err error) {
-	return s.R.CreateHall(name, capacity)
+	id, err := s.R.CreateHall(name, capacity)
+	if err != nil {
+		return 0, ErrInternalError
+	}
+	return id, nil
 }
 
 func (s Service) UpdateHall(id int, name string, capacity int) error {

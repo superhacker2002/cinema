@@ -25,6 +25,7 @@ func New(db *sql.DB) *HallRepository {
 func (h *HallRepository) Halls() ([]service.Hall, error) {
 	rows, err := h.db.Query(`SELECT hall_id, hall_name, capacity FROM halls`)
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
 
