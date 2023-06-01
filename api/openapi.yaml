@@ -714,6 +714,35 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /cinema-sessions/{sessionId}/seats:
+    get:
+      summary: Returns all available seats for the session
+      operationId: getAvailableSeats
+      tags:
+        - cinema sessions
+      parameters:
+        - in: path
+          name: sessionId
+          required: true
+          schema:
+            type: integer
+          description: ID of the cinema session to get seats available
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                format: int
+                example: [1, 2, 3, 4, 8, 9]
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   /tickets:
     post:
       tags:
