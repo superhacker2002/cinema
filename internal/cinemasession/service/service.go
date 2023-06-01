@@ -18,6 +18,7 @@ type repository interface {
 	SessionEndTime(id int, startTime string) (string, error)
 	HallIsBusy(sessionId, hallId int, startTime, endTime string) (bool, error)
 	UpdateSession(id, movieId, hallId int, startTime, endTime string, price float32) error
+	AvailableSeats(sessionId int) ([]int, error)
 }
 
 var (
@@ -26,6 +27,7 @@ var (
 	ErrHallIsBusy             = errors.New("hall is busy at the time")
 	ErrHallNotFound           = errors.New("hall was not found")
 	ErrMovieNotFound          = errors.New("movie was not found")
+	ErrNoAvailableSeats       = errors.New("no available seats found for the cinema session")
 )
 
 type Service struct {
@@ -171,4 +173,22 @@ func (s Service) UpdateSession(id, movieId, hallId int, startTime string, price 
 	}
 
 	return nil
+}
+
+func (s Service) AvailableSeats(sessionId int) ([]int, error) {
+	ok, err := s.r.SessionExists(sessionId)
+	if err != nil {
+		return nil, ErrInternalError
+	}
+	if !ok {
+		return nil, ErrCinemaSessionsNotFound
+	}
+	seats, err := s.r.AvailableSeats(sessionId)
+	if errors.Is(err, ErrNoAvailableSeats) {
+		return nil, err
+	}
+	if err != nil {
+		return nil, ErrInternalError
+	}
+	return seats, nil
 }

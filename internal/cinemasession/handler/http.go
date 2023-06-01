@@ -249,7 +249,7 @@ func (h HttpHandler) deleteSessionHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (h HttpHandler) availableSeatsHandler(w http.ResponseWriter, r *http.Request) {
-	sessionId, err := apiutils.IntPathParam((r, "sessionId")
+	sessionId, err := apiutils.IntPathParam(r, "sessionId")
 	if err != nil {
 		log.Println(err)
 		http.Error(w, ErrInvalidSessionId.Error(), http.StatusBadRequest)
