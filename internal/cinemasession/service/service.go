@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"sort"
 )
 
 type repository interface {
@@ -190,5 +191,6 @@ func (s Service) AvailableSeats(sessionId int) ([]int, error) {
 	if err != nil {
 		return nil, ErrInternalError
 	}
+	sort.Ints(seats)
 	return seats, nil
 }
