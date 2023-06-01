@@ -13,12 +13,13 @@ type mockRepo struct {
 	movieExists   bool
 	hallExists    bool
 	hallBusy      bool
+	seats         []int
 	id            int
 	err           error
 }
 
 func (m *mockRepo) AvailableSeats(sessionId int) ([]int, error) {
-	return nil, nil
+	return m.seats, m.err
 }
 
 func (m *mockRepo) UpdateSession(id, movieId, hallId int, startTime, endTime string, price float32) error {
@@ -282,5 +283,49 @@ func TestUpdateSession(t *testing.T) {
 		s := New(&repo)
 		err := s.UpdateSession(1, 1, 1, "2023-05-30 20:00:00 +04", 10.0)
 		assert.ErrorIs(t, err, ErrInternalError)
+	})
+}
+
+func TestAvailableSeats(t *testing.T) {
+	repo := mockRepo{}
+
+	t.Run("successful seats get", func(t *testing.T) {
+		repo.sessionExists = true
+		repo.seats = []int{3, 2, 1}
+		repo.err = nil
+
+		s := New(&repo)
+		seats, err := s.AvailableSeats(1)
+		assert.NoError(t, err)
+		assert.Equal(t, seats, []int{1, 2, 3})
+	})
+
+	t.Run("session does not exist", func(t *testing.T) {
+		repo.sessionExists = false
+
+		s := New(&repo)
+		seats, err := s.AvailableSeats(1)
+		assert.ErrorIs(t, err, ErrCinemaSessionsNotFound)
+		assert.Zero(t, len(seats))
+	})
+
+	t.Run("no available seats", func(t *testing.T) {
+		repo.sessionExists = true
+		repo.err = ErrNoAvailableSeats
+
+		s := New(&repo)
+		seats, err := s.AvailableSeats(1)
+		assert.ErrorIs(t, err, ErrNoAvailableSeats)
+		assert.Zero(t, len(seats))
+	})
+
+	t.Run("repository error", func(t *testing.T) {
+		repo.sessionExists = true
+		repo.err = errors.New("something went wrong")
+
+		s := New(&repo)
+		seats, err := s.AvailableSeats(1)
+		assert.ErrorIs(t, err, ErrInternalError)
+		assert.Zero(t, len(seats))
 	})
 }
