@@ -16,6 +16,7 @@ test:
 clean:
 	docker compose down
 
+
 .PHONY: test-auth
 test-auth:
 	 curl -i -X 'POST' \
