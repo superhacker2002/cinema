@@ -209,7 +209,11 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Hall'
+              properties:
+                id:
+                  type: integer
+                  example: 1
+                  description: ID of the hall tha was created on the server side
       responses:
         '201':
           description: The new hall was created successfully
@@ -279,11 +283,9 @@ paths:
               $ref: '#/components/schemas/Hall'
       responses:
         '200':
-          description: Details about the updated hall
           content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Hall'
+            text/plain:
+              example: "hall was successfully updated"
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -309,7 +311,8 @@ paths:
             type: integer
       responses:
         '204':
-          description: The hall was deleted successfully
+          text/plain:
+            example: "hall was successfully deleted"
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
