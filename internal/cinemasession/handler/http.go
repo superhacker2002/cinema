@@ -223,7 +223,7 @@ func (h HttpHandler) updateSessionHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	apiutils.WriteResponse(w, "session was updated successfully", http.StatusOK)
+	apiutils.WriteMsg(w, "session was updated successfully\n", http.StatusOK)
 }
 
 func (h HttpHandler) deleteSessionHandler(w http.ResponseWriter, r *http.Request) {
@@ -245,7 +245,7 @@ func (h HttpHandler) deleteSessionHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	apiutils.WriteResponse(w, "session was deleted successfully", http.StatusNoContent)
+	apiutils.WriteMsg(w, "session was deleted successfully\n", http.StatusNoContent)
 }
 
 func (h HttpHandler) availableSeatsHandler(w http.ResponseWriter, r *http.Request) {

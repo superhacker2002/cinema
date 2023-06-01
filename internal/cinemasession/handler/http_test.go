@@ -24,6 +24,10 @@ type mockService struct {
 	err       error
 }
 
+func (m *mockService) AvailableSeats(sessionId int) ([]int, error) {
+	return nil, nil
+}
+
 func (m *mockService) UpdateSession(id, movieId, hallId int, startTime string, price float32) error {
 	return nil
 }
