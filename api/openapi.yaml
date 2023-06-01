@@ -97,6 +97,10 @@ components:
           type: integer
           example: 1
           description: ID of the movie being shown in the cinema session.
+        hall_id:
+          type: integer
+          example: 1
+          description: ID of the hall where the session will take place.
         start_time:
           type: string
           format: timestamp
@@ -107,6 +111,7 @@ components:
           format: timestamp
           description: Start time of the cinema session.
           example: 2024-05-18 22:00:00
+          readOnly: true
         price:
           type: number
           format: float
@@ -130,11 +135,20 @@ components:
           type: integer
           example: 1
           description: ID of the movie being shown in the cinema session.
+        hall_id:
+          type: integer
+          example: 1
+          description: ID of the hall where the session will take place.
         start_time:
           type: string
           format: timestamp
           description: Start time of the cinema session
           example: 2024-05-18 20:00:00
+        price:
+          type: number
+          format: float
+          example: 10.5
+          description: Price for the cinema session in GEL
         status:
           type: string
           description: Current status of the movie
@@ -605,7 +619,21 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CinemaSession'
+              properties:
+                movie_id:
+                  type: integer
+                  example: 1
+                  description: ID of the movie being shown in the cinema session.
+                start_time:
+                  type: string
+                  format: timestamp
+                  description: Start time of the cinema session
+                  example: 2024-05-18 20:00:00
+                price:
+                  type: number
+                  format: float
+                  example: 10.5
+                  description: Price for the cinema session in GEL
       responses:
         '201':
           description: The newly created cinema session
@@ -652,10 +680,6 @@ paths:
       responses:
         '200':
           description: The cinema session was updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CinemaSession'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':

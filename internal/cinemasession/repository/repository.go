@@ -29,15 +29,21 @@ type CinemaSession struct {
 }
 
 func (s *SessionsRepository) SessionsForHall(hallId int, date string) ([]entity.CinemaSession, error) {
-	rows, err := s.db.Query("SELECT session_id, movie_id, hall_id, start_time, end_time, price "+
-		"FROM cinema_sessions "+
-		"WHERE hall_id = $1 AND date_trunc('day', start_time) = $2 "+
-		"ORDER BY start_time ", hallId, date)
-
+	rows, err := s.db.Query(`SELECT session_id, movie_id, hall_id, start_time, end_time, price
+		FROM cinema_sessions
+		WHERE hall_id = $1 AND date_trunc('day', start_time) = $2
+		ORDER BY start_time`, hallId, date)
 	if err != nil {
 		log.Println(err)
 		return nil, fmt.Errorf("failed to get cinema sessions: %w", err)
 	}
+
+	defer func() {
+		err = rows.Close()
+		if err != nil {
+			log.Println(err)
+		}
+	}()
 
 	cinemaSessions, err := s.readCinemaSessions(rows)
 	if err != nil {
@@ -49,17 +55,24 @@ func (s *SessionsRepository) SessionsForHall(hallId int, date string) ([]entity.
 }
 
 func (s *SessionsRepository) AllSessions(date string, offset, limit int) ([]entity.CinemaSession, error) {
-	rows, err := s.db.Query("SELECT session_id, movie_id, hall_id, start_time, end_time, price "+
-		"FROM cinema_sessions "+
-		"WHERE start_time >= $1 "+
-		"ORDER BY hall_id, start_time "+
-		"OFFSET $2 "+
-		"LIMIT $3", date, offset, limit)
+	rows, err := s.db.Query(`SELECT session_id, movie_id, hall_id, start_time, end_time, price
+		FROM cinema_sessions
+		WHERE start_time >= $1
+		ORDER BY hall_id, start_time
+		OFFSET $2
+		LIMIT $3`, date, offset, limit)
 
 	if err != nil {
 		log.Println(err)
 		return nil, fmt.Errorf("failed to get cinema sessions: %w", err)
 	}
+
+	defer func() {
+		err = rows.Close()
+		if err != nil {
+			log.Println(err)
+		}
+	}()
 
 	cinemaSessions, err := s.readCinemaSessions(rows)
 	if err != nil {
@@ -71,9 +84,9 @@ func (s *SessionsRepository) AllSessions(date string, offset, limit int) ([]enti
 }
 
 func (s *SessionsRepository) CreateSession(movieId, hallId int, startTime, endTime string, price float32) (sessionId int, err error) {
-	err = s.db.QueryRow("INSERT INTO cinema_sessions (movie_id, hall_id, start_time, end_time, price)"+
-		"VALUES ($1, $2, $3, $4, $5)"+
-		"RETURNING session_id", movieId, hallId, startTime, endTime, price).Scan(&sessionId)
+	err = s.db.QueryRow(`INSERT INTO cinema_sessions (movie_id, hall_id, start_time, end_time, price)
+		VALUES ($1, $2, $3, $4, $5)
+		RETURNING session_id`, movieId, hallId, startTime, endTime, price).Scan(&sessionId)
 	if err != nil {
 		log.Println(err)
 		return 0, err
@@ -83,11 +96,10 @@ func (s *SessionsRepository) CreateSession(movieId, hallId int, startTime, endTi
 }
 
 func (s *SessionsRepository) HallIsBusy(sessionId, hallId int, startTime, endTime string) (bool, error) {
-	row := s.db.QueryRow("SELECT session_id "+
-		"FROM cinema_sessions "+
-		"WHERE hall_id = $1 AND $2 < start_time AND start_time < $3 "+
-		"OR (start_time <= $2 AND end_time > $2)",
-		hallId, startTime, endTime)
+	row := s.db.QueryRow(`SELECT session_id
+		FROM cinema_sessions
+		WHERE hall_id = $1 AND $2 < start_time AND start_time < $3
+		OR (start_time <= $2 AND end_time > $2)`, hallId, startTime, endTime)
 
 	var id int
 	if err := row.Scan(&id); err == nil {
@@ -134,29 +146,66 @@ func (s *SessionsRepository) DeleteSession(id int) error {
 }
 
 func (s *SessionsRepository) UpdateSession(id, movieId, hallId int, startTime, endTime string, price float32) error {
-	var hall int
-	err := s.db.QueryRow("SELECT hall_id FROM cinema_sessions WHERE session_id = $1", id).Scan(&hall)
-	log.Println("current hall", hall)
-	log.Println("new hall value", hallId)
-
-	_, err = s.db.Exec("UPDATE cinema_sessions "+
-		"SET movie_id = $1, hall_id = $2, start_time = $3, end_time = $4, price = $5 "+
-		"WHERE session_id = $6", movieId, hallId, startTime, endTime, price, id)
+	_, err := s.db.Exec(`UPDATE cinema_sessions
+		SET movie_id = $1, hall_id = $2, start_time = $3, end_time = $4, price = $5
+		WHERE session_id = $6`, movieId, hallId, startTime, endTime, price, id)
 
 	if err != nil {
 		return fmt.Errorf("failed to update cinema session: %w", err)
 	}
 
-	err = s.db.QueryRow("SELECT hall_id FROM cinema_sessions WHERE session_id = $1", id).Scan(&hall)
-	log.Println("updated hall:", hall)
-
 	return nil
+}
+
+func (s *SessionsRepository) AvailableSeats(sessionId int) ([]int, error) {
+	query := `SELECT seat_number
+				FROM (SELECT generate_series(1, capacity) AS seat_number
+		      		  FROM halls
+                      WHERE hall_id = $1)
+				EXCEPT (SELECT seat_number
+                        FROM tickets
+                        WHERE session_id = $2)`
+	rows, err := s.db.Query(query)
+	if err != nil {
+		log.Println(err)
+		return nil, fmt.Errorf("failed to get available seats: %w", err)
+	}
+	defer func() {
+		err = rows.Close()
+		if err != nil {
+			log.Println(err)
+		}
+	}()
+
+	var freeSeats []int
+	for rows.Next() {
+		var seatNumber int
+		err := rows.Scan(&seatNumber)
+		if err != nil {
+			log.Println(err)
+			return nil, fmt.Errorf("failed to get available seats: %w", err)
+		}
+		freeSeats = append(freeSeats, seatNumber)
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Println(err)
+		return nil, fmt.Errorf("error while iterating over halls seats: %w", err)
+	}
+
+	if len(freeSeats) == 0 {
+		log.Println(service.ErrNoAvailableSeats)
+		return nil, service.ErrNoAvailableSeats
+	}
+
+	return freeSeats, nil
 }
 
 func (s *SessionsRepository) SessionExists(id int) (bool, error) {
 	var count int
 	err := s.db.QueryRow("SELECT COUNT(*) FROM cinema_sessions WHERE session_id = $1", id).Scan(&count)
 	if err != nil {
+		log.Println(err)
 		return false, fmt.Errorf("failed to check if session exists %w", err)
 	}
 

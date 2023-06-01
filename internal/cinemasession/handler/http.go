@@ -30,6 +30,7 @@ type Service interface {
 	CreateSession(movieId, hallId int, startTime string, price float32) (int, error)
 	DeleteSession(id int) error
 	UpdateSession(id, movieId, hallId int, startTime string, price float32) error
+	AvailableSeats(sessionId int) ([]int, error)
 }
 
 type HttpHandler struct {
@@ -46,7 +47,6 @@ type session struct {
 	MovieId   int     `json:"movieId"`
 	HallId    int     `json:"hallId"`
 	StartTime string  `json:"startTime"`
-	EndTime   string  `json:"endTime"`
 	Price     float32 `json:"price"`
 	Status    string  `json:"status"`
 }
@@ -65,6 +65,7 @@ func (h HttpHandler) setRoutes(router *mux.Router) {
 	s.HandleFunc("/{sessionId}", h.deleteSessionHandler).Methods("DELETE")
 	s.HandleFunc("/{hallId}", h.getSessionsHandler).Methods("GET")
 	s.HandleFunc("/{hallId}", h.createSessionHandler).Methods("POST")
+	s.HandleFunc("/{sessionId}/seats", h.availableSeatsHandler).Methods("GET")
 }
 
 func (h HttpHandler) getAllSessionsHandler(w http.ResponseWriter, r *http.Request) {
@@ -111,8 +112,6 @@ func (h HttpHandler) getSessionsHandler(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, fmt.Sprintf("%v: %s", ErrInvalidDate, d), http.StatusBadRequest)
 		return
 	}
-
-	fmt.Println(hallId)
 
 	sessions, err := h.s.SessionsForHall(hallId, d)
 
@@ -172,15 +171,7 @@ func (h HttpHandler) createSessionHandler(w http.ResponseWriter, r *http.Request
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]int{"session_id": id})
-	if err != nil {
-		log.Println(err)
-		http.Error(w, service.ErrInternalError.Error(), http.StatusInternalServerError)
-		return
-	}
+	apiutils.WriteResponse(w, map[string]int{"session_id": id}, http.StatusCreated)
 }
 
 func (h HttpHandler) updateSessionHandler(w http.ResponseWriter, r *http.Request) {
@@ -233,13 +224,7 @@ func (h HttpHandler) updateSessionHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write([]byte("session was updated successfully\n"))
-	if err != nil {
-		log.Println(err)
-		http.Error(w, service.ErrInternalError.Error(), http.StatusInternalServerError)
-		return
-	}
+	apiutils.WriteMsg(w, "session was updated successfully\n", http.StatusOK)
 }
 
 func (h HttpHandler) deleteSessionHandler(w http.ResponseWriter, r *http.Request) {
@@ -261,13 +246,30 @@ func (h HttpHandler) deleteSessionHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
-	_, err = w.Write([]byte("session was deleted successfully\n"))
+	apiutils.WriteMsg(w, "session was deleted successfully\n", http.StatusNoContent)
+}
+
+func (h HttpHandler) availableSeatsHandler(w http.ResponseWriter, r *http.Request) {
+	sessionId, err := apiutils.IntPathParam(r, "sessionId")
 	if err != nil {
 		log.Println(err)
-		http.Error(w, service.ErrInternalError.Error(), http.StatusInternalServerError)
+		http.Error(w, ErrInvalidSessionId.Error(), http.StatusBadRequest)
 		return
 	}
+
+	seats, err := h.s.AvailableSeats(sessionId)
+	if errors.Is(service.ErrCinemaSessionsNotFound, err) {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	apiutils.WriteResponse(w, seats, http.StatusOK)
+
 }
 
 func page(r *http.Request) (Page, error) {
@@ -324,7 +326,6 @@ func entitiesToDTO(sessions []entity.CinemaSession) []session {
 			MovieId:   s.MovieId,
 			HallId:    s.HallId,
 			StartTime: s.StartTime.Format(timestampLayout),
-			EndTime:   s.EndTime.Format(timestampLayout),
 			Price:     s.Price,
 			Status:    s.Status,
 		})

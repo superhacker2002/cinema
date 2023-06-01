@@ -1,9 +1,11 @@
 OPENAPI_FILE=openapi.html
-DATABASE_CONTAINER=cinema-container
-DATABASE_IMAGE=cinema-image
 
 .PHONY: run
+<<<<<<< HEAD
 run: docker-db
+=======
+run:
+>>>>>>> 8426025b7a7b0bd59d3fee9c5bd7960d4b6c6c52
 	go run cmd/cinema.go
 
 docker-compose-run:
@@ -13,6 +15,7 @@ docker-compose-run:
 test:
 	go test ./...
 
+<<<<<<< HEAD
 clean:
 	docker compose down
 
@@ -56,6 +59,8 @@ clean-docker:
 	docker rm $(DATABASE_CONTAINER)
 	docker rmi $(DATABASE_IMAGE)
 
+=======
+>>>>>>> 8426025b7a7b0bd59d3fee9c5bd7960d4b6c6c52
 .PHONY: openapi-docs
 openapi-docs:
 	redocly build-docs api/openapi.yaml --output=docs/$(OPENAPI_FILE)
@@ -63,6 +68,7 @@ openapi-docs:
 
 .PHONY: clean-docs
 clean-docs:
+<<<<<<< HEAD
 	rm -rf docs/
 
 
@@ -91,3 +97,6 @@ test-create-hall:
 test-delete-hall:
 	 curl -i -X 'DELETE' \
     'localhost:8080/halls/1'
+=======
+	rm -rf docs/
+>>>>>>> 8426025b7a7b0bd59d3fee9c5bd7960d4b6c6c52

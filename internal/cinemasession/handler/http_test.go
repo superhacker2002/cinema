@@ -24,6 +24,10 @@ type mockService struct {
 	err       error
 }
 
+func (m *mockService) AvailableSeats(sessionId int) ([]int, error) {
+	return nil, nil
+}
+
 func (m *mockService) UpdateSession(id, movieId, hallId int, startTime string, price float32) error {
 	return nil
 }
@@ -369,7 +373,7 @@ func TestDeleteSessionHandler(t *testing.T) {
 		handler := HttpHandler{s: &s}.deleteSessionHandler
 		handler(response, req)
 
-		assert.Equal(t, "session was deleted successfully", response.Body.String())
+		assert.Equal(t, "session was deleted successfully\n", response.Body.String())
 		assert.Equal(t, http.StatusNoContent, response.Code)
 	})
 

@@ -17,6 +17,10 @@ type mockRepo struct {
 	err           error
 }
 
+func (m *mockRepo) AvailableSeats(sessionId int) ([]int, error) {
+	return nil, nil
+}
+
 func (m *mockRepo) UpdateSession(id, movieId, hallId int, startTime, endTime string, price float32) error {
 	return m.err
 }
