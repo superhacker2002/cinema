@@ -30,11 +30,11 @@ type Service interface {
 }
 
 type HTTPHandler struct {
-	s Service
+	S Service
 }
 
 func New(router *mux.Router, s Service) HTTPHandler {
-	handler := HTTPHandler{s: s}
+	handler := HTTPHandler{S: s}
 	handler.setRoutes(router)
 
 	return handler
@@ -50,7 +50,7 @@ func (h HTTPHandler) setRoutes(router *mux.Router) {
 }
 
 func (h HTTPHandler) getHallsHandler(w http.ResponseWriter, _ *http.Request) {
-	cinemaHalls, err := h.s.Halls()
+	cinemaHalls, err := h.S.Halls()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -73,7 +73,7 @@ func (h HTTPHandler) createHallHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.s.CreateHall(hall.Name, hall.Capacity)
+	id, err := h.S.CreateHall(hall.Name, hall.Capacity)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -89,7 +89,7 @@ func (h HTTPHandler) getHallHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hall, err := h.s.HallById(hallID)
+	hall, err := h.S.HallById(hallID)
 	if errors.Is(err, service.ErrHallNotFound) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
@@ -123,7 +123,7 @@ func (h HTTPHandler) updateHallHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.s.UpdateHall(hallID, hall.Name, hall.Capacity)
+	err = h.S.UpdateHall(hallID, hall.Name, hall.Capacity)
 	if errors.Is(err, service.ErrHallNotFound) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
@@ -144,7 +144,7 @@ func (h HTTPHandler) deleteHallHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.s.DeleteHall(hallID)
+	err = h.S.DeleteHall(hallID)
 	if errors.Is(err, service.ErrHallNotFound) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
