@@ -26,7 +26,6 @@ CREATE TABLE halls (
     hall_id SERIAL PRIMARY KEY,
     hall_name VARCHAR(50) NOT NULL,
     capacity INTEGER NOT NULL,
-    availability BOOLEAN NOT NULL DEFAULT true
 );
 
 CREATE TABLE cinema_sessions (
