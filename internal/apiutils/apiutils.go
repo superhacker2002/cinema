@@ -32,3 +32,13 @@ func WriteResponse(w http.ResponseWriter, data interface{}, statusCode int) {
 	}
 	w.WriteHeader(statusCode)
 }
+
+func WriteMsg(w http.ResponseWriter, msg string, statusCode int) {
+	w.WriteHeader(statusCode)
+	w.Header().Set("Content-Type", "text/plain")
+	_, err := w.Write([]byte(msg))
+	if err != nil {
+		log.Println(err)
+		http.Error(w, service.ErrInternalError.Error(), http.StatusInternalServerError)
+	}
+}

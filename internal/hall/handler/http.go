@@ -134,7 +134,7 @@ func (h HTTPHandler) updateHallHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	apiutils.WriteResponse(w, "cinema hall was updated successfully", http.StatusOK)
+	apiutils.WriteMsg(w, "cinema hall was updated successfully\n", http.StatusOK)
 }
 
 func (h HTTPHandler) deleteHallHandler(w http.ResponseWriter, r *http.Request) {
@@ -155,7 +155,7 @@ func (h HTTPHandler) deleteHallHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	apiutils.WriteResponse(w, "cinema hall was deleted successfully", http.StatusOK)
+	apiutils.WriteMsg(w, "cinema hall was deleted successfully\n", http.StatusOK)
 }
 
 func entitiesToDTO(halls []service.Hall) []cinemaHall {
