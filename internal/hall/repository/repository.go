@@ -55,8 +55,10 @@ func (h *HallRepository) HallById(id int) (service.Hall, error) {
 	err := row.Scan(&hall.Id, &hall.Name, &hall.Capacity)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
+			log.Println(err)
 			return service.Hall{}, service.ErrHallNotFound
 		}
+		log.Println(err)
 		return service.Hall{}, fmt.Errorf("could not get user credentials: %w", err)
 	}
 
@@ -81,6 +83,7 @@ func (h *HallRepository) UpdateHall(id int, name string, capacity int) error {
 								SET hall_name = $1, capacity = $2
 								WHERE hall_id = $3`, name, capacity, id)
 	if err != nil {
+		log.Println(err)
 		return fmt.Errorf("failed to update hall: %w", err)
 	}
 
@@ -90,6 +93,7 @@ func (h *HallRepository) UpdateHall(id int, name string, capacity int) error {
 func (h *HallRepository) DeleteHall(id int) error {
 	_, err := h.db.Exec(`DELETE FROM halls WHERE hall_id = $1`, id)
 	if err != nil {
+		log.Println(err)
 		return fmt.Errorf("failed to delete hall: %w", err)
 	}
 
@@ -106,33 +110,3 @@ func (h *HallRepository) HallExists(id int) (bool, error) {
 
 	return count > 0, nil
 }
-
-/*
-func (h *HallRepository) UpdateHallAvailability(id int, available bool) error {
-	_, err := h.db.Exec("UPDATE halls SET available = $1 WHERE hall_id = $2", available, id)
-	return err
-}
-
-func AssignMovie(w http.ResponseWriter, r *http.Request, db *sql.DB) {
-	var assignment struct {
-		HallID int    `json:"hallId"`
-		Movie  string `json:"movie"`
-		Seats  int    `json:"seats"`
-	}
-
-	err := json.NewDecoder(r.Body).Decode(&assignment)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	_, err = db.Exec("UPDATE halls SET assigned_movie = $1, seats_available = $2 WHERE hall_id = $3",
-		assignment.Movie, assignment.Seats, assignment.HallID)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-}
-*/
