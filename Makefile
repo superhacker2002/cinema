@@ -3,12 +3,18 @@ DATABASE_CONTAINER=cinema-container
 DATABASE_IMAGE=cinema-image
 
 .PHONY: run
-run:
+run: docker-db
+	go run cmd/cinema.go
+
+docker-compose-run:
 	docker compose up
 
 .PHONY: test
 test:
 	go test ./...
+
+clean:
+	docker compose down
 
 .PHONY: test-auth
 test-auth:
@@ -83,4 +89,4 @@ test-create-hall:
 
 test-delete-hall:
 	 curl -i -X 'DELETE' \
-    'localhost:8080/halls/2'
+    'localhost:8080/halls/1'
