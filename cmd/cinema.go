@@ -6,6 +6,7 @@ import (
 
 	hallHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/hall/handler"
 	hallRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/hall/repository"
+	hallService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/hall/service"
 
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/auth/service"
 	sessionsHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasession/handler"
@@ -43,7 +44,8 @@ func main() {
 	sessionsHandler.New(router, sessionsServ)
 
 	hallRepo := hallRepository.New(db)
-	hallHandler.New(router, hallRepo)
+	hallServ := hallService.New(hallRepo)
+	hallHandler.New(router, hallServ)
 
 	log.Fatal(http.ListenAndServe(":"+configs.Port, router))
 }
