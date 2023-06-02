@@ -2,11 +2,10 @@ package service
 
 import (
 	"errors"
-	"time"
 )
 
 var (
-	ErrHallNotFound  = errors.New("hall not found")
+	ErrMovieNotFound = errors.New("movie not found")
 	ErrInternalError = errors.New("internal server error")
 )
 
@@ -14,25 +13,27 @@ type Movie struct {
 	Id          int
 	Title       string
 	Genre       string
-	ReleaseDate time.Time
+	ReleaseDate string
 	Duration    int
 }
 
-func NewMovieEntity(id int, name string, capacity int) Movie {
-	return Hall{
-		Id:       id,
-		Name:     name,
-		Capacity: capacity,
+func NewMovieEntity(id int, title, genre string, releaseDate string, duration int) Movie {
+	return Movie{
+		Id:          id,
+		Title:       title,
+		Genre:       genre,
+		ReleaseDate: releaseDate,
+		Duration:    duration,
 	}
 }
 
 type repository interface {
-	Halls() ([]Hall, error)
-	HallById(id int) (Hall, error)
-	CreateHall(name string, capacity int) (hallId int, err error)
-	UpdateHall(id int, name string, capacity int) error
-	DeleteHall(id int) error
-	HallExists(id int) (bool, error)
+	Movies() ([]Movie, error)
+	MovieById(id int) (Movie, error)
+	CreateMovie(title, genre, releaseDate string, duration int) (movieId int, err error)
+	UpdateMovie(id int, title, genre, releaseDate string, duration int) error
+	DeleteMovie(id int) error
+	MovieExists(id int) (bool, error)
 }
 
 type Service struct {
@@ -43,51 +44,51 @@ func New(r repository) Service {
 	return Service{R: r}
 }
 
-func (s Service) Halls() ([]Hall, error) {
-	halls, err := s.R.Halls()
+func (s Service) Movies() ([]Movie, error) {
+	halls, err := s.R.Movies()
 	if err != nil {
-		return []Hall{}, ErrInternalError
+		return []Movie{}, ErrInternalError
 	}
 	return halls, nil
 }
 
-func (s Service) HallById(id int) (Hall, error) {
-	hall, err := s.R.HallById(id)
-	if errors.Is(err, ErrHallNotFound) {
-		return Hall{}, ErrHallNotFound
+func (s Service) MovieById(id int) (Movie, error) {
+	hall, err := s.R.MovieById(id)
+	if errors.Is(err, ErrMovieNotFound) {
+		return Movie{}, ErrMovieNotFound
 	}
 	if err != nil {
-		return Hall{}, ErrInternalError
+		return Movie{}, ErrInternalError
 	}
 	return hall, nil
 }
 
-func (s Service) CreateHall(name string, capacity int) (hallId int, err error) {
-	id, err := s.R.CreateHall(name, capacity)
+func (s Service) CreateMovie(title, genre, releaseDate string, duration int) (movieId int, err error) {
+	id, err := s.R.CreateMovie(title, genre, releaseDate, duration)
 	if err != nil {
 		return 0, ErrInternalError
 	}
 	return id, nil
 }
 
-func (s Service) UpdateHall(id int, name string, capacity int) error {
-	ok, err := s.R.HallExists(id)
+func (s Service) UpdateMovie(id int, title, genre, releaseDate string, duration int) error {
+	ok, err := s.R.MovieExists(id)
 	if err != nil {
 		return ErrInternalError
 	}
 	if !ok {
-		return ErrHallNotFound
+		return ErrMovieNotFound
 	}
-	return s.R.UpdateHall(id, name, capacity)
+	return s.R.UpdateMovie(id, title, genre, releaseDate, duration)
 }
 
-func (s Service) DeleteHall(id int) error {
-	ok, err := s.R.HallExists(id)
+func (s Service) DeleteMovie(id int) error {
+	ok, err := s.R.MovieExists(id)
 	if err != nil {
 		return ErrInternalError
 	}
 	if !ok {
-		return ErrHallNotFound
+		return ErrMovieNotFound
 	}
-	return s.R.DeleteHall(id)
+	return s.R.DeleteMovie(id)
 }

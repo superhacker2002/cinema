@@ -12,10 +12,10 @@ import (
 
 var (
 	ErrReadRequestFail = errors.New("failed to read request")
-	ErrInvalidMovie    = errors.New("invalid movie id")
+	ErrInvalidMovieId  = errors.New("invalid movie id")
 )
 
-type cinemaHall struct {
+type Movie struct {
 	ID          int    `json:"id"`
 	Title       string `json:"title"`
 	Genre       string `json:"genre"`
@@ -27,7 +27,7 @@ type Service interface {
 	Movies() ([]service.Movie, error)
 	MovieById(id int) (service.Movie, error)
 	CreateMovie(title, genre, releaseDate string, duration int) (movieId int, err error)
-	UpdateMovie(id int, name string, capacity int) error
+	UpdateMovie(id int, title, genre, releaseDate string, duration int) error
 	DeleteMovie(id int) error
 }
 
@@ -46,13 +46,13 @@ func (h HTTPHandler) setRoutes(router *mux.Router) {
 	s := router.PathPrefix("/halls").Subrouter()
 	s.HandleFunc("/", h.getMoviesHandler).Methods(http.MethodGet)
 	s.HandleFunc("/", h.createMovieHandler).Methods(http.MethodPost)
-	s.HandleFunc("/{hallId}", h.getMovieHandler).Methods(http.MethodGet)
-	s.HandleFunc("/{hallId}", h.updateMovieHandler).Methods(http.MethodPut)
-	s.HandleFunc("/{hallId}", h.deleteMovieHandler).Methods(http.MethodDelete)
+	s.HandleFunc("/{movieId}", h.getMovieHandler).Methods(http.MethodGet)
+	s.HandleFunc("/{movieId}", h.updateMovieHandler).Methods(http.MethodPut)
+	s.HandleFunc("/{movieId}", h.deleteMovieHandler).Methods(http.MethodDelete)
 }
 
-func (h HTTPHandler) getHallsHandler(w http.ResponseWriter, _ *http.Request) {
-	cinemaHalls, err := h.S.Halls()
+func (h HTTPHandler) getMoviesHandler(w http.ResponseWriter, _ *http.Request) {
+	cinemaHalls, err := h.S.Movies()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -86,15 +86,15 @@ func (h HTTPHandler) createMovieHandler(w http.ResponseWriter, r *http.Request) 
 	apiutils.WriteResponse(w, map[string]int{"movieId": id}, http.StatusCreated)
 }
 
-func (h HTTPHandler) getHallHandler(w http.ResponseWriter, r *http.Request) {
-	hallID, err := apiutils.IntPathParam(r, "hallId")
+func (h HTTPHandler) getMovieHandler(w http.ResponseWriter, r *http.Request) {
+	movieId, err := apiutils.IntPathParam(r, "movieId")
 	if err != nil {
-		http.Error(w, ErrInvalidHallId.Error(), http.StatusBadRequest)
+		http.Error(w, ErrInvalidMovieId.Error(), http.StatusBadRequest)
 		return
 	}
 
-	hall, err := h.S.HallById(hallID)
-	if errors.Is(err, service.ErrHallNotFound) {
+	movie, err := h.S.MovieById(movieId)
+	if errors.Is(err, service.ErrMovieNotFound) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
@@ -104,31 +104,33 @@ func (h HTTPHandler) getHallHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	apiutils.WriteResponse(w, entityToDTO(hall), http.StatusOK)
+	apiutils.WriteResponse(w, entityToDTO(movie), http.StatusOK)
 }
 
-func (h HTTPHandler) updateHallHandler(w http.ResponseWriter, r *http.Request) {
-	hallID, err := apiutils.IntPathParam(r, "hallId")
+func (h HTTPHandler) updateMovieHandler(w http.ResponseWriter, r *http.Request) {
+	movieId, err := apiutils.IntPathParam(r, "movieId")
 	if err != nil {
-		http.Error(w, ErrInvalidHallId.Error(), http.StatusBadRequest)
+		http.Error(w, ErrInvalidMovieId.Error(), http.StatusBadRequest)
 		return
 	}
 
-	type hallInfo struct {
-		Name     string `json:"name"`
-		Capacity int    `json:"capacity"`
+	type movieInfo struct {
+		Title       string `json:"title"`
+		Genre       string `json:"genre"`
+		ReleaseDate string `json:"release_date"`
+		Duration    int    `json:"duration"`
 	}
 
-	var hall hallInfo
+	var movie movieInfo
 
-	err = json.NewDecoder(r.Body).Decode(&hall)
+	err = json.NewDecoder(r.Body).Decode(&movie)
 	if err != nil {
 		http.Error(w, ErrReadRequestFail.Error(), http.StatusBadRequest)
 		return
 	}
 
-	err = h.S.UpdateHall(hallID, hall.Name, hall.Capacity)
-	if errors.Is(err, service.ErrHallNotFound) {
+	err = h.S.UpdateMovie(movieId, movie.Title, movie.Genre, movie.ReleaseDate, movie.Duration)
+	if errors.Is(err, service.ErrMovieNotFound) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
@@ -138,18 +140,18 @@ func (h HTTPHandler) updateHallHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	apiutils.WriteMsg(w, "cinema hall was updated successfully\n", http.StatusOK)
+	w.WriteHeader(http.StatusOK)
 }
 
-func (h HTTPHandler) deleteHallHandler(w http.ResponseWriter, r *http.Request) {
-	hallID, err := apiutils.IntPathParam(r, "hallId")
+func (h HTTPHandler) deleteMovieHandler(w http.ResponseWriter, r *http.Request) {
+	movieId, err := apiutils.IntPathParam(r, "movieId")
 	if err != nil {
-		http.Error(w, ErrInvalidHallId.Error(), http.StatusBadRequest)
+		http.Error(w, ErrInvalidMovieId.Error(), http.StatusBadRequest)
 		return
 	}
 
-	err = h.S.DeleteHall(hallID)
-	if errors.Is(err, service.ErrHallNotFound) {
+	err = h.S.DeleteMovie(movieId)
+	if errors.Is(err, service.ErrMovieNotFound) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
@@ -159,21 +161,23 @@ func (h HTTPHandler) deleteHallHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	apiutils.WriteMsg(w, "cinema hall was deleted successfully\n", http.StatusOK)
+	w.WriteHeader(http.StatusNoContent)
 }
 
-func entitiesToDTO(halls []service.Hall) []cinemaHall {
-	var DTOHalls []cinemaHall
+func entitiesToDTO(halls []service.Movie) []Movie {
+	var DTOHalls []Movie
 	for _, hall := range halls {
 		DTOHalls = append(DTOHalls, entityToDTO(hall))
 	}
 	return DTOHalls
 }
 
-func entityToDTO(hall service.Hall) cinemaHall {
-	return cinemaHall{
-		ID:       hall.Id,
-		Name:     hall.Name,
-		Capacity: hall.Capacity,
+func entityToDTO(hall service.Movie) Movie {
+	return Movie{
+		ID:          hall.Id,
+		Title:       hall.Title,
+		Genre:       hall.Genre,
+		ReleaseDate: hall.ReleaseDate,
+		Duration:    hall.Duration,
 	}
 }
