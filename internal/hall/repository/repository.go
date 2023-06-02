@@ -50,8 +50,8 @@ func (h *HallRepository) Halls() ([]service.Hall, error) {
 
 func (h *HallRepository) HallById(id int) (service.Hall, error) {
 	row := h.db.QueryRow(`SELECT hall_id, hall_name, capacity 
-								FROM halls 
-								WHERE hall_id = $1`, id)
+						FROM halls 
+						WHERE hall_id = $1`, id)
 	var hall hall
 	err := row.Scan(&hall.Id, &hall.Name, &hall.Capacity)
 	if err != nil {
@@ -69,8 +69,8 @@ func (h *HallRepository) HallById(id int) (service.Hall, error) {
 func (h *HallRepository) CreateHall(name string, capacity int) (hallId int, err error) {
 	var id int
 	err = h.db.QueryRow(`INSERT INTO halls (hall_name, capacity)
-								VALUES ($1, $2)
-								RETURNING hall_id`, name, capacity).Scan(&id)
+						VALUES ($1, $2)
+						RETURNING hall_id`, name, capacity).Scan(&id)
 	if err != nil {
 		log.Println(err)
 		return 0, err
@@ -81,8 +81,8 @@ func (h *HallRepository) CreateHall(name string, capacity int) (hallId int, err 
 
 func (h *HallRepository) UpdateHall(id int, name string, capacity int) error {
 	_, err := h.db.Exec(`UPDATE halls
-								SET hall_name = $1, capacity = $2
-								WHERE hall_id = $3`, name, capacity, id)
+						SET hall_name = $1, capacity = $2
+						WHERE hall_id = $3`, name, capacity, id)
 	if err != nil {
 		log.Println(err)
 		return fmt.Errorf("failed to update hall: %w", err)
