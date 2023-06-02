@@ -16,16 +16,18 @@ type CinemaSession struct {
 	HallId    int
 	StartTime time.Time
 	EndTime   time.Time
+	Price     float32
 	Status    string
 }
 
-func New(id, movieId, hallId int, startTime, endTime time.Time, timeZone *time.Location) CinemaSession {
+func New(id, movieId, hallId int, startTime, endTime time.Time, price float32, timeZone *time.Location) CinemaSession {
 	session := CinemaSession{
 		Id:        id,
 		MovieId:   movieId,
 		HallId:    hallId,
 		StartTime: startTime.In(timeZone),
 		EndTime:   endTime.In(timeZone),
+		Price:     price,
 	}
 	session.setStatus()
 	return session
