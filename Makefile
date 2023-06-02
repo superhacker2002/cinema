@@ -16,5 +16,3 @@ openapi-docs:
 .PHONY: clean-docs
 clean-docs:
 	rm -rf docs/
-
-

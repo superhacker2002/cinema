@@ -2,9 +2,9 @@ package main
 
 import (
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/auth/service"
-	sessionsHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasessions/handler"
-	sessionsRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasessions/repository"
-	sessionsService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasessions/service"
+	sessionsHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasession/handler"
+	sessionsRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasession/repository"
+	sessionsService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasession/service"
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/config"
 	userHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/handler"
 	userRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/repository"
