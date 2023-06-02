@@ -37,8 +37,8 @@ func (m *mockRepository) UpdateHall(id int, name string, capacity int) error {
 	return m.err
 }
 
-func (m *mockRepository) DeleteHall(id int) error {
-	return m.err
+func (m *mockRepository) DeleteHall(id int) (bool, error) {
+	return m.hallExists, m.err
 }
 
 func (m *mockRepository) HallExists(id int) (bool, error) {

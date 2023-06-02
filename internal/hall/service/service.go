@@ -26,7 +26,7 @@ type repository interface {
 	HallById(id int) (Hall, error)
 	CreateHall(name string, capacity int) (hallId int, err error)
 	UpdateHall(id int, name string, capacity int) error
-	DeleteHall(id int) error
+	DeleteHall(id int) (bool, error)
 	HallExists(id int) (bool, error)
 }
 
@@ -80,15 +80,12 @@ func (s Service) UpdateHall(id int, name string, capacity int) error {
 }
 
 func (s Service) DeleteHall(id int) error {
-	ok, err := s.R.HallExists(id)
+	found, err := s.R.DeleteHall(id)
 	if err != nil {
 		return ErrInternalError
 	}
-	if !ok {
+	if !found {
 		return ErrHallNotFound
-	}
-	if err = s.R.DeleteHall(id); err != nil {
-		return ErrInternalError
 	}
 	return nil
 }

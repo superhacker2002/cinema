@@ -91,14 +91,18 @@ func (h *HallRepository) UpdateHall(id int, name string, capacity int) error {
 	return nil
 }
 
-func (h *HallRepository) DeleteHall(id int) error {
-	_, err := h.db.Exec(`DELETE FROM halls WHERE hall_id = $1`, id)
+func (h *HallRepository) DeleteHall(id int) (bool, error) {
+	res, err := h.db.Exec(`DELETE FROM halls WHERE hall_id = $1`, id)
 	if err != nil {
 		log.Println(err)
-		return fmt.Errorf("failed to delete hall: %w", err)
+		return false, fmt.Errorf("failed to delete hall: %w", err)
 	}
 
-	return nil
+	rowsAffected, err := res.RowsAffected()
+	if rowsAffected == 0 {
+		return false, nil
+	}
+	return true, nil
 }
 
 func (h *HallRepository) HallExists(id int) (bool, error) {
