@@ -60,7 +60,7 @@ func (h *HallRepository) HallById(id int) (service.Hall, error) {
 			return service.Hall{}, service.ErrHallNotFound
 		}
 		log.Println(err)
-		return service.Hall{}, fmt.Errorf("could not get user credentials: %w", err)
+		return service.Hall{}, fmt.Errorf("could not get hall by id: %w", err)
 	}
 
 	return service.NewHallEntity(hall.Id, hall.Name, hall.Capacity), nil
