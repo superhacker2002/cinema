@@ -224,7 +224,7 @@ func (h HttpHandler) updateSessionHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	apiutils.WriteMsg(w, "session was updated successfully\n", http.StatusOK)
+	w.WriteHeader(http.StatusOK)
 }
 
 func (h HttpHandler) deleteSessionHandler(w http.ResponseWriter, r *http.Request) {
