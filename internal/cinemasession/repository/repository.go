@@ -101,9 +101,9 @@ func (s *SessionsRepository) HallIsBusy(sessionId, hallId int, startTime, endTim
 		WHERE hall_id = $1 AND start_time BETWEEN $2 AND $3
 		OR (start_time <= $2 AND end_time > $2)`, hallId, startTime, endTime)
 
-	var id int
-	if err := row.Scan(&id); err == nil {
-		return sessionId != id, nil
+	var sessionExistId int
+	if err := row.Scan(&sessionExistId); err == nil {
+		return sessionId != sessionExistId, nil
 	} else if err != sql.ErrNoRows {
 		return true, fmt.Errorf("failed to check if cinema session can be created: %w", err)
 	}
