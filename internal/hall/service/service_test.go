@@ -38,8 +38,7 @@ func (m *mockRepository) UpdateHall(id int, name string, capacity int) error {
 }
 
 func (m *mockRepository) DeleteHall(id int) error {
-	// Implement delete hall logic if needed
-	return nil
+	return m.err
 }
 
 func (m *mockRepository) HallExists(id int) (bool, error) {
@@ -138,5 +137,13 @@ func TestDeleteHall(t *testing.T) {
 		s := New(&repo)
 		err := s.DeleteHall(3)
 		assert.ErrorIs(t, err, ErrHallNotFound)
+	})
+
+	t.Run("repository error", func(t *testing.T) {
+		repo.hallExists = true
+		repo.err = errors.New("something went wrong")
+		s := New(&repo)
+		err := s.DeleteHall(3)
+		assert.ErrorIs(t, err, ErrInternalError)
 	})
 }

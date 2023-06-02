@@ -73,7 +73,10 @@ func (s Service) UpdateHall(id int, name string, capacity int) error {
 	if !ok {
 		return ErrHallNotFound
 	}
-	return s.R.UpdateHall(id, name, capacity)
+	if err = s.R.UpdateHall(id, name, capacity); err != nil {
+		return ErrInternalError
+	}
+	return nil
 }
 
 func (s Service) DeleteHall(id int) error {
@@ -84,5 +87,8 @@ func (s Service) DeleteHall(id int) error {
 	if !ok {
 		return ErrHallNotFound
 	}
-	return s.R.DeleteHall(id)
+	if err = s.R.DeleteHall(id); err != nil {
+		return ErrInternalError
+	}
+	return nil
 }
