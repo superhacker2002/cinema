@@ -246,7 +246,7 @@ func (h HttpHandler) deleteSessionHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	apiutils.WriteMsg(w, "session was deleted successfully\n", http.StatusNoContent)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h HttpHandler) availableSeatsHandler(w http.ResponseWriter, r *http.Request) {
