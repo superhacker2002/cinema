@@ -158,10 +158,6 @@ func (s *SessionsRepository) UpdateSession(id, movieId, hallId int, startTime, e
 }
 
 func (s *SessionsRepository) AvailableSeats(sessionId int) ([]int, error) {
-	hallId, err := s.getHallId(sessionId)
-	if err != nil {
-		return nil, err
-	}
 	rows, err := s.db.Query(`SELECT seat_number
 				FROM (
 					SELECT generate_series(1, capacity) AS seat_number
@@ -241,16 +237,6 @@ func (s *SessionsRepository) MovieExists(id int) (bool, error) {
 	}
 
 	return count > 0, nil
-}
-
-func (s *SessionsRepository) getHallId(sessionId int) (int, error) {
-	var id int
-	err := s.db.QueryRow("SELECT hall_id FROM cinema_sessions WHERE session_id = $1", sessionId).Scan(&id)
-	if err != nil {
-		log.Println(err)
-		return 0, fmt.Errorf("failed to get hall id of the session: %w", err)
-	}
-	return id, nil
 }
 
 func (s *SessionsRepository) readCinemaSessions(rows *sql.Rows) ([]entity.CinemaSession, error) {
