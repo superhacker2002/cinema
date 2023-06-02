@@ -13,6 +13,7 @@ import (
 var (
 	ErrReadRequestFail = errors.New("failed to read request")
 	ErrInvalidMovieId  = errors.New("invalid movie id")
+	ErrInvalidUserId   = errors.New("invalid user id")
 )
 
 type Movie struct {
@@ -29,6 +30,7 @@ type Service interface {
 	CreateMovie(title, genre, releaseDate string, duration int) (movieId int, err error)
 	UpdateMovie(id int, title, genre, releaseDate string, duration int) error
 	DeleteMovie(id int) error
+	WatchedMovies(userId int) ([]service.Movie, error)
 }
 
 type HTTPHandler struct {
@@ -49,6 +51,7 @@ func (h HTTPHandler) setRoutes(router *mux.Router) {
 	s.HandleFunc("/{movieId}", h.getMovieHandler).Methods(http.MethodGet)
 	s.HandleFunc("/{movieId}", h.updateMovieHandler).Methods(http.MethodPut)
 	s.HandleFunc("/{movieId}", h.deleteMovieHandler).Methods(http.MethodDelete)
+	s.HandleFunc("/{userId}", h.watchedMoviesHandler).Methods(http.MethodGet)
 }
 
 func (h HTTPHandler) getMoviesHandler(w http.ResponseWriter, _ *http.Request) {
@@ -94,7 +97,7 @@ func (h HTTPHandler) getMovieHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	movie, err := h.S.MovieById(movieId)
-	if errors.Is(err, service.ErrMovieNotFound) {
+	if errors.Is(err, service.ErrMoviesNotFound) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
@@ -130,7 +133,7 @@ func (h HTTPHandler) updateMovieHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	err = h.S.UpdateMovie(movieId, movie.Title, movie.Genre, movie.ReleaseDate, movie.Duration)
-	if errors.Is(err, service.ErrMovieNotFound) {
+	if errors.Is(err, service.ErrMoviesNotFound) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
@@ -151,7 +154,7 @@ func (h HTTPHandler) deleteMovieHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	err = h.S.DeleteMovie(movieId)
-	if errors.Is(err, service.ErrMovieNotFound) {
+	if errors.Is(err, service.ErrMoviesNotFound) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
@@ -162,6 +165,21 @@ func (h HTTPHandler) deleteMovieHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h HTTPHandler) watchedMoviesHandler(w http.ResponseWriter, r *http.Request) {
+	userId, err := apiutils.IntPathParam(r, "userId")
+	if err != nil {
+		http.Error(w, ErrInvalidUserId.Error(), http.StatusBadRequest)
+		return
+	}
+	movies, err := h.S.WatchedMovies(userId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	apiutils.WriteResponse(w, entitiesToDTO(movies), http.StatusOK)
 }
 
 func entitiesToDTO(halls []service.Movie) []Movie {

@@ -6,8 +6,9 @@ import (
 )
 
 var (
-	ErrMovieNotFound = errors.New("movie not found")
-	ErrInternalError = errors.New("internal server error")
+	ErrMoviesNotFound = errors.New("movies not found")
+	ErrInternalError  = errors.New("internal server error")
+	ErrUserNotFound   = errors.New("user not found")
 )
 
 type Movie struct {
@@ -35,6 +36,8 @@ type repository interface {
 	UpdateMovie(id int, title, genre, releaseDate string, duration int) error
 	DeleteMovie(id int) error
 	MovieExists(id int) (bool, error)
+	WatchedMovies(userId int) ([]Movie, error)
+	UserExists(id int) (bool, error)
 }
 
 type Service struct {
@@ -47,22 +50,22 @@ func New(r repository) Service {
 
 func (s Service) Movies() ([]Movie, error) {
 	date := time.Now().Format("2006-01-02")
-	halls, err := s.R.Movies(date)
+	movies, err := s.R.Movies(date)
 	if err != nil {
 		return []Movie{}, ErrInternalError
 	}
-	return halls, nil
+	return movies, nil
 }
 
 func (s Service) MovieById(id int) (Movie, error) {
-	hall, err := s.R.MovieById(id)
-	if errors.Is(err, ErrMovieNotFound) {
-		return Movie{}, ErrMovieNotFound
+	movie, err := s.R.MovieById(id)
+	if errors.Is(err, ErrMoviesNotFound) {
+		return Movie{}, ErrMoviesNotFound
 	}
 	if err != nil {
 		return Movie{}, ErrInternalError
 	}
-	return hall, nil
+	return movie, nil
 }
 
 func (s Service) CreateMovie(title, genre, releaseDate string, duration int) (movieId int, err error) {
@@ -79,9 +82,12 @@ func (s Service) UpdateMovie(id int, title, genre, releaseDate string, duration 
 		return ErrInternalError
 	}
 	if !ok {
-		return ErrMovieNotFound
+		return ErrMoviesNotFound
 	}
-	return s.R.UpdateMovie(id, title, genre, releaseDate, duration)
+	if err = s.R.UpdateMovie(id, title, genre, releaseDate, duration); err != nil {
+		return ErrInternalError
+	}
+	return nil
 }
 
 func (s Service) DeleteMovie(id int) error {
@@ -90,7 +96,25 @@ func (s Service) DeleteMovie(id int) error {
 		return ErrInternalError
 	}
 	if !ok {
-		return ErrMovieNotFound
+		return ErrMoviesNotFound
 	}
-	return s.R.DeleteMovie(id)
+	if err = s.R.DeleteMovie(id); err != nil {
+		return ErrInternalError
+	}
+	return nil
+}
+
+func (s Service) WatchedMovies(userId int) ([]Movie, error) {
+	ok, err := s.R.UserExists(userId)
+	if err != nil {
+		return nil, ErrInternalError
+	}
+	if !ok {
+		return nil, ErrUserNotFound
+	}
+	movies, err := s.R.WatchedMovies(userId)
+	if err != nil {
+		return nil, ErrInternalError
+	}
+	return movies, nil
 }

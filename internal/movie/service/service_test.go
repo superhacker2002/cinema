@@ -10,8 +10,17 @@ import (
 type mockRepository struct {
 	movies      []Movie
 	movieExists bool
+	userExists  bool
 	id          int
 	err         error
+}
+
+func (m *mockRepository) WatchedMovies(userId int) ([]Movie, error) {
+	return m.movies, m.err
+}
+
+func (m *mockRepository) UserExists(id int) (bool, error) {
+	return m.userExists, nil
 }
 
 func (m *mockRepository) Movies(_ string) ([]Movie, error) {
@@ -35,7 +44,7 @@ func (m *mockRepository) MovieById(id int) (Movie, error) {
 			Duration:    118,
 		}, nil
 	default:
-		return Movie{}, ErrMovieNotFound
+		return Movie{}, ErrMoviesNotFound
 	}
 }
 
@@ -111,7 +120,7 @@ func TestMovieById(t *testing.T) {
 	t.Run("movie does not exist", func(t *testing.T) {
 		s := New(&repo)
 		_, err := s.MovieById(3)
-		assert.ErrorIs(t, err, ErrMovieNotFound)
+		assert.ErrorIs(t, err, ErrMoviesNotFound)
 	})
 }
 
@@ -147,7 +156,7 @@ func TestUpdateMovie(t *testing.T) {
 		repo.movieExists = false
 		s := New(&repo)
 		err := s.UpdateMovie(1, "Movie", "Art house", "2023-05-30", 190)
-		assert.ErrorIs(t, err, ErrMovieNotFound)
+		assert.ErrorIs(t, err, ErrMoviesNotFound)
 	})
 }
 
@@ -164,6 +173,52 @@ func TestDeleteMovie(t *testing.T) {
 		repo.movieExists = false
 		s := New(&repo)
 		err := s.DeleteMovie(3)
-		assert.ErrorIs(t, err, ErrMovieNotFound)
+		assert.ErrorIs(t, err, ErrMoviesNotFound)
+	})
+}
+
+func TestWatchedMovies(t *testing.T) {
+	repo := &mockRepository{}
+
+	t.Run("successful movies get", func(t *testing.T) {
+		movies := []Movie{
+			{
+				Id:          1,
+				Title:       "Avengers: Endgame",
+				Genre:       "Action, Adventure, Drama",
+				ReleaseDate: "2019-04-26",
+				Duration:    181,
+			},
+			{
+				Id:          1,
+				Title:       "The Lion Kin",
+				Genre:       "Animation, Adventure, Drama",
+				ReleaseDate: "2019-07-19",
+				Duration:    118,
+			},
+		}
+		repo.movies = movies
+		repo.userExists = true
+		s := New(repo)
+		respMovies, err := s.WatchedMovies(1)
+		assert.NoError(t, err)
+		assert.Equal(t, movies, respMovies)
+	})
+
+	t.Run("repository error", func(t *testing.T) {
+		repo.err = errors.New("something went wrong")
+		repo.userExists = true
+		s := New(repo)
+		respMovies, err := s.WatchedMovies(1)
+		assert.Error(t, ErrInternalError, err)
+		assert.Zero(t, len(respMovies))
+	})
+
+	t.Run("user does not exist", func(t *testing.T) {
+		repo.userExists = false
+		s := New(repo)
+		respMovies, err := s.WatchedMovies(1)
+		assert.Error(t, ErrUserNotFound, err)
+		assert.Zero(t, len(respMovies))
 	})
 }
