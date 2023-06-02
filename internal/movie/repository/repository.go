@@ -16,46 +16,50 @@ type movie struct {
 	Duration    int
 }
 
-type HallRepository struct {
+type MovieRepository struct {
 	db *sql.DB
 }
 
-func New(db *sql.DB) *HallRepository {
-	return &HallRepository{db: db}
+func New(db *sql.DB) *MovieRepository {
+	return &MovieRepository{db: db}
 }
 
-//func (h *HallRepository) Halls() ([]service.Hall, error) {
-//	rows, err := h.db.Query(`SELECT hall_id, hall_name, capacity FROM halls`)
-//	if err != nil {
-//		log.Println(err)
-//		return nil, err
-//	}
-//
-//	defer func() {
-//		if err = rows.Close(); err != nil {
-//			log.Println(err)
-//		}
-//	}()
-//
-//	var cinemaHalls []service.Hall
-//	for rows.Next() {
-//		var hall hall
-//		if err = rows.Scan(&hall.Id, &hall.Name, &hall.Capacity); err != nil {
-//			log.Println(err)
-//			return nil, fmt.Errorf("failed to get hall: %w", err)
-//		}
-//		cinemaHalls = append(cinemaHalls, service.NewHallEntity(hall.Id, hall.Name, hall.Capacity))
-//	}
-//
-//	return cinemaHalls, nil
-//}
+func (h *MovieRepository) Movies(date string) ([]service.Movie, error) {
+	rows, err := h.db.Query(`SELECT DISTINCT m.*
+									FROM movies m
+									JOIN cinema_sessions cs ON m.movie_id = cs.movie_id
+									WHERE date_trunc('day', start_time) = $1`, date)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
 
-func (h *HallRepository) MovieById(id int) (service.Movie, error) {
-	row := h.db.QueryRow(`SELECT movie_id, title, genre, release_date, duration 
+	defer func() {
+		if err = rows.Close(); err != nil {
+			log.Println(err)
+		}
+	}()
+
+	var movies []service.Movie
+	for rows.Next() {
+		var movie movie
+		if err = rows.Scan(&movie.Id, &movie.Title, &movie.Genre, &movie.ReleaseDate, &movie.Duration); err != nil {
+			log.Println(err)
+			return nil, fmt.Errorf("failed to get movie: %w", err)
+		}
+		movies = append(movies,
+			service.NewMovieEntity(movie.Id, movie.Title, movie.Genre, movie.ReleaseDate, movie.Duration))
+	}
+
+	return movies, nil
+}
+
+func (h *MovieRepository) MovieById(id int) (service.Movie, error) {
+	row := h.db.QueryRow(`SELECT *
 								FROM movies 
 								WHERE movie_id = $1`, id)
 	var movie movie
-	err := row.Scan(&movie.Id, &movie.Title, &movie.Genre, &movie.ReleaseDate, &movie.ReleaseDate, &movie.Duration)
+	err := row.Scan(&movie.Id, &movie.Title, &movie.Genre, &movie.ReleaseDate, &movie.Duration)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			log.Println(err)
@@ -65,10 +69,10 @@ func (h *HallRepository) MovieById(id int) (service.Movie, error) {
 		return service.Movie{}, fmt.Errorf("could not get movie by id: %w", err)
 	}
 
-	return service.NewHallEntity(hall.Id, hall.Name, hall.Capacity), nil
+	return service.NewMovieEntity(movie.Id, movie.Title, movie.Genre, movie.ReleaseDate, movie.Duration), nil
 }
 
-func (h *HallRepository) CreateMovie(title, genre, releaseDate string, duration int) (hallId int, err error) {
+func (h *MovieRepository) CreateMovie(title, genre, releaseDate string, duration int) (hallId int, err error) {
 	var id int
 	err = h.db.QueryRow(`INSERT INTO movies (title, genre, release_date, duration)
 								VALUES ($1, $2, $3, $4)
@@ -81,7 +85,7 @@ func (h *HallRepository) CreateMovie(title, genre, releaseDate string, duration 
 	return id, nil
 }
 
-func (h *HallRepository) UpdateMovie(id int, title, genre, releaseDate string, duration int) error {
+func (h *MovieRepository) UpdateMovie(id int, title, genre, releaseDate string, duration int) error {
 	_, err := h.db.Exec(`UPDATE movies
 								SET title = $1, genre = $2, release_date = $3, duration = $4
 								WHERE movie_id = $5`, title, genre, releaseDate, duration, id)
@@ -93,7 +97,7 @@ func (h *HallRepository) UpdateMovie(id int, title, genre, releaseDate string, d
 	return nil
 }
 
-func (h *HallRepository) DeleteMovie(id int) error {
+func (h *MovieRepository) DeleteMovie(id int) error {
 	_, err := h.db.Exec(`DELETE FROM movies WHERE movie_id = $1`, id)
 	if err != nil {
 		log.Println(err)
@@ -103,7 +107,7 @@ func (h *HallRepository) DeleteMovie(id int) error {
 	return nil
 }
 
-func (h *HallRepository) MovieExists(id int) (bool, error) {
+func (h *MovieRepository) MovieExists(id int) (bool, error) {
 	var count int
 	err := h.db.QueryRow(`SELECT COUNT(*) FROM movies WHERE movie_id = $1`, id).Scan(&count)
 	if err != nil {

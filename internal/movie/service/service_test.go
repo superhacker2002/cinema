@@ -8,92 +8,119 @@ import (
 )
 
 type mockRepository struct {
-	halls      []Hall
-	hallExists bool
-	id         int
-	err        error
+	movies      []Movie
+	movieExists bool
+	id          int
+	err         error
 }
 
-func (m *mockRepository) Halls() ([]Hall, error) {
-	return m.halls, m.err
+func (m *mockRepository) Movies(_ string) ([]Movie, error) {
+	return m.movies, m.err
 }
 
-func (m *mockRepository) HallById(id int) (Hall, error) {
+func (m *mockRepository) MovieById(id int) (Movie, error) {
 	switch id {
 	case 1:
-		return Hall{Id: 1, Name: "Hall 1", Capacity: 100}, nil
+		return Movie{Id: 1,
+			Title:       "Avengers: Endgame",
+			Genre:       "Action, Adventure, Drama",
+			ReleaseDate: "2019-04-26",
+			Duration:    181,
+		}, nil
 	case 2:
-		return Hall{Id: 2, Name: "Hall 2", Capacity: 150}, nil
+		return Movie{Id: 1,
+			Title:       "The Lion Kin",
+			Genre:       "Animation, Adventure, Drama",
+			ReleaseDate: "2019-07-19",
+			Duration:    118,
+		}, nil
 	default:
-		return Hall{}, ErrHallNotFound
+		return Movie{}, ErrMovieNotFound
 	}
 }
 
-func (m *mockRepository) CreateHall(name string, capacity int) (int, error) {
+func (m *mockRepository) CreateMovie(title, genre, releaseDate string, duration int) (movieId int, err error) {
 	return m.id, m.err
 }
 
-func (m *mockRepository) UpdateHall(id int, name string, capacity int) error {
+func (m *mockRepository) UpdateMovie(id int, title, genre, releaseDate string, duration int) error {
 	return m.err
 }
 
-func (m *mockRepository) DeleteHall(id int) error {
-	// Implement delete hall logic if needed
-	return nil
+func (m *mockRepository) DeleteMovie(id int) error {
+	return m.err
 }
 
-func (m *mockRepository) HallExists(id int) (bool, error) {
-	return m.hallExists, nil
+func (m *mockRepository) MovieExists(id int) (bool, error) {
+	return m.movieExists, nil
 }
 
-func TestHalls(t *testing.T) {
+func TestMovies(t *testing.T) {
 	repo := &mockRepository{}
 
-	t.Run("successful halls get", func(t *testing.T) {
-		halls := []Hall{
-			{Id: 1, Name: "Hall 1", Capacity: 100},
-			{Id: 2, Name: "Hall 2", Capacity: 150},
+	t.Run("successful movies get", func(t *testing.T) {
+		movies := []Movie{
+			{
+				Id:          1,
+				Title:       "Avengers: Endgame",
+				Genre:       "Action, Adventure, Drama",
+				ReleaseDate: "2019-04-26",
+				Duration:    181,
+			},
+			{
+				Id:          1,
+				Title:       "The Lion Kin",
+				Genre:       "Animation, Adventure, Drama",
+				ReleaseDate: "2019-07-19",
+				Duration:    118,
+			},
 		}
-		repo.halls = halls
+		repo.movies = movies
 		s := New(repo)
-		respHalls, err := s.Halls()
+		respMovies, err := s.Movies()
 		assert.NoError(t, err)
-		assert.Equal(t, halls, respHalls)
+		assert.Equal(t, movies, respMovies)
 	})
 
 	t.Run("repository error", func(t *testing.T) {
 		repo.err = errors.New("something went wrong")
 		s := New(repo)
-		respHalls, err := s.Halls()
+		respMovies, err := s.Movies()
 		assert.Error(t, ErrInternalError, err)
-		assert.Zero(t, len(respHalls))
+		assert.Zero(t, len(respMovies))
 	})
 }
 
-func TestHallById(t *testing.T) {
+func TestMovieById(t *testing.T) {
 	repo := mockRepository{}
 	t.Run("successful hall get", func(t *testing.T) {
-		hall := Hall{Id: 1, Name: "Hall 1", Capacity: 100}
+		movie := Movie{
+			Id:          1,
+			Title:       "Avengers: Endgame",
+			Genre:       "Action, Adventure, Drama",
+			ReleaseDate: "2019-04-26",
+			Duration:    181,
+		}
 
 		s := New(&repo)
-		respHall, err := s.HallById(1)
+		respMovie, err := s.MovieById(1)
 		assert.NoError(t, err)
-		assert.Equal(t, hall, respHall)
+		assert.Equal(t, movie, respMovie)
 	})
 
-	t.Run("hall does not exist", func(t *testing.T) {
+	t.Run("movie does not exist", func(t *testing.T) {
 		s := New(&repo)
-		_, err := s.HallById(3)
-		assert.ErrorIs(t, err, ErrHallNotFound)
+		_, err := s.MovieById(3)
+		assert.ErrorIs(t, err, ErrMovieNotFound)
 	})
 }
 
-func TestCreateHall(t *testing.T) {
+func TestCreateMovie(t *testing.T) {
 	repo := mockRepository{}
-	t.Run("successful hall creation", func(t *testing.T) {
+	t.Run("successful movie creation", func(t *testing.T) {
 		repo.id = 3
 		s := New(&repo)
-		id, err := s.CreateHall("Hall 3", 200)
+		id, err := s.CreateMovie("Movie", "Art house", "2023-05-30", 190)
 		assert.NoError(t, err)
 		assert.Equal(t, 3, id)
 	})
@@ -101,42 +128,42 @@ func TestCreateHall(t *testing.T) {
 	t.Run("repository error", func(t *testing.T) {
 		repo.err = errors.New("something went wrong")
 		s := New(&repo)
-		id, err := s.CreateHall("Hall 3", 200)
+		id, err := s.CreateMovie("Movie", "Art house", "2023-05-30", 190)
 		assert.ErrorIs(t, err, ErrInternalError)
 		assert.Zero(t, id)
 	})
 }
 
-func TestUpdateHall(t *testing.T) {
+func TestUpdateMovie(t *testing.T) {
 	repo := mockRepository{}
-	t.Run("successful hall update", func(t *testing.T) {
-		repo.hallExists = true
+	t.Run("successful movie update", func(t *testing.T) {
+		repo.movieExists = true
 		s := New(&repo)
-		err := s.UpdateHall(1, "Hall 3", 200)
+		err := s.UpdateMovie(1, "Movie", "Art house", "2023-05-30", 190)
 		assert.NoError(t, err)
 	})
 
-	t.Run("hall does not exist", func(t *testing.T) {
-		repo.hallExists = false
+	t.Run("movie does not exist", func(t *testing.T) {
+		repo.movieExists = false
 		s := New(&repo)
-		err := s.UpdateHall(1, "Hall 3", 200)
-		assert.ErrorIs(t, err, ErrHallNotFound)
+		err := s.UpdateMovie(1, "Movie", "Art house", "2023-05-30", 190)
+		assert.ErrorIs(t, err, ErrMovieNotFound)
 	})
 }
 
-func TestDeleteHall(t *testing.T) {
+func TestDeleteMovie(t *testing.T) {
 	repo := mockRepository{}
-	t.Run("successful hall delete", func(t *testing.T) {
-		repo.hallExists = true
+	t.Run("successful movie delete", func(t *testing.T) {
+		repo.movieExists = true
 		s := New(&repo)
-		err := s.DeleteHall(1)
+		err := s.DeleteMovie(1)
 		assert.NoError(t, err)
 	})
 
-	t.Run("hall does not exist", func(t *testing.T) {
-		repo.hallExists = false
+	t.Run("movie does not exist", func(t *testing.T) {
+		repo.movieExists = false
 		s := New(&repo)
-		err := s.DeleteHall(3)
-		assert.ErrorIs(t, err, ErrHallNotFound)
+		err := s.DeleteMovie(3)
+		assert.ErrorIs(t, err, ErrMovieNotFound)
 	})
 }

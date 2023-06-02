@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"time"
 )
 
 var (
@@ -28,7 +29,7 @@ func NewMovieEntity(id int, title, genre string, releaseDate string, duration in
 }
 
 type repository interface {
-	Movies() ([]Movie, error)
+	Movies(date string) ([]Movie, error)
 	MovieById(id int) (Movie, error)
 	CreateMovie(title, genre, releaseDate string, duration int) (movieId int, err error)
 	UpdateMovie(id int, title, genre, releaseDate string, duration int) error
@@ -45,7 +46,8 @@ func New(r repository) Service {
 }
 
 func (s Service) Movies() ([]Movie, error) {
-	halls, err := s.R.Movies()
+	date := time.Now().Format("2006-01-02")
+	halls, err := s.R.Movies(date)
 	if err != nil {
 		return []Movie{}, ErrInternalError
 	}
