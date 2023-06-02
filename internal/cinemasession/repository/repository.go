@@ -98,7 +98,7 @@ func (s *SessionsRepository) CreateSession(movieId, hallId int, startTime, endTi
 func (s *SessionsRepository) HallIsBusy(sessionId, hallId int, startTime, endTime string) (bool, error) {
 	row := s.db.QueryRow(`SELECT session_id
 		FROM cinema_sessions
-		WHERE hall_id = $1 AND $2 < start_time AND start_time < $3
+		WHERE hall_id = $1 AND start_time BETWEEN $2 AND $3
 		OR (start_time <= $2 AND end_time > $2)`, hallId, startTime, endTime)
 
 	var id int
@@ -162,9 +162,7 @@ func (s *SessionsRepository) AvailableSeats(sessionId int) ([]int, error) {
 				FROM (
 					SELECT generate_series(1, capacity) AS seat_number
 					FROM halls
-					WHERE (SELECT hall_id 
-					       FROM cinema_sessions 
-					       WHERE session_id = $1)
+					WHERE hall_id = (SELECT hall_id FROM cinema_sessions WHERE session_id = $1)
 				) AS all_seats
 				EXCEPT (
 					SELECT seat_number
