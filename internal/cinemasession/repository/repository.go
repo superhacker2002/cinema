@@ -98,16 +98,16 @@ func (s *SessionsRepository) CreateSession(movieId, hallId int, startTime, endTi
 func (s *SessionsRepository) HallIsBusy(sessionId, hallId int, startTime, endTime string) (bool, error) {
 	row := s.db.QueryRow(`SELECT session_id
 		FROM cinema_sessions
-		WHERE hall_id = $1 AND start_time BETWEEN $2 AND $3
-		OR (start_time <= $2 AND end_time > $2)`, hallId, startTime, endTime)
+		WHERE hall_id = $1 AND session_id != $2 AND (start_time BETWEEN $3 AND $4
+		OR (start_time <= $3 AND end_time > $3))`, hallId, sessionId, startTime, endTime)
 
 	var sessionExistId int
-	if err := row.Scan(&sessionExistId); err == nil {
-		return sessionId != sessionExistId, nil
-	} else if err != sql.ErrNoRows {
-		return true, fmt.Errorf("failed to check if cinema session can be created: %w", err)
+	err := row.Scan(&sessionExistId)
+	if err != nil && err != sql.ErrNoRows {
+		return false, fmt.Errorf("failed to check if cinema session can be created: %w", err)
 	}
-	return false, nil
+
+	return err == nil, nil
 }
 
 func (s *SessionsRepository) SessionEndTime(id int, startTime string) (string, error) {
