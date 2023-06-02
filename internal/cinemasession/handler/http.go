@@ -204,8 +204,6 @@ func (h HttpHandler) updateSessionHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	log.Println(session)
-
 	err = h.s.UpdateSession(sessionId, session.MovieId, session.HallId, session.StartTime, session.Price)
 
 	if errors.Is(err, service.ErrHallIsBusy) {
