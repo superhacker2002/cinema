@@ -166,13 +166,15 @@ func (s *SessionsRepository) AvailableSeats(sessionId int) ([]int, error) {
 				FROM (
 					SELECT generate_series(1, capacity) AS seat_number
 					FROM halls
-					WHERE hall_id = $1
+					WHERE (SELECT hall_id 
+					       FROM cinema_sessions 
+					       WHERE session_id = $1)
 				) AS all_seats
 				EXCEPT (
 					SELECT seat_number
 					FROM tickets
-					WHERE session_id = $2
-				);`, hallId, sessionId)
+					WHERE session_id = $1
+				)`, sessionId)
 	if err != nil {
 		log.Println(err)
 		return nil, fmt.Errorf("failed to get available seats: %w", err)
