@@ -275,7 +275,6 @@ paths:
           schema:
             type: integer
       requestBody:
-        description: The hall was updated successfully
         required: true
         content:
           application/json:
@@ -283,9 +282,7 @@ paths:
               $ref: '#/components/schemas/Hall'
       responses:
         '200':
-          content:
-            text/plain:
-              example: "hall was successfully updated"
+          description: Successful hall update
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -311,8 +308,7 @@ paths:
             type: integer
       responses:
         '204':
-          text/plain:
-            example: "hall was successfully deleted"
+          description: Successful hall delete
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
