@@ -68,7 +68,7 @@ func (h HTTPHandler) createMovieHandler(w http.ResponseWriter, r *http.Request) 
 	type movieInfo struct {
 		Title       string `json:"title"`
 		Genre       string `json:"genre"`
-		ReleaseDate string `json:"release_date"`
+		ReleaseDate string `json:"releaseDate"`
 		Duration    int    `json:"duration"`
 	}
 
@@ -120,7 +120,7 @@ func (h HTTPHandler) updateMovieHandler(w http.ResponseWriter, r *http.Request) 
 	type movieInfo struct {
 		Title       string `json:"title"`
 		Genre       string `json:"genre"`
-		ReleaseDate string `json:"release_date"`
+		ReleaseDate string `json:"releaseDate"`
 		Duration    int    `json:"duration"`
 	}
 
