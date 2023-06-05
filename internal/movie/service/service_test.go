@@ -15,12 +15,8 @@ type mockRepository struct {
 	err         error
 }
 
-func (m *mockRepository) WatchedMovies(userId int) ([]Movie, error) {
-	return m.movies, m.err
-}
-
-func (m *mockRepository) UserExists(id int) (bool, error) {
-	return m.userExists, nil
+func (m *mockRepository) WatchedMovies(userId int) (bool, error, []Movie) {
+	return m.userExists, m.err, m.movies
 }
 
 func (m *mockRepository) Movies(_ string) ([]Movie, error) {
@@ -52,16 +48,12 @@ func (m *mockRepository) CreateMovie(title, genre, releaseDate string, duration 
 	return m.id, m.err
 }
 
-func (m *mockRepository) UpdateMovie(id int, title, genre, releaseDate string, duration int) error {
-	return m.err
+func (m *mockRepository) UpdateMovie(id int, title, genre, releaseDate string, duration int) (bool, error) {
+	return m.movieExists, m.err
 }
 
-func (m *mockRepository) DeleteMovie(id int) error {
-	return m.err
-}
-
-func (m *mockRepository) MovieExists(id int) (bool, error) {
-	return m.movieExists, nil
+func (m *mockRepository) DeleteMovie(id int) (bool, error) {
+	return m.movieExists, m.err
 }
 
 func TestMovies(t *testing.T) {

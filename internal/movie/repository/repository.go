@@ -80,60 +80,54 @@ func (m *MovieRepository) CreateMovie(title, genre, releaseDate string, duration
 	return id, nil
 }
 
-func (m *MovieRepository) UpdateMovie(id int, title, genre, releaseDate string, duration int) error {
-	_, err := m.db.Exec(`UPDATE movies
+func (m *MovieRepository) UpdateMovie(id int, title, genre, releaseDate string, duration int) (bool, error) {
+	res, err := m.db.Exec(`UPDATE movies
 						SET title = $1, genre = $2, release_date = $3, duration = $4
 						WHERE movie_id = $5`, title, genre, releaseDate, duration, id)
 	if err != nil {
 		log.Println(err)
-		return fmt.Errorf("failed to update movie: %w", err)
+		return false, fmt.Errorf("failed to update movie: %w", err)
 	}
 
-	return nil
+	rowsAffected, err := res.RowsAffected()
+	if rowsAffected == 0 {
+		return false, nil
+	}
+
+	return true, nil
 }
 
-func (m *MovieRepository) DeleteMovie(id int) error {
-	_, err := m.db.Exec(`DELETE FROM movies WHERE movie_id = $1`, id)
+func (m *MovieRepository) DeleteMovie(id int) (bool, error) {
+	res, err := m.db.Exec(`DELETE FROM movies WHERE movie_id = $1`, id)
 	if err != nil {
 		log.Println(err)
-		return fmt.Errorf("failed to delete movie: %w", err)
+		return false, fmt.Errorf("failed to delete movie: %w", err)
 	}
 
-	return nil
-}
-
-func (m *MovieRepository) MovieExists(id int) (bool, error) {
-	var count int
-	err := m.db.QueryRow(`SELECT COUNT(*) FROM movies WHERE movie_id = $1`, id).Scan(&count)
-	if err != nil {
-		log.Println(err)
-		return false, fmt.Errorf("failed to cmeck if movie exists %w", err)
+	rowsAffected, err := res.RowsAffected()
+	if rowsAffected == 0 {
+		return false, nil
 	}
 
-	return count > 0, nil
+	return true, nil
 }
 
-func (m *MovieRepository) UserExists(id int) (bool, error) {
-	var count int
-	err := m.db.QueryRow(`SELECT COUNT(*) FROM users WHERE user_id = $1`, id).Scan(&count)
-	if err != nil {
-		log.Println(err)
-		return false, fmt.Errorf("failed to cmeck if user exists %w", err)
-	}
-
-	return count > 0, nil
-}
-
-func (m *MovieRepository) WatchedMovies(userId int) ([]service.Movie, error) {
+func (m *MovieRepository) WatchedMovies(userId int) (bool, error, []service.Movie) {
 	rows, err := m.db.Query(`SELECT DISTINCT m.*
 							FROM movies m
 							JOIN cinema_sessions cs ON m.movie_id = cs.movie_id
 							JOIN tickets t ON cs.session_id = t.session_id
 							WHERE t.user_id = $1;
 							`, userId)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		log.Println(err)
+		return false, nil, nil
+	}
+
 	if err != nil {
 		log.Println(err)
-		return nil, err
+		return false, err, nil
 	}
 
 	defer func() {
@@ -145,10 +139,10 @@ func (m *MovieRepository) WatchedMovies(userId int) ([]service.Movie, error) {
 	movies, err := m.readMovies(rows)
 	if err != nil {
 		log.Println(err)
-		return nil, err
+		return false, err, nil
 	}
 
-	return movies, nil
+	return false, nil, movies
 }
 
 func (m *MovieRepository) readMovies(rows *sql.Rows) ([]service.Movie, error) {

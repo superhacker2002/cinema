@@ -33,11 +33,9 @@ type repository interface {
 	Movies(date string) ([]Movie, error)
 	MovieById(id int) (Movie, error)
 	CreateMovie(title, genre, releaseDate string, duration int) (movieId int, err error)
-	UpdateMovie(id int, title, genre, releaseDate string, duration int) error
-	DeleteMovie(id int) error
-	MovieExists(id int) (bool, error)
-	WatchedMovies(userId int) ([]Movie, error)
-	UserExists(id int) (bool, error)
+	UpdateMovie(id int, title, genre, releaseDate string, duration int) (bool, error)
+	DeleteMovie(id int) (bool, error)
+	WatchedMovies(userId int) (bool, error, []Movie)
 }
 
 type Service struct {
@@ -77,44 +75,37 @@ func (s Service) CreateMovie(title, genre, releaseDate string, duration int) (mo
 }
 
 func (s Service) UpdateMovie(id int, title, genre, releaseDate string, duration int) error {
-	ok, err := s.R.MovieExists(id)
+	found, err := s.R.UpdateMovie(id, title, genre, releaseDate, duration)
 	if err != nil {
 		return ErrInternalError
 	}
-	if !ok {
+	if !found {
 		return ErrMoviesNotFound
 	}
-	if err = s.R.UpdateMovie(id, title, genre, releaseDate, duration); err != nil {
-		return ErrInternalError
-	}
+
 	return nil
 }
 
 func (s Service) DeleteMovie(id int) error {
-	ok, err := s.R.MovieExists(id)
+	found, err := s.R.DeleteMovie(id)
 	if err != nil {
 		return ErrInternalError
 	}
-	if !ok {
+	if !found {
 		return ErrMoviesNotFound
 	}
-	if err = s.R.DeleteMovie(id); err != nil {
-		return ErrInternalError
-	}
+
 	return nil
 }
 
 func (s Service) WatchedMovies(userId int) ([]Movie, error) {
-	ok, err := s.R.UserExists(userId)
+	found, err, movies := s.R.WatchedMovies(userId)
 	if err != nil {
 		return nil, ErrInternalError
 	}
-	if !ok {
+	if !found {
 		return nil, ErrUserNotFound
 	}
-	movies, err := s.R.WatchedMovies(userId)
-	if err != nil {
-		return nil, ErrInternalError
-	}
+
 	return movies, nil
 }

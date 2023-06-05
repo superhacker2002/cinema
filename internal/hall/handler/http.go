@@ -24,7 +24,7 @@ type Service interface {
 	Halls() ([]service.Hall, error)
 	HallById(id int) (service.Hall, error)
 	CreateHall(name string, capacity int) (hallId int, err error)
-	UpdateHall(id int, name string, capacity int) error
+	UpdateHall(id int, name string, capacity int) (err error)
 	DeleteHall(id int) error
 }
 
