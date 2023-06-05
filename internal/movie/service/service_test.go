@@ -15,15 +15,15 @@ type mockRepository struct {
 	err         error
 }
 
-func (m *mockRepository) WatchedMovies(userId int) (bool, error, []Movie) {
-	return m.userExists, m.err, m.movies
-}
-
-func (m *mockRepository) Movies(_ string) ([]Movie, error) {
+func (m mockRepository) WatchedMovies(userId int) ([]Movie, error) {
 	return m.movies, m.err
 }
 
-func (m *mockRepository) MovieById(id int) (Movie, error) {
+func (m mockRepository) Movies(_ string) ([]Movie, error) {
+	return m.movies, m.err
+}
+
+func (m mockRepository) MovieById(id int) (Movie, error) {
 	switch id {
 	case 1:
 		return Movie{Id: 1,
@@ -44,16 +44,20 @@ func (m *mockRepository) MovieById(id int) (Movie, error) {
 	}
 }
 
-func (m *mockRepository) CreateMovie(title, genre, releaseDate string, duration int) (movieId int, err error) {
+func (m mockRepository) CreateMovie(title, genre, releaseDate string, duration int) (movieId int, err error) {
 	return m.id, m.err
 }
 
-func (m *mockRepository) UpdateMovie(id int, title, genre, releaseDate string, duration int) (bool, error) {
+func (m mockRepository) UpdateMovie(id int, title, genre, releaseDate string, duration int) (bool, error) {
 	return m.movieExists, m.err
 }
 
-func (m *mockRepository) DeleteMovie(id int) (bool, error) {
+func (m mockRepository) DeleteMovie(id int) (bool, error) {
 	return m.movieExists, m.err
+}
+
+func (m mockRepository) UserExists(id int) (bool, error) {
+	return m.userExists, nil
 }
 
 func TestMovies(t *testing.T) {
@@ -103,14 +107,14 @@ func TestMovieById(t *testing.T) {
 			Duration:    181,
 		}
 
-		s := New(&repo)
+		s := New(repo)
 		respMovie, err := s.MovieById(1)
 		assert.NoError(t, err)
 		assert.Equal(t, movie, respMovie)
 	})
 
 	t.Run("movie does not exist", func(t *testing.T) {
-		s := New(&repo)
+		s := New(repo)
 		_, err := s.MovieById(3)
 		assert.ErrorIs(t, err, ErrMoviesNotFound)
 	})
@@ -120,7 +124,7 @@ func TestCreateMovie(t *testing.T) {
 	repo := mockRepository{}
 	t.Run("successful movie creation", func(t *testing.T) {
 		repo.id = 3
-		s := New(&repo)
+		s := New(repo)
 		id, err := s.CreateMovie("Movie", "Art house", "2023-05-30", 190)
 		assert.NoError(t, err)
 		assert.Equal(t, 3, id)
@@ -128,7 +132,7 @@ func TestCreateMovie(t *testing.T) {
 
 	t.Run("repository error", func(t *testing.T) {
 		repo.err = errors.New("something went wrong")
-		s := New(&repo)
+		s := New(repo)
 		id, err := s.CreateMovie("Movie", "Art house", "2023-05-30", 190)
 		assert.ErrorIs(t, err, ErrInternalError)
 		assert.Zero(t, id)
@@ -139,14 +143,14 @@ func TestUpdateMovie(t *testing.T) {
 	repo := mockRepository{}
 	t.Run("successful movie update", func(t *testing.T) {
 		repo.movieExists = true
-		s := New(&repo)
+		s := New(repo)
 		err := s.UpdateMovie(1, "Movie", "Art house", "2023-05-30", 190)
 		assert.NoError(t, err)
 	})
 
 	t.Run("movie does not exist", func(t *testing.T) {
 		repo.movieExists = false
-		s := New(&repo)
+		s := New(repo)
 		err := s.UpdateMovie(1, "Movie", "Art house", "2023-05-30", 190)
 		assert.ErrorIs(t, err, ErrMoviesNotFound)
 	})
@@ -156,14 +160,14 @@ func TestDeleteMovie(t *testing.T) {
 	repo := mockRepository{}
 	t.Run("successful movie delete", func(t *testing.T) {
 		repo.movieExists = true
-		s := New(&repo)
+		s := New(repo)
 		err := s.DeleteMovie(1)
 		assert.NoError(t, err)
 	})
 
 	t.Run("movie does not exist", func(t *testing.T) {
 		repo.movieExists = false
-		s := New(&repo)
+		s := New(repo)
 		err := s.DeleteMovie(3)
 		assert.ErrorIs(t, err, ErrMoviesNotFound)
 	})
