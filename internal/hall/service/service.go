@@ -25,9 +25,8 @@ type repository interface {
 	Halls() ([]Hall, error)
 	HallById(id int) (Hall, error)
 	CreateHall(name string, capacity int) (hallId int, err error)
-	UpdateHall(id int, name string, capacity int) error
-	DeleteHall(id int) error
-	HallExists(id int) (bool, error)
+	UpdateHall(id int, name string, capacity int) (found bool, err error)
+	DeleteHall(id int) (bool, error)
 }
 
 type Service struct {
@@ -66,23 +65,23 @@ func (s Service) CreateHall(name string, capacity int) (hallId int, err error) {
 }
 
 func (s Service) UpdateHall(id int, name string, capacity int) error {
-	ok, err := s.R.HallExists(id)
+	found, err := s.R.UpdateHall(id, name, capacity)
 	if err != nil {
 		return ErrInternalError
 	}
-	if !ok {
+	if !found {
 		return ErrHallNotFound
 	}
-	return s.R.UpdateHall(id, name, capacity)
+	return nil
 }
 
 func (s Service) DeleteHall(id int) error {
-	ok, err := s.R.HallExists(id)
+	found, err := s.R.DeleteHall(id)
 	if err != nil {
 		return ErrInternalError
 	}
-	if !ok {
+	if !found {
 		return ErrHallNotFound
 	}
-	return s.R.DeleteHall(id)
+	return nil
 }

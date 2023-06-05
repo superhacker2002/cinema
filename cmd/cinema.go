@@ -1,23 +1,23 @@
 package main
 
 import (
-	"log"
-	"net/http"
-
-	hallHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/hall/handler"
-	hallRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/hall/repository"
-	hallService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/hall/service"
-
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/auth/service"
 	sessionsHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasession/handler"
 	sessionsRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasession/repository"
 	sessionsService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasession/service"
+
+	hallsHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/hall/handler"
+	hallsRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/hall/repository"
+	hallsService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/hall/service"
+
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/config"
 	userHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/handler"
 	userRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/repository"
 
 	"database/sql"
 	"github.com/gorilla/mux"
+	"log"
+	"net/http"
 )
 
 func main() {
@@ -43,9 +43,9 @@ func main() {
 	sessionsServ := sessionsService.New(sessionsRepo)
 	sessionsHandler.New(router, sessionsServ)
 
-	hallRepo := hallRepository.New(db)
-	hallServ := hallService.New(hallRepo)
-	hallHandler.New(router, hallServ)
+	hallsRepo := hallsRepository.New(db)
+	hallsServ := hallsService.New(hallsRepo)
+	hallsHandler.New(router, hallsServ)
 
 	log.Fatal(http.ListenAndServe(":"+configs.Port, router))
 }
