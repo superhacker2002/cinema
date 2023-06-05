@@ -51,7 +51,7 @@ func (h HTTPHandler) setRoutes(router *mux.Router) {
 	s.HandleFunc("/{movieId}", h.getMovieHandler).Methods(http.MethodGet)
 	s.HandleFunc("/{movieId}", h.updateMovieHandler).Methods(http.MethodPut)
 	s.HandleFunc("/{movieId}", h.deleteMovieHandler).Methods(http.MethodDelete)
-	s.HandleFunc("/{userId}", h.watchedMoviesHandler).Methods(http.MethodGet)
+	s.HandleFunc("/watched/{userId}", h.watchedMoviesHandler).Methods(http.MethodGet)
 }
 
 func (h HTTPHandler) getMoviesHandler(w http.ResponseWriter, _ *http.Request) {
