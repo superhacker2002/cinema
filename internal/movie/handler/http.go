@@ -44,7 +44,7 @@ func New(router *mux.Router, s Service) HTTPHandler {
 }
 
 func (h HTTPHandler) setRoutes(router *mux.Router) {
-	s := router.PathPrefix("/halls").Subrouter()
+	s := router.PathPrefix("/movies").Subrouter()
 	s.HandleFunc("/", h.getMoviesHandler).Methods(http.MethodGet)
 	s.HandleFunc("/", h.createMovieHandler).Methods(http.MethodPost)
 	s.HandleFunc("/{movieId}", h.getMovieHandler).Methods(http.MethodGet)
