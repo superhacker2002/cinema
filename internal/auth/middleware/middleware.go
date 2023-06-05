@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 )
@@ -30,11 +29,11 @@ func checkAccessRights(next http.Handler, perms []string, a auth) http.Handler {
 			return
 		}
 
-		userID, err := a.VerifyToken(token)
-		if err != nil {
-			http.Error(w, fmt.Sprintln("could not authorize:", err), http.StatusUnauthorized)
-			return
-		}
+		//userID, err := a.VerifyToken(token)
+		//if err != nil {
+		//	http.Error(w, fmt.Sprintln("could not authorize:", err), http.StatusUnauthorized)
+		//	return
+		//}
 
 		// Получение прав пользователя из базы данных или другого источника
 		//userPermissions, err := getUserPermissions(userID)

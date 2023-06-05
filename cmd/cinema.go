@@ -1,7 +1,10 @@
 package main
 
 import (
-	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/auth/service"
+	authHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/auth/handler"
+	authRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/auth/repository"
+	authService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/auth/service"
+
 	sessionsHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasession/handler"
 	sessionsRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasession/repository"
 	sessionsService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasession/service"
@@ -17,6 +20,7 @@ import (
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/config"
 	userHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/handler"
 	userRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/repository"
+	userService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/service"
 
 	"database/sql"
 	"github.com/gorilla/mux"
@@ -39,9 +43,13 @@ func main() {
 
 	router := mux.NewRouter()
 
+	authRepo := authRepository.New(db)
+	authServ := authService.New(configs.JWTSecret, configs.TokenExp, authRepo)
+	authHandler.New(router, authServ)
+
 	userRepo := userRepository.New(db)
-	authentication := service.New(configs.JWTSecret, configs.TokenExp, userRepo)
-	userHandler.New(router, authentication, userRepo)
+	userServ := userService.New(userRepo)
+	userHandler.New(router, userServ)
 
 	sessionsRepo := sessionsRepository.New(db, configs.TimeZone)
 	sessionsServ := sessionsService.New(sessionsRepo)
