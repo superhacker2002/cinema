@@ -121,7 +121,7 @@ func (m *MovieRepository) WatchedMovies(userId int) (bool, error, []service.Movi
 							`, userId)
 
 	if errors.Is(err, sql.ErrNoRows) {
-		log.Println(err)
+		log.Printf("user was not found in the system: %d", userId)
 		return false, nil, nil
 	}
 
