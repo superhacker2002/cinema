@@ -2,7 +2,7 @@ OPENAPI_FILE=openapi.html
 
 .PHONY: run
 run:
-	docker compose up -d
+	docker compose up
 
 .PHONY: openapi-docs
 openapi-docs:
