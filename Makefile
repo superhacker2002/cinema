@@ -17,3 +17,6 @@ clean:
 clean-docs:
 	rm -rf docs/
 
+clean-images:
+	docker rmi cinemago-app-cinema-service
+
