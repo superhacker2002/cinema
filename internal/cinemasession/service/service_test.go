@@ -38,8 +38,8 @@ func (m *mockRepo) CreateSession(movieId, hallId int, startTime, endTime string,
 	return m.id, m.err
 }
 
-func (m *mockRepo) DeleteSession(id int) error {
-	return m.err
+func (m *mockRepo) DeleteSession(id int) (bool, error) {
+	return m.sessionExists, m.err
 }
 
 func (m *mockRepo) SessionExists(id int) (bool, error) {

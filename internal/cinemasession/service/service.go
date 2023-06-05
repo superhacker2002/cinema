@@ -12,7 +12,7 @@ type repository interface {
 	SessionsForHall(hallId int, date string) ([]entity.CinemaSession, error)
 	AllSessions(date string, offset, limit int) ([]entity.CinemaSession, error)
 	CreateSession(movieId, hallId int, startTime, endTime string, price float32) (int, error)
-	DeleteSession(id int) error
+	DeleteSession(id int) (found bool, err error)
 	SessionExists(id int) (bool, error)
 	HallExists(id int) (bool, error)
 	MovieExists(id int) (bool, error)
@@ -106,19 +106,12 @@ func (s Service) CreateSession(movieId, hallId int, startTime string, price floa
 }
 
 func (s Service) DeleteSession(id int) error {
-	exists, err := s.r.SessionExists(id)
+	found, err := s.r.DeleteSession(id)
 	if err != nil {
-		log.Println(err)
 		return ErrInternalError
 	}
-
-	if !exists {
+	if !found {
 		return ErrCinemaSessionsNotFound
-	}
-
-	err = s.r.DeleteSession(id)
-	if err != nil {
-		return ErrInternalError
 	}
 
 	return nil

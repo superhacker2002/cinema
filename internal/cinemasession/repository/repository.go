@@ -136,13 +136,16 @@ func (s *SessionsRepository) SessionEndTime(id int, startTime string) (string, e
 	return endTime, nil
 }
 
-func (s *SessionsRepository) DeleteSession(id int) error {
-	_, err := s.db.Exec("DELETE FROM cinema_sessions WHERE session_id = $1", id)
+func (s *SessionsRepository) DeleteSession(id int) (bool, error) {
+	res, err := s.db.Exec("DELETE FROM cinema_sessions WHERE session_id = $1", id)
 	if err != nil {
-		return fmt.Errorf("failed to delete cinema session: %w", err)
+		return false, fmt.Errorf("failed to delete cinema session: %w", err)
 	}
-
-	return nil
+	rowsAffected, err := res.RowsAffected()
+	if rowsAffected == 0 {
+		return false, nil
+	}
+	return true, nil
 }
 
 func (s *SessionsRepository) UpdateSession(id, movieId, hallId int, startTime, endTime string, price float32) error {
