@@ -106,6 +106,9 @@ func (s Service) WatchedMovies(userId int) ([]Movie, error) {
 	if !found {
 		return nil, ErrUserNotFound
 	}
+	if errors.Is(err, ErrMoviesNotFound) {
+		return nil, err
+	}
 
 	return movies, nil
 }
