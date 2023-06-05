@@ -20,7 +20,7 @@ type Movie struct {
 	ID          int    `json:"id"`
 	Title       string `json:"title"`
 	Genre       string `json:"genre"`
-	ReleaseDate string `json:"release_date"`
+	ReleaseDate string `json:"releaseDate"`
 	Duration    int    `json:"duration"`
 }
 
