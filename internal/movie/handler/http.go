@@ -1,13 +1,12 @@
 package handler
 
 import (
+	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/apiutils"
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/movie/service"
 	"encoding/json"
 	"errors"
-	"net/http"
-
-	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/apiutils"
 	"github.com/gorilla/mux"
+	"net/http"
 )
 
 var (
