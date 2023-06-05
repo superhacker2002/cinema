@@ -1,15 +1,9 @@
 package middleware
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
-)
-
-var (
-	ErrNoAuthHeader      = errors.New("authorization header required")
-	ErrInvalidAuthHeader = errors.New("invalid authorization header")
 )
 
 type auth interface {
@@ -25,13 +19,13 @@ func (a accessChecker) checkAccessRights(next http.Handler, perms string) http.H
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
-			http.Error(w, ErrNoAuthHeader.Error(), http.StatusUnauthorized)
+			http.Error(w, "authorization header required", http.StatusUnauthorized)
 			return
 		}
 
 		token := strings.TrimPrefix(authHeader, "Bearer ")
 		if token == authHeader {
-			http.Error(w, ErrInvalidAuthHeader.Error(), http.StatusBadRequest)
+			http.Error(w, "invalid authorization header", http.StatusBadRequest)
 			return
 		}
 
