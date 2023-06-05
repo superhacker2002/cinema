@@ -1,7 +1,6 @@
 package service
 
 import (
-	userRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/repository"
 	"crypto/sha256"
 	"encoding/hex"
 	"github.com/dgrijalva/jwt-go"
@@ -11,16 +10,12 @@ import (
 )
 
 type mockRepository struct {
-	creds userRepository.Credentials
+	creds Credentials
 	err   error
 }
 
-func (m mockRepository) GetUser(username string) (userRepository.Credentials, error) {
+func (m mockRepository) GetUser(username string) (Credentials, error) {
 	return m.creds, m.err
-}
-
-func (m mockRepository) CreateUser(username string, passwordHash string) (int, error) {
-	return 0, nil
 }
 
 func TestAuthenticate(t *testing.T) {
@@ -30,7 +25,7 @@ func TestAuthenticate(t *testing.T) {
 	hasher.Write([]byte("password"))
 	hashedPassword := hex.EncodeToString(hasher.Sum(nil))
 
-	repo.creds = userRepository.Credentials{ID: 1, PasswordHash: hashedPassword}
+	repo.creds = Credentials{ID: 1, PasswordHash: hashedPassword}
 
 	t.Run("Valid auth", func(t *testing.T) {
 		repo.err = nil
@@ -41,7 +36,7 @@ func TestAuthenticate(t *testing.T) {
 	})
 
 	t.Run("Invalid username", func(t *testing.T) {
-		repo.err = userRepository.ErrUserNotFound
+		repo.err = ErrUserNotFound
 		auth := New("secret-key", 24, repo)
 		token, err := auth.Authenticate("non_existing_user", hashedPassword)
 		assert.Equal(t, ErrInvalidUsernameOrPassword, err)
@@ -49,7 +44,7 @@ func TestAuthenticate(t *testing.T) {
 	})
 
 	t.Run("Invalid password", func(t *testing.T) {
-		repo.err = userRepository.ErrUserNotFound
+		repo.err = ErrUserNotFound
 		auth := New("secret-key", 24, repo)
 		token, err := auth.Authenticate("existing_user", "invalid_password")
 		assert.Equal(t, ErrInvalidUsernameOrPassword, err)
@@ -69,7 +64,7 @@ func createTokenString(secret []byte, userID int, tokenExp int) (string, error) 
 func TestVerifyToken(t *testing.T) {
 	repo := mockRepository{}
 
-	repo.creds = userRepository.Credentials{}
+	repo.creds = Credentials{}
 	auth := New("secret-key", 24, repo)
 
 	t.Run("valid token", func(t *testing.T) {
