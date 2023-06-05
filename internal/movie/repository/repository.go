@@ -142,7 +142,7 @@ func (m *MovieRepository) WatchedMovies(userId int) (bool, error, []service.Movi
 		return false, err, nil
 	}
 
-	return false, nil, movies
+	return true, nil, movies
 }
 
 func (m *MovieRepository) readMovies(rows *sql.Rows) ([]service.Movie, error) {
