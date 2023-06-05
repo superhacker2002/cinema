@@ -6,8 +6,6 @@ import (
 	_ "github.com/lib/pq"
 	"log"
 	"time"
-
-	userRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/repository"
 )
 
 var (
@@ -16,15 +14,25 @@ var (
 	ErrInvalidToken              = errors.New("invalid token")
 	ErrExpiredToken              = errors.New("token is expired")
 	ErrInternalError             = errors.New("internal server error")
+	ErrUserNotFound              = errors.New("user not found")
 )
+
+type Credentials struct {
+	ID           int
+	PasswordHash string
+}
+
+type repository interface {
+	GetUser(username string) (Credentials, error)
+}
 
 type Auth struct {
 	jwtSecret []byte
-	r         userRepository.Repository
+	r         repository
 	exp       int
 }
 
-func New(jwtSecret string, tokenExp int, repo userRepository.Repository) Auth {
+func New(jwtSecret string, tokenExp int, repo repository) Auth {
 	return Auth{
 		jwtSecret: []byte(jwtSecret),
 		r:         repo,
@@ -34,7 +42,7 @@ func New(jwtSecret string, tokenExp int, repo userRepository.Repository) Auth {
 
 func (a Auth) Authenticate(username string, passwordHash string) (token string, err error) {
 	userCreds, err := a.r.GetUser(username)
-	if errors.Is(userRepository.ErrUserNotFound, err) {
+	if errors.Is(ErrUserNotFound, err) {
 		return "", ErrInvalidUsernameOrPassword
 	}
 	if err != nil {
