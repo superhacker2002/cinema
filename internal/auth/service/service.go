@@ -24,6 +24,7 @@ type Credentials struct {
 
 type repository interface {
 	GetUser(username string) (Credentials, error)
+	Permissions(userId int) (string, error)
 }
 
 type Auth struct {
@@ -96,4 +97,16 @@ func (a Auth) tokenIsExpired(claims jwt.MapClaims) bool {
 	exp := time.Unix(int64(claims["exp"].(float64)), 0).UTC()
 	now := time.Now().UTC()
 	return exp.Before(now)
+}
+
+func (a Auth) UserPermissions(id int) (string, error) {
+	perms, err := a.r.Permissions(id)
+	if errors.Is(err, ErrUserNotFound) {
+		return "", err
+	}
+	if err != nil {
+		return "", ErrInternalError
+	}
+
+	return perms, nil
 }
