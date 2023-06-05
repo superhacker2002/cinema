@@ -1,13 +1,12 @@
 package handler
 
 import (
+	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/apiutils"
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/movie/service"
 	"encoding/json"
 	"errors"
-	"net/http"
-
-	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/apiutils"
 	"github.com/gorilla/mux"
+	"net/http"
 )
 
 var (
@@ -34,11 +33,11 @@ type Service interface {
 }
 
 type HTTPHandler struct {
-	S Service
+	s Service
 }
 
 func New(router *mux.Router, s Service) HTTPHandler {
-	handler := HTTPHandler{S: s}
+	handler := HTTPHandler{s: s}
 	handler.setRoutes(router)
 
 	return handler
@@ -55,7 +54,7 @@ func (h HTTPHandler) setRoutes(router *mux.Router) {
 }
 
 func (h HTTPHandler) getMoviesHandler(w http.ResponseWriter, _ *http.Request) {
-	cinemaHalls, err := h.S.Movies()
+	cinemaHalls, err := h.s.Movies()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -80,7 +79,7 @@ func (h HTTPHandler) createMovieHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	id, err := h.S.CreateMovie(movie.Title, movie.Genre, movie.ReleaseDate, movie.Duration)
+	id, err := h.s.CreateMovie(movie.Title, movie.Genre, movie.ReleaseDate, movie.Duration)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -96,7 +95,7 @@ func (h HTTPHandler) getMovieHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	movie, err := h.S.MovieById(movieId)
+	movie, err := h.s.MovieById(movieId)
 	if errors.Is(err, service.ErrMoviesNotFound) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
@@ -132,7 +131,7 @@ func (h HTTPHandler) updateMovieHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	err = h.S.UpdateMovie(movieId, movie.Title, movie.Genre, movie.ReleaseDate, movie.Duration)
+	err = h.s.UpdateMovie(movieId, movie.Title, movie.Genre, movie.ReleaseDate, movie.Duration)
 	if errors.Is(err, service.ErrMoviesNotFound) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
@@ -153,7 +152,7 @@ func (h HTTPHandler) deleteMovieHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	err = h.S.DeleteMovie(movieId)
+	err = h.s.DeleteMovie(movieId)
 	if errors.Is(err, service.ErrMoviesNotFound) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
@@ -173,7 +172,7 @@ func (h HTTPHandler) watchedMoviesHandler(w http.ResponseWriter, r *http.Request
 		http.Error(w, ErrInvalidUserId.Error(), http.StatusBadRequest)
 		return
 	}
-	movies, err := h.S.WatchedMovies(userId)
+	movies, err := h.s.WatchedMovies(userId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
