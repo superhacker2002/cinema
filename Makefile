@@ -108,3 +108,8 @@ test-seats:
 	 curl -i -X 'GET' \
     'localhost:8080/cinema-sessions/1/seats'
 
+test-create-ticket:
+	 curl -i -X 'POST' \
+ 	-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODYxMjgyMDYsInVzZXJfaWQiOjF9.wD8AOseT-5wYboBkQwL_BChShjCJN7nB7cze6A8izyI" \
+    'localhost:8080/tickets/'
+

@@ -5,7 +5,7 @@ info:
   version: 1.0.0
 
 servers:
-  - url: http://localhost:8080
+  - url: https://localhost
 
 components:
   securitySchemes:
@@ -180,7 +180,7 @@ components:
         price:
           type: number
           format: float
-          example: 350
+          example: 10
           description: Price of the ticket in dollars.
         pdf_url:
           type: string
@@ -908,13 +908,19 @@ paths:
         - authorization
       summary: Logs user into the system
       operationId: login
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/User'
-
+      parameters:
+        - name: username
+          in: query
+          description: The user name for login
+          required: true
+          schema:
+            type: string
+        - name: password
+          in: query
+          description: The password for login in clear text
+          required: true
+          schema:
+            type: string
       responses:
         '201':
           description: The user logged in successfully
@@ -933,6 +939,21 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
+  /auth/logout:
+    post:
+      tags:
+        - authorization
+      summary: Logs user out the system
+      operationId: logout
+      responses:
+        '201':
+          description: The user logged out successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /users/{userId}:
     get:
@@ -946,7 +967,7 @@ paths:
           required: true
           schema:
             type: integer
-            description: ID of the user to retrieve
+          description: ID of the user to retrieve
       responses:
         '200':
           description: Successful operation

@@ -14,6 +14,7 @@ import (
 	moviesHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/movie/handler"
 	moviesRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/movie/repository"
 	moviesService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/movie/service"
+	ticketHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/ticket/handler"
 	userHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/user/handler"
 	userRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/user/repository"
 	userService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/user/service"
@@ -62,6 +63,9 @@ func main() {
 	moviesRepo := moviesRepository.New(db)
 	moviesServ := moviesService.New(moviesRepo)
 	moviesHandler.New(router, moviesServ)
+
+	ticketHandler := ticketHandler.New()
+	ticketHandler.SetRoutes(router, authorizer)
 
 	log.Fatal(http.ListenAndServe(":"+configs.Port, router))
 }
