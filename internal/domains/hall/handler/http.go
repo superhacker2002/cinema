@@ -157,48 +157,6 @@ func (h HTTPHandler) deleteHallHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-//func authMiddleware(next http.Handler) http.Handler {
-//	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-//		authHeader := r.Header.Get("Authorization")
-//		if authHeader == "" {
-//			http.Error(w, "Authorization header required", http.StatusUnauthorized)
-//			return
-//		}
-//
-//		// Извлекаем токен из заголовка
-//		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-//		if tokenString == authHeader {
-//			http.Error(w, "Invalid authorization header", http.StatusBadRequest)
-//			return
-//		}
-//
-//		// Проверяем токен и извлекаем информацию о пользователе
-//		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-//			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-//				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-//			}
-//			return []byte(jwtSecret), nil
-//		})
-//		if err != nil {
-//			http.Error(w, err.Error(), http.StatusUnauthorized)
-//			return
-//		}
-//
-//		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-//			// Добавляем информацию о пользователе в контекст запроса
-//			userID := int64(claims["user_id"].(float64))
-//			username := claims["username"].(string)
-//			ctx := context.WithValue(r.Context(), "user", User{ID: userID, Username: username})
-//
-//			// Вызываем следующий обработчик с измененным контекстом запроса
-//			next.ServeHTTP(w, r.WithContext(ctx))
-//			return
-//		}
-//
-//		http.Error(w, "Invalid token", http.StatusUnauthorized)
-//	})
-//}
-
 func entitiesToDTO(halls []service.Hall) []cinemaHall {
 	var DTOHalls []cinemaHall
 	for _, hall := range halls {
