@@ -22,7 +22,7 @@ func New(a auth) AccessChecker {
 	}
 }
 
-func (a AccessChecker) Authorize(next http.Handler) http.Handler {
+func (a AccessChecker) Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
@@ -48,7 +48,7 @@ func (a AccessChecker) Authorize(next http.Handler) http.Handler {
 	})
 }
 
-func (a AccessChecker) CheckPerms(next http.Handler, perms []string) http.Handler {
+func (a AccessChecker) CheckPerms(next http.Handler, perms ...string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		userID := r.Context().Value("userID").(int)
 
