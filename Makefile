@@ -6,6 +6,9 @@ DATABASE_IMAGE=cinema-image
 run: docker-db
 	go run cmd/cinema.go
 
+test:
+	go test ./...
+
 .PHONY: docker-db
 docker-db:
 	docker build -f database/Dockerfile -t $(DATABASE_IMAGE) .

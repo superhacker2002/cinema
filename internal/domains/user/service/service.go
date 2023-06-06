@@ -4,11 +4,6 @@ import (
 	"errors"
 )
 
-type auth interface {
-	Authenticate(username string, passwordHash string) (token string, err error)
-	VerifyToken(token string) (userID int, err error)
-}
-
 var (
 	ErrInternalError = errors.New("internal server error")
 	ErrUserExists    = errors.New("user already exists")

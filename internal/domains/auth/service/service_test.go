@@ -14,6 +14,10 @@ type mockRepository struct {
 	err   error
 }
 
+func (m mockRepository) Permissions(userId int) (string, error) {
+	return "", nil
+}
+
 func (m mockRepository) GetUser(username string) (Credentials, error) {
 	return m.creds, m.err
 }
