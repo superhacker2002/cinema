@@ -1,17 +1,36 @@
 OPENAPI_FILE=openapi.html
+DATABASE_IMAGE=cinema-image
+DATABASE_CONTAINER=cinema-container
 
 .PHONY: run
-run:
+run: docker-db
+	go run cmd/cinema.go
+
+docker-compose-run:
 	docker compose up
+
+.PHONY: test
+test:
+	go test ./...
+
+clean:
+	docker compose down
+
+.PHONY: docker-db
+docker-db:
+	docker build -f database/Dockerfile -t $(DATABASE_IMAGE) .
+	docker run --name $(DATABASE_CONTAINER) -d -p 5432:5432 $(DATABASE_IMAGE)
+
+.PHONY: clean-docker
+clean-docker:
+	docker stop $(DATABASE_CONTAINER)
+	docker rm $(DATABASE_CONTAINER)
+	docker rmi $(DATABASE_IMAGE)
 
 .PHONY: openapi-docs
 openapi-docs:
 	redocly build-docs api/openapi.yaml --output=docs/$(OPENAPI_FILE)
 	@echo "Open html file created in docs/ directory with the browser."
-
-.PHONY: clean
-clean:
-	docker compose down
 
 .PHONY: clean-docs
 clean-docs:
@@ -21,8 +40,8 @@ clean-images:
 	docker rmi cinemago-app-cinema-service
 
 
-.PHONY: test-auth
-test-auth:
+.PHONY: auth
+auth:
 	 curl -i -X 'POST' \
     'localhost:8080/auth/' \
     -H 'accept: application/json' \
@@ -32,8 +51,8 @@ test-auth:
     "password": "6D4525C2A21F9BE1CCA9E41F3AA402E0765EE5FCC3E7FEA34A169B1730AE386E" \
     }'
 
-.PHONY: test-create-user
-test-create-user:
+.PHONY: create-user
+create-user:
 	 curl -i -X 'POST' \
     'localhost:8080/users/' \
     -H 'accept: application/json' \
@@ -43,14 +62,15 @@ test-create-user:
     "password": "10a6e6cc8311a3e2bcc09bf6c199adecd5dd59408c343e926b129c4914f3cb01" \
     }'
 
-.PHONY: test-get-sessions
-test-get-sessions:
+# ---------------- sessions --------------------
+.PHONY: get-sessions
+get-sessions:
 	 curl -i -X 'GET' -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODYxMjIzMzMsInVzZXJfaWQiOjF9.fVF1xUBEBNnUNZVU-FbL5aQGYUDrj3QlUcvRoNYTi4Q" \
     'localhost:8080/cinema-sessions/1?date=2023-05-29' \
     -H 'accept: application/json'
 
-.PHONY: test-create-session
-test-create-session:
+.PHONY: create-session
+create-session:
 	 curl curl -i -X 'POST' -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODYxMjIzMzMsInVzZXJfaWQiOjF9.fVF1xUBEBNnUNZVU-FbL5aQGYUDrj3QlUcvRoNYTi4Q" \
     'localhost:8080/cinema-sessions/2' \
     -H 'accept: application/json' \
@@ -61,8 +81,8 @@ test-create-session:
 	"price": 10.0 \
 	}'
 
-.PHONY: test-update-session
-test-update-session:
+.PHONY: update-session
+update-session:
 	 curl -i -X 'PUT' -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODYxMjIxODcsInVzZXJfaWQiOjJ9.5BfTo-05IIPJVlAqpFDXplfRCNzkkneOIuu6nIjnXnE" \
     'localhost:8080/cinema-sessions/1' \
     -H 'accept: application/json' \
@@ -74,22 +94,31 @@ test-update-session:
 	"price": 10.0 \
 	}'
 
-test-delete-session:
+.PHONY: delete-session
+delete-session:
 	 curl -i -X 'DELETE' -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODYxMjIxODcsInVzZXJfaWQiOjJ9.5BfTo-05IIPJVlAqpFDXplfRCNzkkneOIuu6nIjnXnE" \
  	'localhost:8080/cinema-sessions/100000'
 
-.PHONY: test-get-halls
-test-get-halls:
+.PHONY: available-seats
+available-seats:
+	 curl -i -X 'GET' \
+    'localhost:8080/cinema-sessions/1/seats'
+
+# ------------------- halls --------------------
+.PHONY: get-halls
+get-halls:
 	 curl -i -X 'GET' \
     'localhost:8080/halls/' \
     -H 'accept: application/json'
 
-test-get-hall:
+.PHONY: get-hall
+get-hall:
 	 curl -i -X 'GET' \
     'localhost:8080/halls/1' \
     -H 'accept: application/json'
 
-test-create-hall:
+.PHONY: create-hall
+create-hall:
 	 curl -i -X 'POST' \
     'localhost:8080/halls/' \
     -H 'accept: application/json' \
@@ -99,17 +128,15 @@ test-create-hall:
 	"capacity": 100 \
 	}'
 
-test-delete-hall:
+.PHONY: delete-hall
+delete-hall:
 	 curl -i -X 'DELETE' \
     'localhost:8080/halls/1'
 
-
-test-seats:
-	 curl -i -X 'GET' \
-    'localhost:8080/cinema-sessions/1/seats'
-
-test-create-ticket:
+# ------------------ tickets -------------------
+.PHONY: create-ticket
+create-ticket:
 	 curl -i -X 'POST' \
- 	-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODYxMjgyMDYsInVzZXJfaWQiOjF9.wD8AOseT-5wYboBkQwL_BChShjCJN7nB7cze6A8izyI" \
+ 	-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODYxMjkzODYsInVzZXJfaWQiOjF9.VbUCJvOL5Oepk24kGIjVteGKljV-WX_4q-Yhcm4i_gY" \
     'localhost:8080/tickets/'
 
