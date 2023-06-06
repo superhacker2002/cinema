@@ -33,8 +33,8 @@ func (a AuthRepository) GetUser(username string) (service.Credentials, error) {
 }
 
 func (a AuthRepository) Permissions(userId int) (string, error) {
-	var role string
-	err := a.db.QueryRow("SELECT role FROM users WHERE id = $1", userId).Scan(&role)
+	var roleId int
+	err := a.db.QueryRow("SELECT role_id FROM users WHERE user_id = $1", userId).Scan(&roleId)
 	if errors.Is(err, sql.ErrNoRows) {
 		log.Println("could not get user permissions:", err)
 		return "", service.ErrUserNotFound
@@ -44,5 +44,12 @@ func (a AuthRepository) Permissions(userId int) (string, error) {
 		return "", err
 	}
 
-	return role, nil
+	var roleName string
+	err = a.db.QueryRow("SELECT role_name FROM roles WHERE role_id = $1", roleId).Scan(&roleName)
+	if errors.Is(err, sql.ErrNoRows) {
+		log.Println("could not get user role:", err)
+		return "", err
+	}
+
+	return roleName, nil
 }
