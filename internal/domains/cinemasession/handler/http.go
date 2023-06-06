@@ -73,7 +73,7 @@ func (h HttpHandler) SetRoutes(router *mux.Router, a AccessChecker) {
 	adminRouter := router.PathPrefix("/cinema-sessions").Subrouter()
 	adminRouter.Use(a.Authenticate)
 	adminRouter.Use(func(next http.Handler) http.Handler {
-		return a.CheckPerms(next, "admin")
+		return a.CheckPerms(next, service.AdminRole)
 	})
 
 	adminRouter.HandleFunc("/{sessionId}", h.updateSessionHandler).Methods("PUT")
