@@ -2,29 +2,30 @@ package pdfgenerator
 
 import (
 	"fmt"
+	"log"
 
-	"github.com/jung-kurt/gofpdf"
+	"github.com/unidoc/unipdf/v3/model"
 )
 
 func GeneratePDF(sessionId, userId, seatNumber int, outputPath string) error {
-	pdf := gofpdf.New("P", "mm", "A4", "")
-	pdf.AddPage()
+	pdf := model.NewPdfWriter()
 
-	pdf.SetFont("Arial", "B", 16)
-	pdf.Cell(40, 10, "Ticket Details")
-	pdf.Ln(12)
+	// Создаем страницу PDF-документа.
+	page := pdf.P
 
-	pdf.SetFont("Arial", "", 12)
-	pdf.Cell(40, 10, fmt.Sprintf("Session ID: %d", sessionId))
-	pdf.Ln(8)
-	pdf.Cell(40, 10, fmt.Sprintf("User ID: %d", userId))
-	pdf.Ln(8)
-	pdf.Cell(40, 10, fmt.Sprintf("Seat Number: %d", seatNumber))
+	text := fmt.Sprintf("Session ID: %d\nUser ID: %d\nSeat Number: %d", sessionId, userId, seatNumber)
 
-	err := pdf.OutputFileAndClose(outputPath)
+	// Добавляем текстовый блок на страницу.
+	page.AddText(text, 50, 500, model.NewHelvetica(12))
+
+	// Добавляем страницу в PDF-документ.
+	pdf.AddPage(page)
+
+	// Сохраняем PDF-документ в файл.
+	err := pdf.WriteToFile("output.pdf")
 	if err != nil {
-		return err
+		log.Fatalf("Ошибка при сохранении PDF-файла: %v", err)
 	}
 
-	return nil
+	fmt.Println("PDF-файл успешно создан.")
 }
