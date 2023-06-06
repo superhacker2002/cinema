@@ -76,10 +76,12 @@ components:
           type: string
           example: Titanic
           description: Title of the movie.
-        description:
+        genre:
           type: string
-          example: Titanic is a 1997 American epic romance and disaster film directed, written, co-produced, and co-edited by James Cameron.
-          description: Description of the movie.
+          example: Adventure, Crime, Drama
+        releaseDate:
+          type: string
+          example: 2023-05-21
         duration:
           type: integer
           example: 195
@@ -371,7 +373,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Movie'
+                properties:
+                  id:
+                    type: integer
+                    example: 1
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -402,7 +407,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Movie'
+                type: array
+                items:
+                  $ref: '#/components/schemas/Movie'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -466,10 +473,6 @@ paths:
       responses:
         '200':
           description: The movie was updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Movie'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -730,8 +733,8 @@ paths:
               schema:
                 type: array
                 items:
-                  format: int
-                example: [1, 2, 3, 4, 8, 9]
+                  type: integer
+                  example: [1, 2, 3, 4, 8, 9]
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':

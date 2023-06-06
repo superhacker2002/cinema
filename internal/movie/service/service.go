@@ -2,7 +2,6 @@ package service
 
 import (
 	"errors"
-	"fmt"
 	"time"
 )
 
@@ -111,9 +110,6 @@ func (s Service) WatchedMovies(userId int) ([]Movie, error) {
 	}
 
 	movies, err := s.r.WatchedMovies(userId)
-	if errors.Is(err, ErrMoviesNotFound) {
-		return nil, fmt.Errorf("%w for user with id %d", err, userId)
-	}
 
 	if err != nil {
 		return nil, ErrInternalError
