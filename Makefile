@@ -3,7 +3,7 @@ DATABASE_CONTAINER=cinema-container
 DATABASE_IMAGE=cinema-image
 
 .PHONY: run
-run: docker-db
+run: clean-docker docker-db
 	go run cmd/cinema.go
 
 .PHONY: test
@@ -128,5 +128,10 @@ delete-hall:
 create-ticket:
 	 curl -i -X 'POST' \
  	-H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODYxMjkzODYsInVzZXJfaWQiOjF9.VbUCJvOL5Oepk24kGIjVteGKljV-WX_4q-Yhcm4i_gY" \
-    'localhost:8080/tickets/'
-
+    'localhost:8080/tickets/' \
+	-H 'accept: application/json' \
+	-H 'Content-Type: application/json' \
+	-d '{ \
+	"sessionId": 1, \
+	"seatNumber": 4 \
+	}'

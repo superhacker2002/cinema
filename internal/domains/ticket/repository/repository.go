@@ -26,22 +26,23 @@ func New(db *sql.DB) TicketRepository {
 func (t TicketRepository) CreateTicket(sessionId, userId, seatNum int) (service.Ticket, error) {
 	var ticket ticket
 	err := t.db.QueryRow(`
-		SELECT m.name, s.start_time, m.duration, s.hall_id
+		SELECT m.title, s.start_time, m.duration, s.hall_id
 		FROM cinema_sessions s
 		JOIN movies m ON s.movie_id = m.movie_id
-		WHERE s.session_id = ?`, sessionId).Scan(&ticket.MovieName, &ticket.StartTime, &ticket.Duration, &ticket.HallId)
+		WHERE s.session_id = $1`, sessionId).Scan(&ticket.MovieName, &ticket.StartTime, &ticket.Duration, &ticket.HallId)
 	if err != nil {
 		log.Println(err)
 		return service.Ticket{}, err
 	}
 
-	exists, err := t.TicketExists(sessionId, seatNum)
+	exists, err := t.ticketExists(sessionId, seatNum)
 	if err != nil {
 		log.Println(err)
 		return service.Ticket{}, err
 	}
 
 	if exists {
+		log.Printf("%v for the session with id %d and seat number %d", service.ErrTicketExists, sessionId, seatNum)
 		return service.Ticket{}, service.ErrTicketExists
 	}
 
@@ -68,25 +69,14 @@ func (t TicketRepository) SessionExists(id int) (bool, error) {
 	return count > 0, nil
 }
 
-func (t TicketRepository) UserExists(id int) (bool, error) {
-	var count int
-	err := t.db.QueryRow("SELECT COUNT(*) FROM users WHERE user_id = $1", id).Scan(&count)
-	if err != nil {
-		log.Println(err)
-		return false, fmt.Errorf("failed to check if user exists %w", err)
-	}
-
-	return count > 0, nil
-}
-
-func (t TicketRepository) TicketExists(sessionId, seatNum int) (bool, error) {
+func (t TicketRepository) ticketExists(sessionId, seatNum int) (bool, error) {
 	var count int
 	err := t.db.QueryRow(`SELECT COUNT(*) 
 				FROM tickets 
 				WHERE session_id = $1 AND seat_number = $2`, sessionId, seatNum).Scan(&count)
 	if err != nil {
 		log.Println(err)
-		return false, fmt.Errorf("failed to check if user exists %w", err)
+		return false, fmt.Errorf("failed to check if ticket exists %w", err)
 	}
 
 	return count > 0, nil

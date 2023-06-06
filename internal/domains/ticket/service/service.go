@@ -7,7 +7,6 @@ import (
 var (
 	ErrInternalError          = errors.New("internal server error")
 	ErrCinemaSessionsNotFound = errors.New("no cinema sessions were found")
-	ErrUserNotFound           = errors.New("user not found")
 	ErrTicketExists           = errors.New("ticket already exists")
 )
 
@@ -33,7 +32,6 @@ func NewTicketEntity(id, hallId, seat, duration int, movie, startTime string) Ti
 
 type repository interface {
 	SessionExists(id int) (bool, error)
-	UserExists(id int) (bool, error)
 	CreateTicket(sessionId, userId, seatNum int) (Ticket, error)
 }
 
@@ -63,15 +61,11 @@ func (s Service) BuyTicket(sessionId, userId, seatNum int) (string, error) {
 		return "", ErrCinemaSessionsNotFound
 	}
 
-	ok, err = s.r.UserExists(userId)
-	if err != nil {
-		return "", ErrInternalError
-	}
-	if !ok {
-		return "", ErrUserNotFound
+	ticket, err := s.r.CreateTicket(sessionId, userId, seatNum)
+	if errors.Is(err, ErrTicketExists) {
+		return "", err
 	}
 
-	ticket, err := s.r.CreateTicket(sessionId, userId, seatNum)
 	if err != nil {
 		return "", ErrInternalError
 	}

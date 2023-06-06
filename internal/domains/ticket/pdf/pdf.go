@@ -4,11 +4,16 @@ import (
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/ticket/service"
 	"fmt"
 	"github.com/jung-kurt/gofpdf"
+	"log"
 )
 
 type PDFGenerator struct{}
 
-func GenerateTicket(t service.Ticket, outputPath string) error {
+func New() PDFGenerator {
+	return PDFGenerator{}
+}
+
+func (p PDFGenerator) GenerateTicket(t service.Ticket, outputPath string) (string, error) {
 	pdf := gofpdf.New("P", "mm", "A6", "")
 	pdf.AddPage()
 
@@ -29,8 +34,9 @@ func GenerateTicket(t service.Ticket, outputPath string) error {
 
 	err := pdf.OutputFileAndClose(outputPath)
 	if err != nil {
-		return err
+		log.Println(err)
+		return "", err
 	}
 
-	return nil
+	return outputPath, nil
 }

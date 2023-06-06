@@ -15,6 +15,9 @@ import (
 	moviesRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/movie/repository"
 	moviesService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/movie/service"
 	ticketHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/ticket/handler"
+	pdfGenerator "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/ticket/pdf"
+	ticketRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/ticket/repository"
+	ticketService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/ticket/service"
 	userHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/user/handler"
 	userRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/user/repository"
 	userService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/user/service"
@@ -64,8 +67,11 @@ func main() {
 	moviesServ := moviesService.New(moviesRepo)
 	moviesHandler.New(router, moviesServ)
 
-	ticketHandler := ticketHandler.New()
-	ticketHandler.SetRoutes(router, authorizer)
+	ticketGen := pdfGenerator.New()
+	ticketRepo := ticketRepository.New(db)
+	ticketServ := ticketService.New(ticketRepo, ticketGen)
+	tHandler := ticketHandler.New(ticketServ)
+	tHandler.SetRoutes(router, authorizer)
 
 	log.Fatal(http.ListenAndServe(":"+configs.Port, router))
 }

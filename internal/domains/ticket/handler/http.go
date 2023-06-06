@@ -2,10 +2,10 @@ package handler
 
 import (
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/apiutils"
+	ticketServ "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/ticket/service"
 	"encoding/json"
 	"errors"
 	"github.com/gorilla/mux"
-	"log"
 	"net/http"
 )
 
@@ -34,7 +34,6 @@ type HttpHandler struct {
 
 type ticket struct {
 	SessionId  int `json:"sessionId"`
-	UserId     int `json:"userId"`
 	SeatNumber int `json:"seatNumber"`
 }
 
@@ -52,9 +51,22 @@ func (h HttpHandler) createTicket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ticketPath, err := h.s.BuyTicket(t.SessionId, t.UserId, t.SeatNumber)
+	userID := r.Context().Value("userID").(int)
+
+	ticketPath, err := h.s.BuyTicket(t.SessionId, userID, t.SeatNumber)
+	if errors.Is(err, ticketServ.ErrCinemaSessionsNotFound) {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	if errors.Is(err, ticketServ.ErrTicketExists) {
+		http.Error(w, err.Error(), http.StatusConflict)
+		return
+	}
+
 	if err != nil {
-		log.Fatal(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	apiutils.WriteResponse(w, map[string]string{"ticketPath": ticketPath}, http.StatusCreated)
