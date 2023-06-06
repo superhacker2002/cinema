@@ -2,8 +2,8 @@ package handler
 
 import (
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/apiutils"
-	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasession/entity"
-	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasession/service"
+	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/cinemasession/entity"
+	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/cinemasession/service"
 	"encoding/json"
 	"errors"
 	"fmt"

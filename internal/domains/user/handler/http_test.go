@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/service"
+	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/user/service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"net/http"

@@ -2,7 +2,7 @@ package handler
 
 import (
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/apiutils"
-	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/service"
+	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/user/service"
 	"encoding/json"
 	"errors"
 	"github.com/gorilla/mux"

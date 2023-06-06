@@ -1,8 +1,8 @@
 package repository
 
 import (
-	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasession/entity"
-	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasession/service"
+	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/cinemasession/entity"
+	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/cinemasession/service"
 	"database/sql"
 	"fmt"
 	"log"

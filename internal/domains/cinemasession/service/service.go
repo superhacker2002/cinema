@@ -1,7 +1,7 @@
 package service
 
 import (
-	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasession/entity"
+	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/cinemasession/entity"
 	"errors"
 	"fmt"
 	"log"

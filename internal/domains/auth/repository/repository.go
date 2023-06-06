@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/auth/service"
+	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/auth/service"
 	"database/sql"
 	"errors"
 	"fmt"

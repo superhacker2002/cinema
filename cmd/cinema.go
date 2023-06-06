@@ -1,28 +1,24 @@
 package main
 
 import (
-	authHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/auth/handler"
-	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/auth/middleware"
-	authRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/auth/repository"
-	authService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/auth/service"
-
-	sessionsHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasession/handler"
-	sessionsRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasession/repository"
-	sessionsService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasession/service"
-
-	hallsHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/hall/handler"
-	hallsRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/hall/repository"
-	hallsService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/hall/service"
-
-	moviesHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/movie/handler"
-	moviesRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/movie/repository"
-	moviesService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/movie/service"
+	authHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/auth/handler"
+	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/auth/middleware"
+	authRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/auth/repository"
+	authService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/auth/service"
+	sessionsHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/cinemasession/handler"
+	sessionsRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/cinemasession/repository"
+	sessionsService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/cinemasession/service"
+	hallsHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/hall/handler"
+	hallsRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/hall/repository"
+	hallsService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/hall/service"
+	moviesHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/movie/handler"
+	moviesRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/movie/repository"
+	moviesService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/movie/service"
+	userHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/user/handler"
+	userRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/user/repository"
+	userService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/user/service"
 
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/config"
-	userHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/handler"
-	userRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/repository"
-	userService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/service"
-
 	"database/sql"
 	"github.com/gorilla/mux"
 	"log"
