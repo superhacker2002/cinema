@@ -2,6 +2,7 @@ package main
 
 import (
 	authHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/auth/handler"
+	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/auth/middleware"
 	authRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/auth/repository"
 	authService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/auth/service"
 
@@ -47,13 +48,16 @@ func main() {
 	authServ := authService.New(configs.JWTSecret, configs.TokenExp, authRepo)
 	authHandler.New(router, authServ)
 
+	authorizer := middleware.New(authServ)
+
 	userRepo := userRepository.New(db)
 	userServ := userService.New(userRepo)
 	userHandler.New(router, userServ)
 
 	sessionsRepo := sessionsRepository.New(db, configs.TimeZone)
 	sessionsServ := sessionsService.New(sessionsRepo)
-	sessionsHandler.New(router, sessionsServ)
+	handler := sessionsHandler.New(sessionsServ)
+	handler.SetRoutes(router, authorizer)
 
 	hallsRepo := hallsRepository.New(db)
 	hallsServ := hallsService.New(hallsRepo)

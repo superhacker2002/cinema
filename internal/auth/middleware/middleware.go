@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -11,11 +12,17 @@ type auth interface {
 	UserPermissions(id int) (string, error)
 }
 
-type accessChecker struct {
+type AccessChecker struct {
 	a auth
 }
 
-func (a accessChecker) checkAccessRights(next http.Handler, perms string) http.Handler {
+func New(a auth) AccessChecker {
+	return AccessChecker{
+		a: a,
+	}
+}
+
+func (a AccessChecker) Authorize(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
@@ -35,17 +42,36 @@ func (a accessChecker) checkAccessRights(next http.Handler, perms string) http.H
 			return
 		}
 
+		ctx := context.WithValue(r.Context(), "userID", userID)
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func (a AccessChecker) CheckPerms(next http.Handler, perms []string) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		userID := r.Context().Value("userID").(int)
+
 		userPermissions, err := a.a.UserPermissions(userID)
 		if err != nil {
 			http.Error(w, "failed to get user permissions", http.StatusInternalServerError)
 			return
 		}
 
-		if perms != userPermissions {
+		if !hasPermissions(userPermissions, perms) {
 			http.Error(w, "insufficient permissions", http.StatusForbidden)
 			return
 		}
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+func hasPermissions(userPerms string, reqPerms []string) bool {
+	for _, word := range reqPerms {
+		if word == userPerms {
+			return true
+		}
+	}
+	return false
 }
