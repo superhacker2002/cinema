@@ -3,7 +3,7 @@ DATABASE_CONTAINER=cinema-container
 DATABASE_IMAGE=cinema-image
 
 .PHONY: run
-run: docker-db
+run: clean-docker docker-db
 	go run cmd/cinema.go
 
 test:
@@ -32,7 +32,6 @@ clean:
 .PHONY: clean-docs
 clean-docs:
 	rm -rf docs/
-
 
 
 
