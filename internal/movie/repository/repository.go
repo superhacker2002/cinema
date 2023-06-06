@@ -157,11 +157,6 @@ func (m MovieRepository) readMovies(rows *sql.Rows) ([]service.Movie, error) {
 		return nil, fmt.Errorf("error while iterating over movies: %w", err)
 	}
 
-	if len(movies) == 0 {
-		log.Println(service.ErrMoviesNotFound)
-		return nil, service.ErrMoviesNotFound
-	}
-
 	return movies, nil
 }
 
