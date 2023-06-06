@@ -1,4 +1,4 @@
-package middleware
+package authmw
 
 import (
 	"context"
