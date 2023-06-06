@@ -69,7 +69,6 @@ func (h HttpHandler) loginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	apiutils.WriteResponse(w, map[string]string{"token": token}, http.StatusCreated)
 }
 

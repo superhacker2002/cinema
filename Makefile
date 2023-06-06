@@ -1,20 +1,14 @@
 OPENAPI_FILE=openapi.html
-DATABASE_IMAGE=cinema-image
 DATABASE_CONTAINER=cinema-container
+DATABASE_IMAGE=cinema-image
 
 .PHONY: run
 run: docker-db
 	go run cmd/cinema.go
 
-docker-compose-run:
-	docker compose up
-
 .PHONY: test
 test:
 	go test ./...
-
-clean:
-	docker compose down
 
 .PHONY: docker-db
 docker-db:
@@ -35,10 +29,6 @@ openapi-docs:
 .PHONY: clean-docs
 clean-docs:
 	rm -rf docs/
-
-clean-images:
-	docker rmi cinemago-app-cinema-service
-
 
 .PHONY: auth
 auth:
