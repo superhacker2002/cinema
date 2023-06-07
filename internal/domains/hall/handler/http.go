@@ -33,17 +33,17 @@ type AccessChecker interface {
 	CheckPerms(perms ...string) mux.MiddlewareFunc
 }
 
-type HTTPHandler struct {
+type HttpHandler struct {
 	s Service
 }
 
-func New(router *mux.Router, s Service) HTTPHandler {
-	return HTTPHandler{
+func New(s Service) HttpHandler {
+	return HttpHandler{
 		s: s,
 	}
 }
 
-func (h HTTPHandler) SetRoutes(router *mux.Router, a AccessChecker) {
+func (h HttpHandler) SetRoutes(router *mux.Router, a AccessChecker) {
 	userRouter := router.PathPrefix("/halls").Subrouter()
 	userRouter.Use(a.Authenticate)
 
@@ -59,7 +59,7 @@ func (h HTTPHandler) SetRoutes(router *mux.Router, a AccessChecker) {
 	adminRouter.HandleFunc("/{hallId}", h.deleteHallHandler).Methods(http.MethodDelete)
 }
 
-func (h HTTPHandler) getHallsHandler(w http.ResponseWriter, _ *http.Request) {
+func (h HttpHandler) getHallsHandler(w http.ResponseWriter, _ *http.Request) {
 	cinemaHalls, err := h.s.Halls()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -69,7 +69,7 @@ func (h HTTPHandler) getHallsHandler(w http.ResponseWriter, _ *http.Request) {
 	apiutils.WriteResponse(w, entitiesToDTO(cinemaHalls), http.StatusOK)
 }
 
-func (h HTTPHandler) createHallHandler(w http.ResponseWriter, r *http.Request) {
+func (h HttpHandler) createHallHandler(w http.ResponseWriter, r *http.Request) {
 	type hallInfo struct {
 		Name     string `json:"name"`
 		Capacity int    `json:"capacity"`
@@ -92,7 +92,7 @@ func (h HTTPHandler) createHallHandler(w http.ResponseWriter, r *http.Request) {
 	apiutils.WriteResponse(w, map[string]int{"hallId": id}, http.StatusCreated)
 }
 
-func (h HTTPHandler) getHallHandler(w http.ResponseWriter, r *http.Request) {
+func (h HttpHandler) getHallHandler(w http.ResponseWriter, r *http.Request) {
 	hallID, err := apiutils.IntPathParam(r, "hallId")
 	if err != nil {
 		http.Error(w, ErrInvalidHallId.Error(), http.StatusBadRequest)
@@ -113,7 +113,7 @@ func (h HTTPHandler) getHallHandler(w http.ResponseWriter, r *http.Request) {
 	apiutils.WriteResponse(w, entityToDTO(hall), http.StatusOK)
 }
 
-func (h HTTPHandler) updateHallHandler(w http.ResponseWriter, r *http.Request) {
+func (h HttpHandler) updateHallHandler(w http.ResponseWriter, r *http.Request) {
 	hallID, err := apiutils.IntPathParam(r, "hallId")
 	if err != nil {
 		http.Error(w, ErrInvalidHallId.Error(), http.StatusBadRequest)
@@ -147,7 +147,7 @@ func (h HTTPHandler) updateHallHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func (h HTTPHandler) deleteHallHandler(w http.ResponseWriter, r *http.Request) {
+func (h HttpHandler) deleteHallHandler(w http.ResponseWriter, r *http.Request) {
 	hallID, err := apiutils.IntPathParam(r, "hallId")
 	if err != nil {
 		http.Error(w, ErrInvalidHallId.Error(), http.StatusBadRequest)
