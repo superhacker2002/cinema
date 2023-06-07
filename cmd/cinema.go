@@ -48,7 +48,7 @@ func main() {
 	authServ := authService.New(configs.JWTSecret, configs.TokenExp, authRepo)
 	authHandler.New(router, authServ)
 
-	authorizer := middleware.New(authServ)
+	authorizer := authmw.New(authServ)
 
 	userRepo := userRepository.New(db)
 	userServ := userService.New(userRepo)

@@ -34,8 +34,8 @@ type Service interface {
 }
 
 type AccessChecker interface {
-	Authorize(next http.Handler) http.Handler
-	CheckPerms(next http.Handler, perms []string) http.Handler
+	Authenticate(next http.Handler) http.Handler
+	CheckPerms(next http.Handler, perms ...string) http.Handler
 }
 
 type HttpHandler struct {
@@ -63,19 +63,22 @@ func New(s Service) HttpHandler {
 }
 
 func (h HttpHandler) SetRoutes(router *mux.Router, a AccessChecker) {
-	s := router.PathPrefix("/cinema-sessions").Subrouter()
-	s.Use(a.Authorize)
+	userRouter := router.PathPrefix("/cinema-sessions").Subrouter()
+	userRouter.Use(a.Authenticate)
 
-	s.HandleFunc("/", h.getAllSessionsHandler).Methods("GET")
-	s.HandleFunc("/{hallId}", h.getSessionsHandler).Methods("GET")
-	s.HandleFunc("/{sessionId}/seats", h.availableSeatsHandler).Methods("GET")
+	userRouter.HandleFunc("/", h.getAllSessionsHandler).Methods("GET")
+	userRouter.HandleFunc("/{hallId}", h.getSessionsHandler).Methods("GET")
+	userRouter.HandleFunc("/{sessionId}/seats", h.availableSeatsHandler).Methods("GET")
 
-	s.Handle("/{sessionId}",
-		a.CheckPerms(http.HandlerFunc(h.updateSessionHandler), []string{"admin"})).Methods("PUT")
-	s.Handle("/{sessionId}",
-		a.CheckPerms(http.HandlerFunc(h.deleteSessionHandler), []string{"admin"})).Methods("DELETE")
-	s.Handle("/{hallId}",
-		a.CheckPerms(http.HandlerFunc(h.createSessionHandler), []string{"admin"})).Methods("POST")
+	adminRouter := router.PathPrefix("/cinema-sessions").Subrouter()
+	adminRouter.Use(a.Authenticate)
+	adminRouter.Use(func(next http.Handler) http.Handler {
+		return a.CheckPerms(next, service.AdminRole)
+	})
+
+	adminRouter.HandleFunc("/{sessionId}", h.updateSessionHandler).Methods("PUT")
+	adminRouter.HandleFunc("/{sessionId}", h.deleteSessionHandler).Methods("DELETE")
+	adminRouter.HandleFunc("/{hallId}", h.createSessionHandler).Methods("POST")
 }
 
 func (h HttpHandler) getAllSessionsHandler(w http.ResponseWriter, r *http.Request) {

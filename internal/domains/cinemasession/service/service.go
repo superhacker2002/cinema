@@ -8,6 +8,17 @@ import (
 	"sort"
 )
 
+var (
+	ErrInternalError          = errors.New("internal server error")
+	ErrCinemaSessionsNotFound = errors.New("no cinema sessions were found")
+	ErrHallIsBusy             = errors.New("hall is busy at the time")
+	ErrHallNotFound           = errors.New("hall was not found")
+	ErrMovieNotFound          = errors.New("movie was not found")
+	ErrNoAvailableSeats       = errors.New("no available seats found for the cinema session")
+)
+
+const AdminRole = "admin"
+
 type repository interface {
 	SessionsForHall(hallId int, date string) ([]entity.CinemaSession, error)
 	AllSessions(date string, offset, limit int) ([]entity.CinemaSession, error)
@@ -21,15 +32,6 @@ type repository interface {
 	UpdateSession(id, movieId, hallId int, startTime, endTime string, price float32) error
 	AvailableSeats(sessionId int) ([]int, error)
 }
-
-var (
-	ErrInternalError          = errors.New("internal server error")
-	ErrCinemaSessionsNotFound = errors.New("no cinema sessions were found")
-	ErrHallIsBusy             = errors.New("hall is busy at the time")
-	ErrHallNotFound           = errors.New("hall was not found")
-	ErrMovieNotFound          = errors.New("movie was not found")
-	ErrNoAvailableSeats       = errors.New("no available seats found for the cinema session")
-)
 
 type Service struct {
 	r repository
