@@ -1,23 +1,24 @@
 package main
 
 import (
-	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/auth/service"
-	sessionsHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasession/handler"
-	sessionsRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasession/repository"
-	sessionsService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasession/service"
-
-	hallsHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/hall/handler"
-	hallsRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/hall/repository"
-	hallsService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/hall/service"
-
-	moviesHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/movie/handler"
-	moviesRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/movie/repository"
-	moviesService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/movie/service"
+	authHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/auth/handler"
+	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/auth/middleware"
+	authRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/auth/repository"
+	authService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/auth/service"
+	sessionsHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/cinemasession/handler"
+	sessionsRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/cinemasession/repository"
+	sessionsService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/cinemasession/service"
+	hallsHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/hall/handler"
+	hallsRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/hall/repository"
+	hallsService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/hall/service"
+	moviesHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/movie/handler"
+	moviesRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/movie/repository"
+	moviesService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/movie/service"
+	userHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/user/handler"
+	userRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/user/repository"
+	userService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/user/service"
 
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/config"
-	userHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/handler"
-	userRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/user/repository"
-
 	"database/sql"
 	"github.com/gorilla/mux"
 	"log"
@@ -39,21 +40,27 @@ func main() {
 
 	router := mux.NewRouter()
 
+	authRepo := authRepository.New(db)
+	authServ := authService.New(configs.JWTSecret, configs.TokenExp, authRepo)
+	authHandler.New(router, authServ)
+
+	authMW := authmw.New(authServ)
+
 	userRepo := userRepository.New(db)
-	authentication := service.New(configs.JWTSecret, configs.TokenExp, userRepo)
-	userHandler.New(router, authentication, userRepo)
+	userServ := userService.New(userRepo)
+	userHandler.New(router, userServ)
 
 	sessionsRepo := sessionsRepository.New(db, configs.TimeZone)
 	sessionsServ := sessionsService.New(sessionsRepo)
-	sessionsHandler.New(router, sessionsServ)
+	sessionsHandler.New(sessionsServ).SetRoutes(router, authMW)
 
 	hallsRepo := hallsRepository.New(db)
 	hallsServ := hallsService.New(hallsRepo)
-	hallsHandler.New(router, hallsServ)
+	hallsHandler.New(hallsServ).SetRoutes(router, authMW)
 
 	moviesRepo := moviesRepository.New(db)
 	moviesServ := moviesService.New(moviesRepo)
-	moviesHandler.New(router, moviesServ)
+	moviesHandler.New(moviesServ).SetRoutes(router, authMW)
 
 	log.Fatal(http.ListenAndServe(":"+configs.Port, router))
 }

@@ -1,7 +1,7 @@
 package apiutils
 
 import (
-	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/cinemasession/service"
+	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/cinemasession/service"
 	"encoding/json"
 	"errors"
 	"log"
