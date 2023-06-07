@@ -44,7 +44,7 @@ func main() {
 	authServ := authService.New(configs.JWTSecret, configs.TokenExp, authRepo)
 	authHandler.New(router, authServ)
 
-	authorizer := authmw.New(authServ)
+	authMW := authmw.New(authServ)
 
 	userRepo := userRepository.New(db)
 	userServ := userService.New(userRepo)
@@ -53,7 +53,7 @@ func main() {
 	sessionsRepo := sessionsRepository.New(db, configs.TimeZone)
 	sessionsServ := sessionsService.New(sessionsRepo)
 	handler := sessionsHandler.New(sessionsServ)
-	handler.SetRoutes(router, authorizer)
+	handler.SetRoutes(router, authMW)
 
 	hallsRepo := hallsRepository.New(db)
 	hallsServ := hallsService.New(hallsRepo)
