@@ -19,7 +19,6 @@ type service interface {
 
 type accessChecker interface {
 	Authenticate(next http.Handler) http.Handler
-	CheckPerms(next http.Handler, perms ...string) http.Handler
 }
 
 func New(s service) HttpHandler {

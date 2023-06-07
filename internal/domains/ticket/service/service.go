@@ -36,6 +36,7 @@ func NewTicketEntity(id, hallId, seat, duration int, movie string, startTime tim
 
 type repository interface {
 	SessionExists(id int) (bool, error)
+	TicketExists(sessionId, seatNum int) (bool, error)
 	CreateTicket(sessionId, userId, seatNum int) (Ticket, error)
 }
 
@@ -56,12 +57,21 @@ func New(r repository, t ticketGenerator) Service {
 }
 
 func (s Service) BuyTicket(sessionId, userId, seatNum int) (string, error) {
-	ok, err := s.r.SessionExists(sessionId)
+	exists, err := s.r.TicketExists(sessionId, seatNum)
 	if err != nil {
 		return "", ErrInternalError
 	}
 
-	if !ok {
+	if exists {
+		return "", ErrTicketExists
+	}
+
+	exists, err = s.r.SessionExists(sessionId)
+	if err != nil {
+		return "", ErrInternalError
+	}
+
+	if !exists {
 		return "", ErrCinemaSessionsNotFound
 	}
 

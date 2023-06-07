@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
@@ -8,7 +9,12 @@ import (
 
 type mockRepository struct {
 	sessionExists bool
+	ticketExists  bool
 	err           error
+}
+
+func (m *mockRepository) TicketExists(sessionId, seatNum int) (bool, error) {
+	return m.ticketExists, nil
 }
 
 func (m *mockRepository) SessionExists(id int) (bool, error) {
@@ -55,16 +61,17 @@ func TestService_BuyTicket(t *testing.T) {
 	})
 
 	t.Run("ticket already exists", func(t *testing.T) {
+		repo.ticketExists = true
 		repo.sessionExists = true
-		repo.err = ErrTicketExists
 		service := New(repo, gen)
 		_, err := service.BuyTicket(4, 5, 6)
 		assert.ErrorIs(t, err, ErrTicketExists)
 	})
 
 	t.Run("internal server error", func(t *testing.T) {
+		repo.ticketExists = false
 		repo.sessionExists = true
-		repo.err = ErrInternalError
+		repo.err = errors.New("something went wrong")
 		service := New(repo, gen)
 		_, err := service.BuyTicket(4, 4, 4)
 		assert.ErrorIs(t, err, ErrInternalError)

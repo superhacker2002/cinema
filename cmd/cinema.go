@@ -70,7 +70,7 @@ func main() {
 
 	ticketRepo := ticketRepository.New(db)
 	ticketServ := ticketService.New(ticketRepo, ticketGen)
-	ticketHandler.New(ticketServ).SetRoutes(router, authorizer)
+	ticketHandler.New(ticketServ).SetRoutes(router, authMW)
 
 	log.Fatal(http.ListenAndServe(":"+configs.Port, router))
 }

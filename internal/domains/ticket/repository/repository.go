@@ -30,17 +30,6 @@ func (t TicketRepository) CreateTicket(sessionId, userId, seatNum int) (service.
 		return service.Ticket{}, err
 	}
 
-	exists, err := t.ticketExists(sessionId, seatNum)
-	if err != nil {
-		log.Println(err)
-		return service.Ticket{}, err
-	}
-
-	if exists {
-		log.Printf("%v for the session with id %d and seat number %d", service.ErrTicketExists, sessionId, seatNum)
-		return service.Ticket{}, service.ErrTicketExists
-	}
-
 	var id int
 	err = t.db.QueryRow(`INSERT INTO tickets (session_id, user_id, seat_number) 
 				VALUES ($1, $2, $3) RETURNING ticket_id`, sessionId, userId, seatNum).Scan(&id)
@@ -80,7 +69,7 @@ func (t TicketRepository) sessionInfo(sessionId int) (ticket, error) {
 	return sessionTicket, nil
 }
 
-func (t TicketRepository) ticketExists(sessionId, seatNum int) (bool, error) {
+func (t TicketRepository) TicketExists(sessionId, seatNum int) (bool, error) {
 	var count int
 	err := t.db.QueryRow(`SELECT COUNT(*) 
 				FROM tickets 
