@@ -52,12 +52,13 @@ func main() {
 
 	sessionsRepo := sessionsRepository.New(db, configs.TimeZone)
 	sessionsServ := sessionsService.New(sessionsRepo)
-	handler := sessionsHandler.New(sessionsServ)
-	handler.SetRoutes(router, authMW)
+	scHandler := sessionsHandler.New(sessionsServ)
+	scHandler.SetRoutes(router, authMW)
 
 	hallsRepo := hallsRepository.New(db)
 	hallsServ := hallsService.New(hallsRepo)
-	hallsHandler.New(router, hallsServ)
+	hHandler := hallsHandler.New(router, hallsServ)
+	hHandler.SetRoutes(router, authMW)
 
 	moviesRepo := moviesRepository.New(db)
 	moviesServ := moviesService.New(moviesRepo)
