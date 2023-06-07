@@ -1,13 +1,21 @@
 OPENAPI_FILE=openapi.html
-DATABASE_CONTAINER=cinema-container
 DATABASE_IMAGE=cinema-image
+DATABASE_CONTAINER=cinema-container
 
 .PHONY: run
 run: clean-docker docker-db
 	go run cmd/cinema.go
 
+docker-compose-run:
+	docker compose up
+
+.PHONY: test
 test:
 	go test ./...
+
+clean:
+	docker compose down
+	docker
 
 .PHONY: docker-db
 docker-db:
@@ -25,13 +33,6 @@ openapi-docs:
 	redocly build-docs api/openapi.yaml --output=docs/$(OPENAPI_FILE)
 	@echo "Open html file created in docs/ directory with the browser."
 
-.PHONY: clean
-clean:
-	docker compose down
-
 .PHONY: clean-docs
 clean-docs:
 	rm -rf docs/
-
-
-
