@@ -5,12 +5,13 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"time"
 )
 
 type ticket struct {
 	Id        int
 	MovieName string
-	StartTime string
+	StartTime time.Time
 	Duration  int
 	HallId    int
 }

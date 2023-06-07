@@ -18,8 +18,8 @@ type service interface {
 }
 
 type accessChecker interface {
-	Authorize(next http.Handler) http.Handler
-	CheckPerms(next http.Handler, perms []string) http.Handler
+	Authenticate(next http.Handler) http.Handler
+	CheckPerms(next http.Handler, perms ...string) http.Handler
 }
 
 func New(s service) HttpHandler {
@@ -39,7 +39,7 @@ type ticket struct {
 
 func (h HttpHandler) SetRoutes(router *mux.Router, a accessChecker) {
 	s := router.PathPrefix("/tickets").Subrouter()
-	s.Use(a.Authorize)
+	s.Use(a.Authenticate)
 	s.HandleFunc("/", h.createTicket).Methods(http.MethodPost)
 }
 

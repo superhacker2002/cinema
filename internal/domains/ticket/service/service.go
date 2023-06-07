@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"time"
 )
 
 var (
@@ -13,17 +14,19 @@ var (
 type Ticket struct {
 	Id         int
 	MovieName  string
+	Date       string
 	StartTime  string
 	Duration   int
 	HallId     int
 	SeatNumber int
 }
 
-func NewTicketEntity(id, hallId, seat, duration int, movie, startTime string) Ticket {
+func NewTicketEntity(id, hallId, seat, duration int, movie string, startTime time.Time) Ticket {
 	return Ticket{
 		Id:         id,
 		MovieName:  movie,
-		StartTime:  startTime,
+		Date:       startTime.Format("2006-01-02"),
+		StartTime:  startTime.Format("15:04:05"),
 		Duration:   duration,
 		HallId:     hallId,
 		SeatNumber: seat,
