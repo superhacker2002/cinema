@@ -40,10 +40,6 @@ func New(router *mux.Router, s Service) HttpHandler {
 func (h HttpHandler) setRoutes(router *mux.Router) {
 	s := router.PathPrefix("/users").Subrouter()
 	s.HandleFunc("/", h.createUserHandler).Methods("POST")
-	s.HandleFunc("/", h.getUsersHandler).Methods("GET")
-	s.HandleFunc("/{userId}/", h.getUserHandler).Methods("GET")
-	s.HandleFunc("/{userId}/", h.deleteUserHandler).Methods("DELETE")
-	s.HandleFunc("/{userId}/", h.updateUserHandler).Methods("PUT")
 }
 
 func (h HttpHandler) createUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -90,24 +86,4 @@ func (c credentials) validate() error {
 		return ErrNoPassword
 	}
 	return nil
-}
-
-func (h HttpHandler) getUsersHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: return all users
-	w.WriteHeader(http.StatusOK)
-}
-
-func (h HttpHandler) getUserHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: return user by ID
-	w.WriteHeader(http.StatusOK)
-}
-
-func (h HttpHandler) deleteUserHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: delete user by ID
-	w.WriteHeader(http.StatusOK)
-}
-
-func (h HttpHandler) updateUserHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: update user by ID
-	w.WriteHeader(http.StatusOK)
 }
