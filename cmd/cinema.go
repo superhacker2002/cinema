@@ -68,10 +68,10 @@ func main() {
 	moviesHandler.New(router, moviesServ)
 
 	ticketGen := pdfGenerator.New()
+
 	ticketRepo := ticketRepository.New(db)
 	ticketServ := ticketService.New(ticketRepo, ticketGen)
-	tHandler := ticketHandler.New(ticketServ)
-	tHandler.SetRoutes(router, authorizer)
+	ticketHandler.New(ticketServ).SetRoutes(router, authorizer)
 
 	log.Fatal(http.ListenAndServe(":"+configs.Port, router))
 }
