@@ -54,10 +54,6 @@ components:
           type: string
           example: theUser
           description: User name
-        email:
-          type: string
-          example: user@email.com
-          description: User email address
         password:
           type: string
           example: user_password
@@ -95,20 +91,20 @@ components:
           example: 1
           description: Unique identifier of the cinema session. Generated on the server side.
           readOnly: true
-        movie_id:
+        movieId:
           type: integer
           example: 1
           description: ID of the movie being shown in the cinema session.
-        hall_id:
+        hallId:
           type: integer
           example: 1
           description: ID of the hall where the session will take place.
-        start_time:
+        startTime:
           type: string
           format: timestamp
           description: Start time of the cinema session
           example: 2024-05-18 20:00:00
-        end_time:
+        endTime:
           type: string
           format: timestamp
           description: Start time of the cinema session.
@@ -133,15 +129,15 @@ components:
           example: 1
           description: Unique identifier of the cinema session. Generated on the server side.
           readOnly: true
-        movie_id:
+        movieId:
           type: integer
           example: 1
           description: ID of the movie being shown in the cinema session.
-        hall_id:
+        hallId:
           type: integer
           example: 1
           description: ID of the hall where the session will take place.
-        start_time:
+        startTime:
           type: string
           format: timestamp
           description: Start time of the cinema session
@@ -165,28 +161,14 @@ components:
           example: 1
           description: Unique identifier of the ticket. Generated on the server side.
           readOnly: true
-        user_id:
-          type: integer
-          example: 1
-          description: ID of the user who purchased the ticket.
-        cinema_session_id:
+        sessionId:
           type: integer
           example: 1
           description: ID of the cinema session for which the ticket was purchased.
-        seat_number:
+        seatNumber:
           type: integer
           example: 50
           description: Number of the seat in the hall for which the ticket was purchased.
-        price:
-          type: number
-          format: float
-          example: 10
-          description: Price of the ticket in dollars.
-        pdf_url:
-          type: string
-          example: https://storage/ticket/1234
-          description: URL of the PDF document containing the ticket.
-          readOnly: true
 
 paths:
   /halls:
@@ -241,7 +223,7 @@ paths:
           $ref: '#/components/responses/InternalServerError'
       security:
         - bearerAuth: []
-  
+
   /halls/{hallId}:
     get:
       tags:
@@ -329,7 +311,7 @@ paths:
           $ref: '#/components/responses/NotFound'
       security:
         - bearerAuth: []
-  
+
   /movies:
     get:
       tags:
@@ -387,7 +369,7 @@ paths:
           $ref: '#/components/responses/InternalServerError'
       security:
         - bearerAuth: []
-  
+
   /movies/watched/{userId}:
     get:
       tags:
@@ -420,7 +402,7 @@ paths:
           $ref: '#/components/responses/InternalServerError'
       security:
         - bearerAuth: []
-  
+
   /movies/{movieId}:
     get:
       tags:
@@ -509,7 +491,7 @@ paths:
           $ref: '#/components/responses/NotFound'
       security:
         - bearerAuth: []
-  
+
   /cinema-sessions:
     get:
       tags:
@@ -556,7 +538,7 @@ paths:
           $ref: '#/components/responses/InternalServerError'
       security:
         - bearerAuth: []
-  
+
   /cinema-sessions/{hallId}:
     get:
       tags:
@@ -652,7 +634,7 @@ paths:
           $ref: '#/components/responses/InternalServerError'
       security:
         - bearerAuth: []
-  
+
   /cinema-sessions/{sessionId}:
     put:
       summary: Updates a specific cinema session
@@ -711,7 +693,7 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-  
+
   /cinema-sessions/{sessionId}/seats:
     get:
       summary: Returns all available seats for the session
@@ -741,7 +723,7 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-  
+
   /tickets:
     post:
       tags:
@@ -779,35 +761,6 @@ paths:
         - bearerAuth: []
 
   /users:
-    get:
-      tags:
-        - users
-      summary: Get all users
-      operationId: getAllUsers
-      parameters:
-        - name: viewed_movies
-          in: query
-          description: Return only users who have viewed at least one movie
-          schema:
-            type: boolean
-      responses:
-        '200':
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/User'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
     post:
       tags:
         - users
@@ -831,26 +784,20 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalServerError'
-  
+
   /auth:
     post:
       tags:
         - authorization
       summary: Logs user into the system
       operationId: login
-      parameters:
-        - name: username
-          in: query
-          description: The user name for login
-          required: true
-          schema:
-            type: string
-        - name: password
-          in: query
-          description: The password for login in clear text
-          required: true
-          schema:
-            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+
       responses:
         '201':
           description: The user logged in successfully
@@ -869,112 +816,5 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
-  /auth/logout:
-    post:
-      tags:
-        - authorization
-      summary: Logs user out the system
-      operationId: logout
-      responses:
-        '201':
-          description: The user logged out successfully
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  
-  /users/{userId}:
-    get:
-      tags:
-        - users
-      summary: Returns a specific user by ID
-      operationId: getUserById
-      parameters:
-        - in: path
-          name: userId
-          required: true
-          schema:
-            type: integer
-          description: ID of the user to retrieve
-      responses:
-        '200':
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-      security:
-        - bearerAuth: []
 
-    put:
-      summary: Updates a specific user by ID
-      operationId: updateUser
-      tags:
-        - users
-      parameters:
-        - in: path
-          name: userId
-          required: true
-          schema:
-            type: integer
-          description: ID of the user to update
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/User'
-      responses:
-        '200':
-          description: The user was updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-      security:
-        - bearerAuth: []
-
-    delete:
-      summary: Deletes a specific user by ID
-      operationId: deleteUser
-      tags:
-        - users
-      parameters:
-        - in: path
-          name: userId
-          required: true
-          schema:
-            type: integer
-          description: ID of the user to delete
-      responses:
-        '204':
-          description: The user was deleted successfully
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-      security:
-        - bearerAuth: []
       
