@@ -35,7 +35,7 @@ type Service interface {
 
 type AccessChecker interface {
 	Authenticate(next http.Handler) http.Handler
-	CheckPerms(next http.Handler, perms ...string) http.Handler
+	CheckPerms(perms ...string) mux.MiddlewareFunc
 }
 
 type HttpHandler struct {
@@ -72,9 +72,7 @@ func (h HttpHandler) SetRoutes(router *mux.Router, a AccessChecker) {
 
 	adminRouter := router.PathPrefix("/cinema-sessions").Subrouter()
 	adminRouter.Use(a.Authenticate)
-	adminRouter.Use(func(next http.Handler) http.Handler {
-		return a.CheckPerms(next, service.AdminRole)
-	})
+	adminRouter.Use(a.CheckPerms(service.AdminRole))
 
 	adminRouter.HandleFunc("/{sessionId}", h.updateSessionHandler).Methods("PUT")
 	adminRouter.HandleFunc("/{sessionId}", h.deleteSessionHandler).Methods("DELETE")
