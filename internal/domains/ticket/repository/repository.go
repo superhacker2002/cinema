@@ -25,14 +25,8 @@ func New(db *sql.DB) TicketRepository {
 }
 
 func (t TicketRepository) CreateTicket(sessionId, userId, seatNum int) (service.Ticket, error) {
-	var ticket ticket
-	err := t.db.QueryRow(`
-		SELECT m.title, s.start_time, m.duration, s.hall_id
-		FROM cinema_sessions s
-		JOIN movies m ON s.movie_id = m.movie_id
-		WHERE s.session_id = $1`, sessionId).Scan(&ticket.MovieName, &ticket.StartTime, &ticket.Duration, &ticket.HallId)
+	sessionTicket, err := t.sessionInfo(sessionId)
 	if err != nil {
-		log.Println(err)
 		return service.Ticket{}, err
 	}
 
@@ -56,7 +50,8 @@ func (t TicketRepository) CreateTicket(sessionId, userId, seatNum int) (service.
 		return service.Ticket{}, err
 	}
 
-	return service.NewTicketEntity(id, ticket.HallId, seatNum, ticket.Duration, ticket.MovieName, ticket.StartTime), nil
+	return service.NewTicketEntity(id, sessionTicket.HallId, seatNum,
+		sessionTicket.Duration, sessionTicket.MovieName, sessionTicket.StartTime), nil
 }
 
 func (t TicketRepository) SessionExists(id int) (bool, error) {
@@ -68,6 +63,21 @@ func (t TicketRepository) SessionExists(id int) (bool, error) {
 	}
 
 	return count > 0, nil
+}
+
+func (t TicketRepository) sessionInfo(sessionId int) (ticket, error) {
+	var sessionTicket ticket
+	err := t.db.QueryRow(`
+		SELECT m.title, s.start_time, m.duration, s.hall_id
+		FROM cinema_sessions s
+		JOIN movies m ON s.movie_id = m.movie_id
+		WHERE s.session_id = $1`, sessionId).Scan(&sessionTicket.MovieName,
+		&sessionTicket.StartTime, &sessionTicket.Duration, &sessionTicket.HallId)
+	if err != nil {
+		log.Println(err)
+		return ticket{}, err
+	}
+	return sessionTicket, nil
 }
 
 func (t TicketRepository) ticketExists(sessionId, seatNum int) (bool, error) {
