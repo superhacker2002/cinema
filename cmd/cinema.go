@@ -52,17 +52,15 @@ func main() {
 
 	sessionsRepo := sessionsRepository.New(db, configs.TimeZone)
 	sessionsServ := sessionsService.New(sessionsRepo)
-	scHandler := sessionsHandler.New(sessionsServ)
-	scHandler.SetRoutes(router, authMW)
+	sessionsHandler.New(sessionsServ).SetRoutes(router, authMW)
 
 	hallsRepo := hallsRepository.New(db)
 	hallsServ := hallsService.New(hallsRepo)
-	hHandler := hallsHandler.New(router, hallsServ)
-	hHandler.SetRoutes(router, authMW)
+	hallsHandler.New(hallsServ).SetRoutes(router, authMW)
 
 	moviesRepo := moviesRepository.New(db)
 	moviesServ := moviesService.New(moviesRepo)
-	moviesHandler.New(router, moviesServ)
+	moviesHandler.New(moviesServ).SetRoutes(router, authMW)
 
 	log.Fatal(http.ListenAndServe(":"+configs.Port, router))
 }
