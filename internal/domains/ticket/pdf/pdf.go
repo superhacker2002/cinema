@@ -32,8 +32,6 @@ func (p PDFGenerator) GenerateTicket(t service.Ticket, outputPath string) error 
 	pdf.SetFont("Arial", "", textSize)
 	pdf.Cell(textWidth, textHeight, fmt.Sprintf("Movie: %s", t.MovieName))
 	pdf.Ln(lineBreak)
-	pdf.Cell(textWidth, textHeight, fmt.Sprintf("Start time: %s", t.StartTime))
-	pdf.Ln(lineBreak)
 	pdf.Cell(textWidth, textHeight, fmt.Sprintf("Date: %s", t.Date))
 	pdf.Ln(lineBreak)
 	pdf.Cell(textWidth, textHeight, fmt.Sprintf("Start time: %s", t.StartTime))
