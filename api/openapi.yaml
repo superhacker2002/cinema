@@ -24,7 +24,7 @@ components:
       description: The requested resource was not found on the server.
     InternalServerError:
       description: An unexpected error occurred on the server.
-
+  
   schemas:
     Hall:
       type: object
@@ -241,7 +241,7 @@ paths:
           $ref: '#/components/responses/InternalServerError'
       security:
         - bearerAuth: []
-
+  
   /halls/{hallId}:
     get:
       tags:
@@ -329,7 +329,7 @@ paths:
           $ref: '#/components/responses/NotFound'
       security:
         - bearerAuth: []
-
+  
   /movies:
     get:
       tags:
@@ -387,7 +387,7 @@ paths:
           $ref: '#/components/responses/InternalServerError'
       security:
         - bearerAuth: []
-
+  
   /movies/watched/{userId}:
     get:
       tags:
@@ -420,7 +420,7 @@ paths:
           $ref: '#/components/responses/InternalServerError'
       security:
         - bearerAuth: []
-
+  
   /movies/{movieId}:
     get:
       tags:
@@ -509,7 +509,7 @@ paths:
           $ref: '#/components/responses/NotFound'
       security:
         - bearerAuth: []
-
+  
   /cinema-sessions:
     get:
       tags:
@@ -556,7 +556,7 @@ paths:
           $ref: '#/components/responses/InternalServerError'
       security:
         - bearerAuth: []
-
+  
   /cinema-sessions/{hallId}:
     get:
       tags:
@@ -652,7 +652,7 @@ paths:
           $ref: '#/components/responses/InternalServerError'
       security:
         - bearerAuth: []
-
+  
   /cinema-sessions/{sessionId}:
     put:
       summary: Updates a specific cinema session
@@ -711,7 +711,7 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
+  
   /cinema-sessions/{sessionId}/seats:
     get:
       summary: Returns all available seats for the session
@@ -741,7 +741,7 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
+  
   /tickets:
     post:
       tags:
@@ -757,86 +757,16 @@ paths:
               $ref: '#/components/schemas/Ticket'
       responses:
         '201':
-          description: Created
-          headers:
-            Location:
-              description: URL of the newly created ticket.
-              schema:
-                type: string
-          content:
-            application/pdf:
-              schema:
-                type: string
-                format: binary
-                description: The PDF ticket document
-                example: Some binary pdf document
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-      security:
-        - bearerAuth: []
-
-  /tickets/{userId}:
-    get:
-      tags:
-        - tickets
-      summary: Get all purchased tickets by a specific user
-      description: Retrieve information about all tickets bought by user in the database.
-      operationId: getTicketByUser
-      parameters:
-        - name: userId
-          in: path
-          description: Identifier of the user to retrieve information about bought tickets
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: OK
+          description: Ticket was successfully created
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Ticket'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-      security:
-        - bearerAuth: []
-
-  /tickets/{ticketId}:
-    get:
-      tags:
-        - tickets
-      summary: Get ticket information
-      description: Retrieve information about a ticket based on its identifier.
-      operationId: getTicketById
-      parameters:
-        - name: ticketId
-          in: path
-          description: Identifier of the ticket to retrieve information about.
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/Ticket'
+                type: object
+                properties:
+                  ticketPath:
+                    type: string
+                    description: Path to the document on local machine
+                    example: ticket1.pdf
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -901,7 +831,7 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
+  
   /auth:
     post:
       tags:
@@ -954,7 +884,7 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
+  
   /users/{userId}:
     get:
       tags:
@@ -1047,4 +977,4 @@ paths:
           $ref: '#/components/responses/NotFound'
       security:
         - bearerAuth: []
-    
+      
