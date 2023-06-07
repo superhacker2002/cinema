@@ -32,28 +32,39 @@ type Service interface {
 	WatchedMovies(userId int) ([]service.Movie, error)
 }
 
-type HTTPHandler struct {
+type AccessChecker interface {
+	Authenticate(next http.Handler) http.Handler
+	CheckPerms(perms ...string) mux.MiddlewareFunc
+}
+
+type HttpHandler struct {
 	s Service
 }
 
-func New(router *mux.Router, s Service) HTTPHandler {
-	handler := HTTPHandler{s: s}
-	handler.setRoutes(router)
-
-	return handler
+func New(s Service) HttpHandler {
+	return HttpHandler{
+		s: s,
+	}
 }
 
-func (h HTTPHandler) setRoutes(router *mux.Router) {
-	s := router.PathPrefix("/movies").Subrouter()
-	s.HandleFunc("/", h.getMoviesHandler).Methods(http.MethodGet)
-	s.HandleFunc("/", h.createMovieHandler).Methods(http.MethodPost)
-	s.HandleFunc("/{movieId}", h.getMovieHandler).Methods(http.MethodGet)
-	s.HandleFunc("/{movieId}", h.updateMovieHandler).Methods(http.MethodPut)
-	s.HandleFunc("/{movieId}", h.deleteMovieHandler).Methods(http.MethodDelete)
-	s.HandleFunc("/watched/{userId}", h.watchedMoviesHandler).Methods(http.MethodGet)
+func (h HttpHandler) SetRoutes(router *mux.Router, a AccessChecker) {
+	userRouter := router.PathPrefix("/movies").Subrouter()
+	userRouter.Use(a.Authenticate)
+
+	userRouter.HandleFunc("/", h.getMoviesHandler).Methods(http.MethodGet)
+	userRouter.HandleFunc("/{movieId}", h.getMovieHandler).Methods(http.MethodGet)
+	userRouter.HandleFunc("/watched/{userId}", h.watchedMoviesHandler).Methods(http.MethodGet)
+
+	adminRouter := router.PathPrefix("/movies").Subrouter()
+	adminRouter.Use(a.Authenticate)
+	adminRouter.Use(a.CheckPerms("admin"))
+
+	adminRouter.HandleFunc("/", h.createMovieHandler).Methods(http.MethodPost)
+	adminRouter.HandleFunc("/{movieId}", h.updateMovieHandler).Methods(http.MethodPut)
+	adminRouter.HandleFunc("/{movieId}", h.deleteMovieHandler).Methods(http.MethodDelete)
 }
 
-func (h HTTPHandler) getMoviesHandler(w http.ResponseWriter, _ *http.Request) {
+func (h HttpHandler) getMoviesHandler(w http.ResponseWriter, _ *http.Request) {
 	cinemaHalls, err := h.s.Movies()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -63,7 +74,7 @@ func (h HTTPHandler) getMoviesHandler(w http.ResponseWriter, _ *http.Request) {
 	apiutils.WriteResponse(w, entitiesToDTO(cinemaHalls), http.StatusOK)
 }
 
-func (h HTTPHandler) createMovieHandler(w http.ResponseWriter, r *http.Request) {
+func (h HttpHandler) createMovieHandler(w http.ResponseWriter, r *http.Request) {
 	type movieInfo struct {
 		Title       string `json:"title"`
 		Genre       string `json:"genre"`
@@ -88,7 +99,7 @@ func (h HTTPHandler) createMovieHandler(w http.ResponseWriter, r *http.Request) 
 	apiutils.WriteResponse(w, map[string]int{"movieId": id}, http.StatusCreated)
 }
 
-func (h HTTPHandler) getMovieHandler(w http.ResponseWriter, r *http.Request) {
+func (h HttpHandler) getMovieHandler(w http.ResponseWriter, r *http.Request) {
 	movieId, err := apiutils.IntPathParam(r, "movieId")
 	if err != nil {
 		http.Error(w, ErrInvalidMovieId.Error(), http.StatusBadRequest)
@@ -109,7 +120,7 @@ func (h HTTPHandler) getMovieHandler(w http.ResponseWriter, r *http.Request) {
 	apiutils.WriteResponse(w, entityToDTO(movie), http.StatusOK)
 }
 
-func (h HTTPHandler) updateMovieHandler(w http.ResponseWriter, r *http.Request) {
+func (h HttpHandler) updateMovieHandler(w http.ResponseWriter, r *http.Request) {
 	movieId, err := apiutils.IntPathParam(r, "movieId")
 	if err != nil {
 		http.Error(w, ErrInvalidMovieId.Error(), http.StatusBadRequest)
@@ -145,7 +156,7 @@ func (h HTTPHandler) updateMovieHandler(w http.ResponseWriter, r *http.Request) 
 	w.WriteHeader(http.StatusOK)
 }
 
-func (h HTTPHandler) deleteMovieHandler(w http.ResponseWriter, r *http.Request) {
+func (h HttpHandler) deleteMovieHandler(w http.ResponseWriter, r *http.Request) {
 	movieId, err := apiutils.IntPathParam(r, "movieId")
 	if err != nil {
 		http.Error(w, ErrInvalidMovieId.Error(), http.StatusBadRequest)
@@ -166,7 +177,7 @@ func (h HTTPHandler) deleteMovieHandler(w http.ResponseWriter, r *http.Request) 
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (h HTTPHandler) watchedMoviesHandler(w http.ResponseWriter, r *http.Request) {
+func (h HttpHandler) watchedMoviesHandler(w http.ResponseWriter, r *http.Request) {
 	userId, err := apiutils.IntPathParam(r, "userId")
 	if err != nil {
 		http.Error(w, ErrInvalidUserId.Error(), http.StatusBadRequest)

@@ -28,28 +28,39 @@ type Service interface {
 	DeleteHall(id int) error
 }
 
-type HTTPHandler struct {
-	S Service
+type AccessChecker interface {
+	Authenticate(next http.Handler) http.Handler
+	CheckPerms(perms ...string) mux.MiddlewareFunc
 }
 
-func New(router *mux.Router, s Service) HTTPHandler {
-	handler := HTTPHandler{S: s}
-	handler.setRoutes(router)
-
-	return handler
+type HttpHandler struct {
+	s Service
 }
 
-func (h HTTPHandler) setRoutes(router *mux.Router) {
-	s := router.PathPrefix("/halls").Subrouter()
-	s.HandleFunc("/", h.getHallsHandler).Methods(http.MethodGet)
-	s.HandleFunc("/", h.createHallHandler).Methods(http.MethodPost)
-	s.HandleFunc("/{hallId}", h.getHallHandler).Methods(http.MethodGet)
-	s.HandleFunc("/{hallId}", h.updateHallHandler).Methods(http.MethodPut)
-	s.HandleFunc("/{hallId}", h.deleteHallHandler).Methods(http.MethodDelete)
+func New(s Service) HttpHandler {
+	return HttpHandler{
+		s: s,
+	}
 }
 
-func (h HTTPHandler) getHallsHandler(w http.ResponseWriter, _ *http.Request) {
-	cinemaHalls, err := h.S.Halls()
+func (h HttpHandler) SetRoutes(router *mux.Router, a AccessChecker) {
+	userRouter := router.PathPrefix("/halls").Subrouter()
+	userRouter.Use(a.Authenticate)
+
+	userRouter.HandleFunc("/", h.getHallsHandler).Methods(http.MethodGet)
+	userRouter.HandleFunc("/{hallId}", h.getHallHandler).Methods(http.MethodGet)
+
+	adminRouter := router.PathPrefix("/halls").Subrouter()
+	adminRouter.Use(a.Authenticate)
+	adminRouter.Use(a.CheckPerms("admin"))
+
+	adminRouter.HandleFunc("/", h.createHallHandler).Methods(http.MethodPost)
+	adminRouter.HandleFunc("/{hallId}", h.updateHallHandler).Methods(http.MethodPut)
+	adminRouter.HandleFunc("/{hallId}", h.deleteHallHandler).Methods(http.MethodDelete)
+}
+
+func (h HttpHandler) getHallsHandler(w http.ResponseWriter, _ *http.Request) {
+	cinemaHalls, err := h.s.Halls()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -58,7 +69,7 @@ func (h HTTPHandler) getHallsHandler(w http.ResponseWriter, _ *http.Request) {
 	apiutils.WriteResponse(w, entitiesToDTO(cinemaHalls), http.StatusOK)
 }
 
-func (h HTTPHandler) createHallHandler(w http.ResponseWriter, r *http.Request) {
+func (h HttpHandler) createHallHandler(w http.ResponseWriter, r *http.Request) {
 	type hallInfo struct {
 		Name     string `json:"name"`
 		Capacity int    `json:"capacity"`
@@ -72,7 +83,7 @@ func (h HTTPHandler) createHallHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.S.CreateHall(hall.Name, hall.Capacity)
+	id, err := h.s.CreateHall(hall.Name, hall.Capacity)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -81,14 +92,14 @@ func (h HTTPHandler) createHallHandler(w http.ResponseWriter, r *http.Request) {
 	apiutils.WriteResponse(w, map[string]int{"hallId": id}, http.StatusCreated)
 }
 
-func (h HTTPHandler) getHallHandler(w http.ResponseWriter, r *http.Request) {
+func (h HttpHandler) getHallHandler(w http.ResponseWriter, r *http.Request) {
 	hallID, err := apiutils.IntPathParam(r, "hallId")
 	if err != nil {
 		http.Error(w, ErrInvalidHallId.Error(), http.StatusBadRequest)
 		return
 	}
 
-	hall, err := h.S.HallById(hallID)
+	hall, err := h.s.HallById(hallID)
 	if errors.Is(err, service.ErrHallNotFound) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
@@ -102,7 +113,7 @@ func (h HTTPHandler) getHallHandler(w http.ResponseWriter, r *http.Request) {
 	apiutils.WriteResponse(w, entityToDTO(hall), http.StatusOK)
 }
 
-func (h HTTPHandler) updateHallHandler(w http.ResponseWriter, r *http.Request) {
+func (h HttpHandler) updateHallHandler(w http.ResponseWriter, r *http.Request) {
 	hallID, err := apiutils.IntPathParam(r, "hallId")
 	if err != nil {
 		http.Error(w, ErrInvalidHallId.Error(), http.StatusBadRequest)
@@ -122,7 +133,7 @@ func (h HTTPHandler) updateHallHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.S.UpdateHall(hallID, hall.Name, hall.Capacity)
+	err = h.s.UpdateHall(hallID, hall.Name, hall.Capacity)
 	if errors.Is(err, service.ErrHallNotFound) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
@@ -136,14 +147,14 @@ func (h HTTPHandler) updateHallHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func (h HTTPHandler) deleteHallHandler(w http.ResponseWriter, r *http.Request) {
+func (h HttpHandler) deleteHallHandler(w http.ResponseWriter, r *http.Request) {
 	hallID, err := apiutils.IntPathParam(r, "hallId")
 	if err != nil {
 		http.Error(w, ErrInvalidHallId.Error(), http.StatusBadRequest)
 		return
 	}
 
-	err = h.S.DeleteHall(hallID)
+	err = h.s.DeleteHall(hallID)
 	if errors.Is(err, service.ErrHallNotFound) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return

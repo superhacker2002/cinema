@@ -3,6 +3,7 @@ package authmw
 import (
 	"context"
 	"fmt"
+	"github.com/gorilla/mux"
 	"net/http"
 	"strings"
 )
@@ -48,23 +49,25 @@ func (a AccessChecker) Authenticate(next http.Handler) http.Handler {
 	})
 }
 
-func (a AccessChecker) CheckPerms(next http.Handler, perms ...string) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		userID := r.Context().Value("userID").(int)
+func (a AccessChecker) CheckPerms(perms ...string) mux.MiddlewareFunc {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			userID := r.Context().Value("userID").(int)
 
-		userPermissions, err := a.a.UserPermissions(userID)
-		if err != nil {
-			http.Error(w, "failed to get user permissions", http.StatusInternalServerError)
-			return
-		}
+			userPermissions, err := a.a.UserPermissions(userID)
+			if err != nil {
+				http.Error(w, "failed to get user permissions", http.StatusInternalServerError)
+				return
+			}
 
-		if !hasPermissions(userPermissions, perms) {
-			http.Error(w, "insufficient permissions", http.StatusForbidden)
-			return
-		}
+			if !hasPermissions(userPermissions, perms) {
+				http.Error(w, "insufficient permissions", http.StatusForbidden)
+				return
+			}
 
-		next.ServeHTTP(w, r)
-	})
+			next.ServeHTTP(w, r)
+		})
+	}
 }
 
 func hasPermissions(userPerms string, reqPerms []string) bool {
