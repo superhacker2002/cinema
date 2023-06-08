@@ -5,19 +5,24 @@ import (
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/auth/middleware"
 	authRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/auth/repository"
 	authService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/auth/service"
+
 	sessionsHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/cinemasession/handler"
 	sessionsRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/cinemasession/repository"
 	sessionsService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/cinemasession/service"
+
 	hallsHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/hall/handler"
 	hallsRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/hall/repository"
 	hallsService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/hall/service"
+
 	moviesHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/movie/handler"
 	moviesRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/movie/repository"
 	moviesService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/movie/service"
+
 	ticketHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/ticket/handler"
 	pdfGenerator "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/ticket/pdf"
 	ticketRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/ticket/repository"
 	ticketService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/ticket/service"
+
 	userHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/user/handler"
 	userRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/user/repository"
 	userService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/user/service"
