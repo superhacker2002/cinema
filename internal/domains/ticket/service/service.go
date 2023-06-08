@@ -12,6 +12,11 @@ var (
 	ErrTicketExists           = errors.New("ticket already exists")
 )
 
+const (
+	dateLayout = "2006-01-02"
+	timeLayout = "15:04:05"
+)
+
 type Ticket struct {
 	Id         int
 	MovieName  string
@@ -26,8 +31,8 @@ func NewTicketEntity(id, hallId, seat, duration int, movie string, startTime tim
 	return Ticket{
 		Id:         id,
 		MovieName:  movie,
-		Date:       startTime.Format("2006-01-02"),
-		StartTime:  startTime.Format("15:04:05"),
+		Date:       startTime.Format(dateLayout),
+		StartTime:  startTime.Format(timeLayout),
 		Duration:   duration,
 		HallId:     hallId,
 		SeatNumber: seat,
