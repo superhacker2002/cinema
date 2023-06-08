@@ -11,6 +11,8 @@ var (
 	ErrUserNotFound   = errors.New("user not found")
 )
 
+const AdminRole = "admin"
+
 type Movie struct {
 	Id          int
 	Title       string
@@ -19,12 +21,12 @@ type Movie struct {
 	Duration    int
 }
 
-func NewMovieEntity(id int, title, genre string, releaseDate string, duration int) Movie {
+func NewMovieEntity(id int, title, genre string, releaseDate time.Time, duration int) Movie {
 	return Movie{
 		Id:          id,
 		Title:       title,
 		Genre:       genre,
-		ReleaseDate: releaseDate,
+		ReleaseDate: releaseDate.Format("2006-01-02"),
 		Duration:    duration,
 	}
 }

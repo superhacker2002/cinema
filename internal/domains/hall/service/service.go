@@ -7,6 +7,8 @@ var (
 	ErrInternalError = errors.New("internal server error")
 )
 
+const AdminRole = "admin"
+
 type Hall struct {
 	Id       int
 	Name     string
