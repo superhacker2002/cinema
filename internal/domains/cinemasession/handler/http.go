@@ -22,6 +22,8 @@ var (
 	ErrInvalidDate      = errors.New("invalid date format")
 	ErrInvalidSessionId = errors.New("invalid session id")
 	ErrReadRequestFail  = errors.New("failed to read request body")
+	ErrInvalidOffset    = errors.New("invalid offset parameter")
+	ErrInvalidLimit     = errors.New("invalid limit parameter")
 )
 
 type Service interface {
@@ -298,17 +300,17 @@ func page(r *http.Request) (Page, error) {
 
 	var err error
 	if p.offset, err = strconv.Atoi(offsetStr); err != nil {
-		return p, err
+		return p, ErrInvalidOffset
 	}
 	if p.limit, err = strconv.Atoi(limitStr); err != nil {
-		return p, err
+		return p, ErrInvalidLimit
 	}
 
 	if p.offset < 0 {
-		return p, errors.New(fmt.Sprintf("invalid offset parameter: %d", p.offset))
+		return p, ErrInvalidOffset
 	}
 	if p.limit < 0 {
-		return p, errors.New(fmt.Sprintf("invalid limit parameter: %d", p.offset))
+		return p, ErrInvalidLimit
 	}
 
 	return p, nil
