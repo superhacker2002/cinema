@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/jung-kurt/gofpdf"
 	"log"
+	"os"
 )
 
 const (
@@ -15,14 +16,12 @@ const (
 	lineBreak            = 8
 )
 
-type PDFGenerator struct{}
+type Generator struct{}
 
-func New() PDFGenerator {
-	return PDFGenerator{}
-}
-
-func (p PDFGenerator) GenerateTicket(t service.Ticket, outputPath string) error {
+func (p Generator) GenerateTicket(t service.Ticket, outputPath string) (*os.File, error) {
 	pdf := gofpdf.New("P", "mm", "A6", "")
+	defer pdf.Close()
+
 	pdf.AddPage()
 
 	pdf.SetFont("Arial", "B", 16)
@@ -42,11 +41,18 @@ func (p PDFGenerator) GenerateTicket(t service.Ticket, outputPath string) error 
 	pdf.Ln(lineBreak)
 	pdf.Cell(textWidth, textHeight, fmt.Sprintf("Seat Number: %d", t.SeatNumber))
 
-	err := pdf.OutputFileAndClose(outputPath)
+	file, err := os.Create(outputPath)
 	if err != nil {
-		log.Println(err)
-		return err
+		log.Printf("error while creating a PDF ticket file: %v", err)
+		return nil, err
+	}
+	defer file.Close()
+
+	err = pdf.Output(file)
+	if err != nil {
+		log.Printf("error while writing in ticket PDF file: %v", err)
+		return nil, err
 	}
 
-	return nil
+	return file, nil
 }

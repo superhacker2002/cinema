@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"fmt"
+	"os"
 	"time"
 )
 
@@ -10,6 +11,11 @@ var (
 	ErrInternalError          = errors.New("internal server error")
 	ErrCinemaSessionsNotFound = errors.New("no cinema sessions were found")
 	ErrTicketExists           = errors.New("ticket already exists")
+)
+
+const (
+	dateLayout = "2006-01-02"
+	timeLayout = "15:04:05"
 )
 
 type Ticket struct {
@@ -26,8 +32,8 @@ func NewTicketEntity(id, hallId, seat, duration int, movie string, startTime tim
 	return Ticket{
 		Id:         id,
 		MovieName:  movie,
-		Date:       startTime.Format("2006-01-02"),
-		StartTime:  startTime.Format("15:04:05"),
+		Date:       startTime.Format(dateLayout),
+		StartTime:  startTime.Format(timeLayout),
 		Duration:   duration,
 		HallId:     hallId,
 		SeatNumber: seat,
@@ -41,7 +47,7 @@ type repository interface {
 }
 
 type ticketGenerator interface {
-	GenerateTicket(t Ticket, outputPath string) error
+	GenerateTicket(t Ticket, outputPath string) (*os.File, error)
 }
 
 type Service struct {
@@ -85,9 +91,10 @@ func (s Service) BuyTicket(sessionId, userId, seatNum int) (string, error) {
 	}
 
 	outputPath := fmt.Sprintf("ticket%d.pdf", ticket.Id)
-	err = s.gen.GenerateTicket(ticket, outputPath)
+	_, err = s.gen.GenerateTicket(ticket, outputPath)
 	if err != nil {
 		return "", ErrInternalError
 	}
+
 	return outputPath, nil
 }
