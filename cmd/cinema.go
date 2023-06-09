@@ -5,7 +5,6 @@ import (
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/auth/middleware"
 	authRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/auth/repository"
 	authService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/auth/service"
-
 	sessionsHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/cinemasession/handler"
 	sessionsRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/cinemasession/repository"
 	sessionsService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/cinemasession/service"
@@ -46,6 +45,15 @@ func main() {
 		log.Fatal(err)
 	}
 	defer db.Close()
+
+	//s.c, err = minio.New(endpoint, &minio.Options{
+	//	Creds:  credentials.NewStaticV4(accessKey, secretKey, ""),
+	//	Secure: useSSL,
+	//})
+	//if err != nil {
+	//	log.Fatalf("failed to create MinIO client: %v", err)
+	//	return err
+	//}
 
 	router := mux.NewRouter()
 
