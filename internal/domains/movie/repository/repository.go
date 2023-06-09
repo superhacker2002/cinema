@@ -6,13 +6,14 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"time"
 )
 
 type movie struct {
 	Id          int
 	Title       string
 	Genre       string
-	ReleaseDate string
+	ReleaseDate time.Time
 	Duration    int
 }
 
