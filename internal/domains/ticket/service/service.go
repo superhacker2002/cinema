@@ -3,7 +3,6 @@ package service
 import (
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"time"
 )
@@ -48,7 +47,7 @@ type repository interface {
 }
 
 type ticketGenerator interface {
-	GenerateTicket(t Ticket, w io.Writer) error
+	GenerateTicket(t Ticket, outputPath string) (*os.File, error)
 }
 
 type Service struct {
@@ -92,10 +91,7 @@ func (s Service) BuyTicket(sessionId, userId, seatNum int) (string, error) {
 	}
 
 	outputPath := fmt.Sprintf("ticket%d.pdf", ticket.Id)
-	ticketFile, err := os.Create(outputPath)
-	defer ticketFile.Close()
-
-	err = s.gen.GenerateTicket(ticket, ticketFile)
+	_, err = s.gen.GenerateTicket(ticket, outputPath)
 	if err != nil {
 		return "", ErrInternalError
 	}
