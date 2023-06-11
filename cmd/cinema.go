@@ -8,6 +8,8 @@ import (
 	sessionsHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/cinemasession/handler"
 	sessionsRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/cinemasession/repository"
 	sessionsService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/cinemasession/service"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 
 	hallsHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/hall/handler"
 	hallsRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/hall/repository"
@@ -21,6 +23,7 @@ import (
 	pdf "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/ticket/pdf"
 	ticketRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/ticket/repository"
 	ticketService "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/ticket/service"
+	minioStorage "bitbucket.org/Ernst_Dzeravianka/cinemago-app/pkg/minio"
 
 	userHandler "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/user/handler"
 	userRepository "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/user/repository"
@@ -42,18 +45,18 @@ func main() {
 
 	db, err := sql.Open("postgres", configs.Db)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("failed to open connection with database: %v", err)
 	}
 	defer db.Close()
 
-	//s.c, err = minio.New(endpoint, &minio.Options{
-	//	Creds:  credentials.NewStaticV4(accessKey, secretKey, ""),
-	//	Secure: useSSL,
-	//})
-	//if err != nil {
-	//	log.Fatalf("failed to create MinIO client: %v", err)
-	//	return err
-	//}
+	minioClient, err := minio.New(configs.MinIOEndpoint, &minio.Options{
+		Creds:  credentials.NewStaticV4(configs.MinIOUser, configs.MinIOPasswd, ""),
+		Secure: false,
+	})
+
+	if err != nil {
+		log.Fatalf("failed to create MinIO client: %v", err)
+	}
 
 	router := mux.NewRouter()
 
@@ -80,9 +83,10 @@ func main() {
 	moviesHandler.New(moviesServ).SetRoutes(router, authMW)
 
 	ticketGen := pdf.Generator{}
+	ticketsStorage := minioStorage.New(minioClient)
 
 	ticketRepo := ticketRepository.New(db)
-	ticketServ := ticketService.New(ticketRepo, ticketGen)
+	ticketServ := ticketService.New(ticketRepo, ticketGen, ticketsStorage)
 	ticketHandler.New(ticketServ).SetRoutes(router, authMW)
 
 	log.Fatal(http.ListenAndServe(":"+configs.Port, router))
