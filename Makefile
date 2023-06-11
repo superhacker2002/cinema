@@ -1,8 +1,8 @@
 OPENAPI_FILE=openapi.html
 DATABASE_CONTAINER=cinema-container
 DATABASE_IMAGE=cinema-image
-MINIO_ACCESS_KEY=rubiezzy
-MINIO_SECRET_KEY=a@3JsY4Vn&fT8s
+MINIO_ROOT_USER=rubiezzy
+MINIO_ROOT_PASSWORD=a3JsY4VnfT8s
 MINIO_CONTAINER=minio
 
 .PHONY: run
@@ -32,11 +32,14 @@ clean-minio:
 .PHONY: minio-storage
 minio-storage:
 	docker run -p 9000:9000 --name $(MINIO_CONTAINER) \
-      -e "MINIO_ACCESS_KEY=$(MINIO_ACCESS_KEY)" \
-      -e "MINIO_SECRET_KEY=$(MINIO_SECRET_KEY)" \
-      minio/minio server /data \
-      mc mb $(MINIO_CONTAINER)/tickets
+      -e "MINIO_ROOT_USER=$(MINIO_ROOT_USER)" \
+      -e "MINIO_ROOT_PASSWORD=$(MINIO_ROOT_PASSWORD)" \
+      minio/minio server /data
 
+.PHONY: create-bucket
+create-bucket:
+	mc alias set minio http://localhost:9000 $(MINIO_ROOT_USER) $(MINIO_ROOT_PASSWORD)
+	mc mb minio/tickets
 
 .PHONY: openapi-docs
 openapi-docs:
