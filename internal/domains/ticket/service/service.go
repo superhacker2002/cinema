@@ -50,15 +50,21 @@ type ticketGenerator interface {
 	GenerateTicket(t Ticket, outputPath string) (*os.File, error)
 }
 
+type ticketsStorage interface {
+	StoreTicket(objName string, file *os.File) error
+}
+
 type Service struct {
 	r   repository
 	gen ticketGenerator
+	s   ticketsStorage
 }
 
-func New(r repository, t ticketGenerator) Service {
+func New(r repository, t ticketGenerator, s ticketsStorage) Service {
 	return Service{
 		r:   r,
 		gen: t,
+		s:   s,
 	}
 }
 
