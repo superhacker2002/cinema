@@ -52,7 +52,7 @@ func (h HttpHandler) SetRoutes(router *mux.Router, a AccessChecker) {
 
 	adminRouter := router.PathPrefix("/halls").Subrouter()
 	adminRouter.Use(a.Authenticate)
-	adminRouter.Use(a.CheckPerms("admin"))
+	adminRouter.Use(a.CheckPerms(service.AdminRole))
 
 	adminRouter.HandleFunc("/", h.createHallHandler).Methods(http.MethodPost)
 	adminRouter.HandleFunc("/{hallId}", h.updateHallHandler).Methods(http.MethodPut)

@@ -76,7 +76,7 @@ func (h HttpHandler) createUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	apiutils.WriteResponse(w, map[string]int{"user_id": id}, http.StatusCreated)
+	apiutils.WriteResponse(w, map[string]int{"userId": id}, http.StatusCreated)
 }
 
 func (c credentials) validate() error {

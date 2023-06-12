@@ -57,7 +57,7 @@ func (h HttpHandler) SetRoutes(router *mux.Router, a AccessChecker) {
 
 	adminRouter := router.PathPrefix("/movies").Subrouter()
 	adminRouter.Use(a.Authenticate)
-	adminRouter.Use(a.CheckPerms("admin"))
+	adminRouter.Use(a.CheckPerms(service.AdminRole))
 
 	adminRouter.HandleFunc("/", h.createMovieHandler).Methods(http.MethodPost)
 	adminRouter.HandleFunc("/{movieId}", h.updateMovieHandler).Methods(http.MethodPut)
