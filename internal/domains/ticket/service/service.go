@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -52,7 +53,7 @@ type ticketGenerator interface {
 }
 
 type ticketsStorage interface {
-	StoreTicket(file *os.File) (string, error)
+	StoreTicket(ctx context.Context, file *os.File) (string, error)
 }
 
 type Service struct {
@@ -107,7 +108,8 @@ func (s Service) BuyTicket(sessionId, userId, seatNum int) (string, error) {
 	}
 
 	ticketFile, err = os.Open(ticketName)
-	path, err := s.storage.StoreTicket(ticketFile)
+	ctx := context.Background()
+	path, err := s.storage.StoreTicket(ctx, ticketFile)
 	if err != nil {
 		return "", ErrInternalError
 	}
