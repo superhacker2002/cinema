@@ -97,17 +97,16 @@ func (s Service) BuyTicket(sessionId, userId, seatNum int) (string, error) {
 		return "", ErrInternalError
 	}
 
-	outputPath := fmt.Sprintf("ticket%d.pdf", ticket.Id)
-	ticketFile, err := os.Create(outputPath)
+	ticketName := fmt.Sprintf("ticket%d.pdf", ticket.Id)
+	ticketFile, err := os.Create(ticketName)
+	defer ticketFile.Close()
 
 	err = s.gen.GenerateTicket(ticket, ticketFile)
 	if err != nil {
 		return "", ErrInternalError
 	}
 
-	ticketFile, err = os.Open(outputPath)
-	defer ticketFile.Close()
-
+	ticketFile, err = os.Open(ticketName)
 	path, err := s.storage.StoreTicket(ticketFile)
 	if err != nil {
 		return "", ErrInternalError
