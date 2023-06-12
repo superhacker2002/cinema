@@ -53,7 +53,7 @@ func (h HttpHandler) createTicket(w http.ResponseWriter, r *http.Request) {
 
 	userID := r.Context().Value("userID").(int)
 
-	ctx := context.Background()
+	ctx := r.Context()
 
 	ticketPath, err := h.s.BuyTicket(ctx, t.SessionId, userID, t.SeatNumber)
 	if errors.Is(err, ticketServ.ErrCinemaSessionsNotFound) {
