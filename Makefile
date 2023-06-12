@@ -10,7 +10,7 @@ run: clean-db docker-db
 	go run cmd/cinema.go
 
 docker-compose-run:
-	docker compose up
+	docker compose --env-file .env up
 
 .PHONY: test
 test:

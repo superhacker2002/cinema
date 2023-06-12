@@ -6,4 +6,4 @@ COPY . .
 
 RUN go build -o /app/cinema ./cmd
 
-CMD ["./cinema"]
+ENTRYPOINT ["./cinema"]

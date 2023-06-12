@@ -1,5 +1,15 @@
 version: '3'
 services:
+  minio:
+    image: minio/minio
+    ports:
+      - "9000:9000"
+    entrypoint: sh
+    command: -c 'mkdir -p /data/tickets && minio server /data'
+    environment:
+      - MINIO_ROOT_USER=rubiezzy
+      - MINIO_ROOT_PASSWORD=a3JsY4VnfT8s
+
   database:
     image: postgres
     restart: always
@@ -24,5 +34,8 @@ services:
       - "8080:8080"
     depends_on:
       - database
+      - minio
     environment:
-      DATABASE_URL: "postgresql://postgres:2587@database:5432/cinema?sslmode=disable"
+      - DATABASE_URL=${DATABASE_URL:?}
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT:?}
+

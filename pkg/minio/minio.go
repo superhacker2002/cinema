@@ -20,7 +20,7 @@ func New(c *minio.Client) Storage {
 }
 
 func (s Storage) StoreTicket(file *os.File) (string, error) {
-	ctx := context.Background()
+	ctx := context.TODO()
 	fileInfo, err := file.Stat()
 	if err != nil {
 		log.Printf("failed to get information about file %v", err)
@@ -33,11 +33,6 @@ func (s Storage) StoreTicket(file *os.File) (string, error) {
 	if err != nil {
 		log.Printf("failed to load PDF file in MinIO: %v", err)
 		return "", err
-	}
-
-	err = s.c.SetBucketPolicy(ctx, "tickets", policy)
-	if err != nil {
-		log.Fatalln(err)
 	}
 
 	url := s.c.EndpointURL().String() + "/" + "tickets" + "/" + fileInfo.Name()
