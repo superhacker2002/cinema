@@ -7,8 +7,25 @@ services:
     entrypoint: sh
     command: -c 'mkdir -p /data/tickets && minio server /data'
     environment:
-      - MINIO_ROOT_USER=rubiezzy
-      - MINIO_ROOT_PASSWORD=a3JsY4VnfT8s
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:?}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:?}
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  set-policy:
+    image: minio/mc
+    depends_on:
+      minio:
+        condition: service_started
+    entrypoint: sh
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:?}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:?}
+    command: >
+      -c 'mc alias set minio http://minio:9000 $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD && mc anonymous set public minio/tickets'
 
   database:
     image: postgres
@@ -36,6 +53,10 @@ services:
       - database
       - minio
     environment:
+      - PORT=${PORT:?}
+      - JWT_SECRET=${JWT_SECRET:?}
+      - TOKEN_EXP_IN_HOURS=${TOKEN_EXP_IN_HOURS:?}
       - DATABASE_URL=${DATABASE_URL:?}
       - MINIO_ENDPOINT=${MINIO_ENDPOINT:?}
+      - BUCKET_NAME=${BUCKET_NAME:?}
 

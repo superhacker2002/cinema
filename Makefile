@@ -6,10 +6,7 @@ MINIO_ROOT_PASSWORD=a3JsY4VnfT8s
 MINIO_CONTAINER=minio
 
 .PHONY: run
-run: clean-db docker-db
-	go run cmd/cinema.go
-
-docker-compose-run:
+run:
 	docker compose --env-file .env up
 
 .PHONY: test
@@ -18,7 +15,6 @@ test:
 
 clean:
 	docker compose down
-	docker
 
 .PHONY: docker-db
 docker-db:
