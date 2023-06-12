@@ -16,6 +16,7 @@ type Config struct {
 	MinIOEndpoint string `env:"MINIO_ENDPOINT,default=localhost:9000"`
 	MinIOUser     string `env:"MINIO_ROOT_USER,default=rubiezzy"`
 	MinIOPasswd   string `env:"MINIO_ROOT_PASSWORD,default=a3JsY4VnfT8s"`
+	BucketName    string `env:"BUCKET_NAME,default=tickets"`
 	TokenExp      int    `env:"TOKEN_EXP_IN_HOURS,default=24"`
 	TimeZone      *time.Location
 }

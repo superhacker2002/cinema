@@ -83,7 +83,7 @@ func main() {
 	moviesHandler.New(moviesServ).SetRoutes(router, authMW)
 
 	ticketGen := pdf.Generator{}
-	ticketsStorage := minioStorage.New(minioClient)
+	ticketsStorage := minioStorage.New(minioClient, configs.BucketName)
 
 	ticketRepo := ticketRepository.New(db)
 	ticketServ := ticketService.New(ticketRepo, ticketGen, ticketsStorage)
