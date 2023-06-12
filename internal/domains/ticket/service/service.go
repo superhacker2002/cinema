@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -51,15 +52,21 @@ type ticketGenerator interface {
 	GenerateTicket(t Ticket, w io.Writer) error
 }
 
-type Service struct {
-	r   repository
-	gen ticketGenerator
+type ticketsStorage interface {
+	StoreTicket(ctx context.Context, file *os.File) (string, error)
 }
 
-func New(r repository, t ticketGenerator) Service {
+type Service struct {
+	r       repository
+	gen     ticketGenerator
+	storage ticketsStorage
+}
+
+func New(r repository, t ticketGenerator, s ticketsStorage) Service {
 	return Service{
-		r:   r,
-		gen: t,
+		r:       r,
+		gen:     t,
+		storage: s,
 	}
 }
 
@@ -91,8 +98,8 @@ func (s Service) BuyTicket(sessionId, userId, seatNum int) (string, error) {
 		return "", ErrInternalError
 	}
 
-	outputPath := fmt.Sprintf("ticket%d.pdf", ticket.Id)
-	ticketFile, err := os.Create(outputPath)
+	ticketName := fmt.Sprintf("ticket%d.pdf", ticket.Id)
+	ticketFile, err := os.Create(ticketName)
 	defer ticketFile.Close()
 
 	err = s.gen.GenerateTicket(ticket, ticketFile)
@@ -100,5 +107,12 @@ func (s Service) BuyTicket(sessionId, userId, seatNum int) (string, error) {
 		return "", ErrInternalError
 	}
 
-	return outputPath, nil
+	ticketFile, err = os.Open(ticketName)
+	ctx := context.Background()
+	path, err := s.storage.StoreTicket(ctx, ticketFile)
+	if err != nil {
+		return "", ErrInternalError
+	}
+
+	return path, nil
 }
