@@ -43,7 +43,6 @@ services:
   cinema-service:
     build:
       context: .
-      dockerfile: Dockerfile
     volumes:
       - ./cmd:/app/cmd
       - ./internal:/app/internal
@@ -52,13 +51,5 @@ services:
     depends_on:
       - database
       - minio
-    environment:
-      - PORT=${PORT:?}
-      - JWT_SECRET=${JWT_SECRET:?}
-      - TOKEN_EXP_IN_HOURS=${TOKEN_EXP_IN_HOURS:?}
-      - DATABASE_URL=${DATABASE_URL:?}
-      - MINIO_ENDPOINT=${MINIO_ENDPOINT:?}
-      - BUCKET_NAME=${BUCKET_NAME:?}
-      - MINIO_ROOT_USER=${MINIO_ROOT_USER:?}
-      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:?}
-
+    env_file:
+      - .env
