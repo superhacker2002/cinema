@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/joho/godotenv"
 	"github.com/sethvargo/go-envconfig"
+	"log"
 	"time"
 )
 
@@ -24,7 +25,7 @@ type Config struct {
 func New() (Config, error) {
 	var c Config
 	if err := godotenv.Load(); err != nil {
-		return c, err
+		log.Println("config loading from .env failed:", err)
 	}
 
 	ctx := context.Background()

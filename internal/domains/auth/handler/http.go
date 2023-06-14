@@ -6,7 +6,6 @@ import (
 	"errors"
 	"github.com/gorilla/mux"
 	"io"
-	"log"
 	"net/http"
 )
 
@@ -43,7 +42,6 @@ func (h HttpHandler) setRoutes(router *mux.Router) {
 func (h HttpHandler) loginHandler(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		log.Println(err)
 		http.Error(w, ErrReadRequestFail.Error(), http.StatusBadRequest)
 		return
 	}
@@ -51,20 +49,17 @@ func (h HttpHandler) loginHandler(w http.ResponseWriter, r *http.Request) {
 	var creds credentials
 	err = json.Unmarshal(body, &creds)
 	if err != nil {
-		log.Println(err)
 		http.Error(w, ErrReadRequestFail.Error(), http.StatusBadRequest)
 		return
 	}
 
 	if err = creds.validate(); err != nil {
-		log.Println(err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	token, err := h.s.Authenticate(creds.Username, creds.Password)
 	if err != nil {
-		log.Println(err)
 		http.Error(w, "failed to authenticate: "+err.Error(), http.StatusUnauthorized)
 		return
 	}
