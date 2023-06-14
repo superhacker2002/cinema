@@ -48,7 +48,7 @@ services:
       - ./cmd:/app/cmd
       - ./internal:/app/internal
     ports:
-      - "8080:8080"
+      - "${PORT}:${PORT}"
     depends_on:
       - database
       - minio
