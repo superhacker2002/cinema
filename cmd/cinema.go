@@ -68,7 +68,7 @@ func main() {
 
 	userRepo := userRepository.New(db)
 	userServ := userService.New(userRepo)
-	userHandler.New(router, userServ)
+	userHandler.New(router, userServ).SetRoutes(router, authMW)
 
 	sessionsRepo := sessionsRepository.New(db, configs.TimeZone)
 	sessionsServ := sessionsService.New(sessionsRepo)

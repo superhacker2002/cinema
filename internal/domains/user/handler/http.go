@@ -45,12 +45,13 @@ func New(router *mux.Router, s Service) HttpHandler {
 
 func (h HttpHandler) SetRoutes(router *mux.Router, a accessChecker) {
 	allRouter := router.PathPrefix("/users").Subrouter()
-	allRouter.HandleFunc("/", h.createUserHandler).Methods("POST")
+	allRouter.HandleFunc("/", h.createUserHandler).Methods(http.MethodPost)
 
 	adminRouter := router.PathPrefix("/users").Subrouter()
 	adminRouter.Use(a.Authenticate)
-	adminRouter.Use(a.CheckPerms("admin"))
-	allRouter.HandleFunc("/{userId}/grand-admin", h.makeUserAdmin).Methods("POST")
+	adminRouter.Use(a.CheckPerms(service.AdminRoleName))
+
+	adminRouter.HandleFunc("/{userId}/grant-admin", h.makeUserAdmin).Methods(http.MethodPut)
 
 }
 

@@ -11,8 +11,9 @@ var (
 )
 
 const (
-	AdminRoleId = 1
-	UserRoleId  = 2
+	AdminRoleId   = 1
+	UserRoleId    = 2
+	AdminRoleName = "admin"
 )
 
 type repository interface {
