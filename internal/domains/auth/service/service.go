@@ -44,13 +44,16 @@ func New(jwtSecret string, tokenExp int, repo repository) Auth {
 func (a Auth) Authenticate(username string, passwordHash string) (token string, err error) {
 	userCreds, err := a.r.GetUser(username)
 	if errors.Is(ErrUserNotFound, err) {
+		log.Println(err)
 		return "", ErrInvalidUsernameOrPassword
 	}
 	if err != nil {
+		log.Println(err)
 		return "", ErrInternalError
 	}
 
 	if passwordHash != userCreds.PasswordHash {
+		log.Println(err)
 		return "", ErrInvalidUsernameOrPassword
 	}
 
@@ -64,6 +67,7 @@ func (a Auth) generateJWT(userID int) (string, error) {
 	})
 	signedToken, err := token.SignedString(a.jwtSecret)
 	if err != nil {
+		log.Println("failed to sign token:", err)
 		return "", err
 	}
 	return signedToken, nil
@@ -77,7 +81,7 @@ func (a Auth) VerifyToken(token string) (userID int, err error) {
 		return a.jwtSecret, nil
 	})
 	if err != nil {
-		log.Println(err)
+		log.Println("failed to parse token:", err)
 		return 0, ErrInvalidToken
 	}
 
@@ -102,9 +106,11 @@ func (a Auth) tokenIsExpired(claims jwt.MapClaims) bool {
 func (a Auth) UserPermissions(id int) (string, error) {
 	perms, err := a.r.Permissions(id)
 	if errors.Is(err, ErrUserNotFound) {
+		log.Println("failed to get user permissions:", ErrUserNotFound)
 		return "", err
 	}
 	if err != nil {
+		log.Println("failed to get user permissions:", err)
 		return "", ErrInternalError
 	}
 

@@ -1,0 +1,55 @@
+version: '3'
+services:
+  minio:
+    image: minio/minio
+    ports:
+      - "9000:9000"
+    entrypoint: sh
+    command: -c 'mkdir -p /data/tickets && minio server /data'
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:?}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:?}
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  set-policy:
+    image: minio/mc
+    depends_on:
+      minio:
+        condition: service_started
+    entrypoint: sh
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:?}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:?}
+    command: >
+      -c 'mc alias set minio http://minio:9000 $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD && mc anonymous set public minio/tickets'
+
+  database:
+    image: postgres
+    restart: always
+    build:
+      context: ./database
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 2587
+      POSTGRES_DB: cinema
+    volumes:
+      - ./database/cinemadb.sql:/docker-entrypoint-initdb.d/cinemadb.sql
+      - ./database/mock_data.sql:/docker-entrypoint-initdb.d/mock_data.sql
+
+  cinema-service:
+    build:
+      context: .
+    volumes:
+      - ./cmd:/app/cmd
+      - ./internal:/app/internal
+    ports:
+      - "${PORT}:${PORT}"
+    depends_on:
+      - database
+      - minio
+    env_file:
+      - .env

@@ -3,6 +3,7 @@ package handler
 import (
 	"bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/apiutils"
 	ticketServ "bitbucket.org/Ernst_Dzeravianka/cinemago-app/internal/domains/ticket/service"
+	"context"
 	"encoding/json"
 	"errors"
 	"github.com/gorilla/mux"
@@ -14,7 +15,7 @@ var (
 )
 
 type service interface {
-	BuyTicket(sessionId, userId, seatNum int) (string, error)
+	BuyTicket(ctx context.Context, sessionId, userId, seatNum int) (string, error)
 }
 
 type accessChecker interface {
@@ -52,7 +53,9 @@ func (h HttpHandler) createTicket(w http.ResponseWriter, r *http.Request) {
 
 	userID := r.Context().Value("userID").(int)
 
-	ticketPath, err := h.s.BuyTicket(t.SessionId, userID, t.SeatNumber)
+	ctx := r.Context()
+
+	ticketPath, err := h.s.BuyTicket(ctx, t.SessionId, userID, t.SeatNumber)
 	if errors.Is(err, ticketServ.ErrCinemaSessionsNotFound) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return

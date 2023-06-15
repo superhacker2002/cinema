@@ -8,23 +8,25 @@ import (
 )
 
 type Storage struct {
-	c *minio.Client
+	c          *minio.Client
+	bucketName string
 }
 
-func New(c *minio.Client) Storage {
+func New(c *minio.Client, bucketName string) Storage {
 	return Storage{
-		c: c,
+		c:          c,
+		bucketName: bucketName,
 	}
 }
 
-func (s Storage) StoreTicket(ctx context.Context, file *os.File) (string, error) {
+func (s Storage) Store(ctx context.Context, file *os.File) (string, error) {
 	fileInfo, err := file.Stat()
 	if err != nil {
 		log.Printf("failed to get information about file %v", err)
 		return "", err
 	}
 
-	_, err = s.c.PutObject(ctx, "tickets", fileInfo.Name(), file, fileInfo.Size(), minio.PutObjectOptions{
+	_, err = s.c.PutObject(ctx, s.bucketName, fileInfo.Name(), file, fileInfo.Size(), minio.PutObjectOptions{
 		ContentType: "application/pdf",
 	})
 	if err != nil {
@@ -32,7 +34,7 @@ func (s Storage) StoreTicket(ctx context.Context, file *os.File) (string, error)
 		return "", err
 	}
 
-	url := s.c.EndpointURL().String() + "/" + "tickets" + "/" + fileInfo.Name()
+	url := "http://localhost:" + s.c.EndpointURL().Port() + "/" + s.bucketName + "/" + fileInfo.Name()
 
 	return url, nil
 }

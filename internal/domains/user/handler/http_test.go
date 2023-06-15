@@ -32,7 +32,7 @@ func TestCreateUserHandler(t *testing.T) {
 		handler := HttpHandler{s: s}.createUserHandler
 		handler(response, req)
 
-		assert.Equal(t, "{\"user_id\":1}\n", response.Body.String())
+		assert.Equal(t, "{\"userId\":1}\n", response.Body.String())
 		assert.Equal(t, http.StatusCreated, response.Code)
 	})
 

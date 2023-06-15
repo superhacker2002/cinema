@@ -1,17 +1,20 @@
 OPENAPI_FILE=openapi.html
-DATABASE_CONTAINER=cinema-container
 DATABASE_IMAGE=cinema-image
+DATABASE_CONTAINER=cinema-container
 MINIO_ROOT_USER=rubiezzy
 MINIO_ROOT_PASSWORD=a3JsY4VnfT8s
 MINIO_CONTAINER=minio
 
 .PHONY: run
-run: clean-db docker-db
-	go run cmd/cinema.go
+run:
+	docker compose --env-file .env up
 
 .PHONY: test
 test:
 	go test ./...
+
+clean:
+	docker compose down
 
 .PHONY: docker-db
 docker-db:
@@ -50,4 +53,3 @@ openapi-docs:
 .PHONY: clean-docs
 clean-docs:
 	rm -rf docs/
-

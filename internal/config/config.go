@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/joho/godotenv"
 	"github.com/sethvargo/go-envconfig"
+	"log"
 	"time"
 )
 
@@ -16,6 +17,7 @@ type Config struct {
 	MinIOEndpoint string `env:"MINIO_ENDPOINT,default=localhost:9000"`
 	MinIOUser     string `env:"MINIO_ROOT_USER,default=rubiezzy"`
 	MinIOPasswd   string `env:"MINIO_ROOT_PASSWORD,default=a3JsY4VnfT8s"`
+	BucketName    string `env:"BUCKET_NAME,default=tickets"`
 	TokenExp      int    `env:"TOKEN_EXP_IN_HOURS,default=24"`
 	TimeZone      *time.Location
 }
@@ -23,7 +25,7 @@ type Config struct {
 func New() (Config, error) {
 	var c Config
 	if err := godotenv.Load(); err != nil {
-		return c, err
+		log.Println("config loading from .env failed:", err)
 	}
 
 	ctx := context.Background()

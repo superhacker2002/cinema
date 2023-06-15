@@ -53,7 +53,7 @@ type ticketGenerator interface {
 }
 
 type ticketsStorage interface {
-	StoreTicket(ctx context.Context, file *os.File) (string, error)
+	Store(ctx context.Context, file *os.File) (string, error)
 }
 
 type Service struct {
@@ -70,7 +70,7 @@ func New(r repository, t ticketGenerator, s ticketsStorage) Service {
 	}
 }
 
-func (s Service) BuyTicket(sessionId, userId, seatNum int) (string, error) {
+func (s Service) BuyTicket(ctx context.Context, sessionId, userId, seatNum int) (string, error) {
 	exists, err := s.r.TicketExists(sessionId, seatNum)
 	if err != nil {
 		return "", ErrInternalError
@@ -108,8 +108,7 @@ func (s Service) BuyTicket(sessionId, userId, seatNum int) (string, error) {
 	}
 
 	ticketFile, err = os.Open(ticketName)
-	ctx := context.Background()
-	path, err := s.storage.StoreTicket(ctx, ticketFile)
+	path, err := s.storage.Store(ctx, ticketFile)
 	if err != nil {
 		return "", ErrInternalError
 	}
