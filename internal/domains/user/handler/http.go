@@ -15,6 +15,7 @@ var (
 	ErrReadRequestFail = errors.New("failed to read request body")
 	ErrNoUsername      = errors.New("missing username")
 	ErrNoPassword      = errors.New("missing password")
+	ErrInvalidUserId   = errors.New("invalid user id")
 )
 
 type credentials struct {
@@ -22,8 +23,14 @@ type credentials struct {
 	Password string `json:"password"`
 }
 
+type accessChecker interface {
+	Authenticate(next http.Handler) http.Handler
+	CheckPerms(perms ...string) mux.MiddlewareFunc
+}
+
 type Service interface {
 	CreateUser(username string, passwordHash string) (userId int, err error)
+	MakeAdmin(userId int) error
 }
 
 type HttpHandler struct {
@@ -31,15 +38,41 @@ type HttpHandler struct {
 }
 
 func New(router *mux.Router, s Service) HttpHandler {
-	handler := HttpHandler{s: s}
-	handler.setRoutes(router)
-
-	return handler
+	return HttpHandler{
+		s: s,
+	}
 }
 
-func (h HttpHandler) setRoutes(router *mux.Router) {
-	s := router.PathPrefix("/users").Subrouter()
-	s.HandleFunc("/", h.createUserHandler).Methods("POST")
+func (h HttpHandler) SetRoutes(router *mux.Router, a accessChecker) {
+	allRouter := router.PathPrefix("/users").Subrouter()
+	allRouter.HandleFunc("/", h.createUserHandler).Methods("POST")
+
+	adminRouter := router.PathPrefix("/users").Subrouter()
+	adminRouter.Use(a.Authenticate)
+	adminRouter.Use(a.CheckPerms("admin"))
+	allRouter.HandleFunc("/{userId}/grand-admin", h.makeUserAdmin).Methods("POST")
+
+}
+
+func (h HttpHandler) makeUserAdmin(w http.ResponseWriter, r *http.Request) {
+	userId, err := apiutils.IntPathParam(r, "userId")
+	if err != nil {
+		http.Error(w, ErrInvalidUserId.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = h.s.MakeAdmin(userId)
+	if errors.Is(err, service.ErrUserNotFound) {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 func (h HttpHandler) createUserHandler(w http.ResponseWriter, r *http.Request) {

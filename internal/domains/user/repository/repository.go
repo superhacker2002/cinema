@@ -5,9 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 )
-
-const UserRoleID = 2
 
 type UserRepository struct {
 	db *sql.DB
@@ -29,10 +28,27 @@ func (u UserRepository) CreateUser(username string, passwordHash string) (userId
 	}
 
 	err = u.db.QueryRow("INSERT INTO users (username, hashed_password, role_id) "+
-		"VALUES ($1, $2, $3) RETURNING user_id", username, passwordHash, UserRoleID).Scan(&userId)
+		"VALUES ($1, $2, $3) RETURNING user_id", username, passwordHash, service.UserRoleId).Scan(&userId)
 	if err != nil {
 		return 0, fmt.Errorf("could not create user: %w", err)
 	}
 
 	return userId, nil
+}
+
+func (u UserRepository) MakeAdmin(userId int) (bool, error) {
+	res, err := u.db.Exec(`UPDATE users
+						SET role_id = $1
+						WHERE user_id = $2`, service.AdminRoleId, userId)
+	if err != nil {
+		log.Println(err)
+		return false, fmt.Errorf("failed to make user an admin: %w", err)
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if rowsAffected == 0 {
+		return false, nil
+	}
+
+	return true, nil
 }

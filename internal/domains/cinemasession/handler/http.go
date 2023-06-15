@@ -184,7 +184,7 @@ func (h HttpHandler) createSessionHandler(w http.ResponseWriter, r *http.Request
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	apiutils.WriteResponse(w, map[string]int{"session_id": id}, http.StatusCreated)
+	apiutils.WriteResponse(w, map[string]int{"sessionId": id}, http.StatusCreated)
 }
 
 func (h HttpHandler) updateSessionHandler(w http.ResponseWriter, r *http.Request) {
