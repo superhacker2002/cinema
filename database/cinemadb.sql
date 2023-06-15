@@ -57,4 +57,4 @@ INSERT INTO roles (role_name) VALUES ('admin');
 INSERT INTO roles (role_name) VALUES ('user');
 
 INSERT INTO users (username, hashed_password, email, credit_card_info, role_id)
-VALUES ('admin', '6D4525C2A21F9BE1CCA9E41F3AA402E0765EE5FCC3E7FEA34A169B1730AE386E', 'admin@example.com', '1234567890123456', 1);
+VALUES ('admin', '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', 'admin@example.com', '1234567890123456', 1);

@@ -78,7 +78,7 @@ func (h HttpHandler) SetRoutes(router *mux.Router, a AccessChecker) {
 
 	adminRouter.HandleFunc("/{sessionId}", h.updateSessionHandler).Methods("PUT")
 	adminRouter.HandleFunc("/{sessionId}", h.deleteSessionHandler).Methods("DELETE")
-	adminRouter.HandleFunc("/{hallId}", h.createSessionHandler).Methods("POST")
+	adminRouter.HandleFunc("/", h.createSessionHandler).Methods("POST")
 }
 
 func (h HttpHandler) getAllSessionsHandler(w http.ResponseWriter, r *http.Request) {
@@ -142,14 +142,9 @@ func (h HttpHandler) getSessionsHandler(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h HttpHandler) createSessionHandler(w http.ResponseWriter, r *http.Request) {
-	hallId, err := apiutils.IntPathParam(r, "hallId")
-	if err != nil {
-		log.Println(err)
-		http.Error(w, ErrInvalidHallId.Error(), http.StatusBadRequest)
-		return
-	}
 	type sessionInfo struct {
 		MovieId   int     `json:"movieId"`
+		HallId    int     `json:"hallId"`
 		StartTime string  `json:"startTime"`
 		Price     float32 `json:"price"`
 	}
@@ -168,7 +163,7 @@ func (h HttpHandler) createSessionHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	id, err := h.s.CreateSession(session.MovieId, hallId, session.StartTime, session.Price)
+	id, err := h.s.CreateSession(session.MovieId, session.HallId, session.StartTime, session.Price)
 
 	if errors.Is(err, service.ErrHallIsBusy) {
 		http.Error(w, err.Error(), http.StatusConflict)
