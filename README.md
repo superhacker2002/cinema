@@ -16,9 +16,9 @@ sessions.
 
 ## Usage
 **1.** [Install golang](https://go.dev/doc/install)  
-**2.** Download repository from Bitbucket
+**2.** Download repository from github
 ```shell
-go get "bitbucket.org/Ernst_Dzeravianka/cinemago-app"
+go get "https://github.com/superhacker2002/cinema"
 ```
 **2.** Set up environment variables:  
 - Create .env file  
